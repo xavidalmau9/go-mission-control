@@ -1,0 +1,817 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GO Advertising · Mission Control</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+/* ── DESIGN TOKENS ── */
+:root {
+  --bg: #050810;
+  --surface: #0c1120;
+  --surface2: #111827;
+  --border: rgba(99,179,237,0.12);
+  --border2: rgba(99,179,237,0.06);
+  --accent: #38bdf8;
+  --accent2: #818cf8;
+  --green: #34d399;
+  --amber: #fbbf24;
+  --red: #f87171;
+  --muted: #64748b;
+  --text: #e2e8f0;
+  --mono: 'Space Mono', monospace;
+  --sans: 'DM Sans', sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:100vh;overflow-x:hidden}
+
+/* Scanlines */
+body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.025) 2px,rgba(0,0,0,0.025) 4px);pointer-events:none;z-index:1000}
+
+/* Grid bg */
+body::after{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(56,189,248,0.025) 1px,transparent 1px),linear-gradient(90deg,rgba(56,189,248,0.025) 1px,transparent 1px);background-size:48px 48px;pointer-events:none;z-index:0}
+
+.wrap{position:relative;z-index:1;max-width:1440px;margin:0 auto;padding:20px}
+
+/* ── HEADER ── */
+.header{display:flex;align-items:center;justify-content:space-between;padding-bottom:18px;border-bottom:1px solid var(--border);margin-bottom:20px}
+.hdr-left{display:flex;align-items:center;gap:14px}
+.logo{width:34px;height:34px;border:1px solid var(--accent);border-radius:4px;display:flex;align-items:center;justify-content:center;position:relative;flex-shrink:0}
+.logo-dot{width:10px;height:10px;border-radius:50%;background:var(--accent);animation:lp 2s ease-in-out infinite}
+@keyframes lp{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(.75)}}
+.logo-text{font-family:var(--mono);font-size:11px;color:var(--accent);letter-spacing:3px}
+.logo-sub{font-size:10px;color:var(--muted);letter-spacing:1px;margin-top:2px}
+.hdr-mid{font-family:var(--mono);font-size:12px;color:var(--muted);letter-spacing:2px}
+.hdr-right{display:flex;flex-direction:column;align-items:flex-end;gap:4px}
+.live-row{display:flex;align-items:center;gap:7px;font-family:var(--mono);font-size:10px;color:var(--green);letter-spacing:2px}
+.live-dot{width:7px;height:7px;border-radius:50%;background:var(--green);animation:livep 1.5s ease-in-out infinite}
+@keyframes livep{0%,100%{box-shadow:0 0 0 0 rgba(52,211,153,.4)}50%{box-shadow:0 0 0 5px rgba(52,211,153,0)}}
+.data-source{font-family:var(--mono);font-size:9px;color:var(--muted);letter-spacing:1px}
+
+/* Loading overlay */
+#loadingOverlay{position:fixed;inset:0;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:999;transition:opacity .5s}
+#loadingOverlay.hidden{opacity:0;pointer-events:none}
+.loader-text{font-family:var(--mono);font-size:12px;color:var(--accent);letter-spacing:4px;animation:blink 1s step-end infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
+.loader-sub{font-family:var(--mono);font-size:9px;color:var(--muted);letter-spacing:2px;margin-top:8px}
+
+/* Error banner */
+#errorBanner{display:none;background:rgba(248,113,113,.1);border:1px solid rgba(248,113,113,.3);border-radius:6px;padding:10px 16px;margin-bottom:16px;font-family:var(--mono);font-size:11px;color:var(--red);letter-spacing:1px}
+
+/* ── KPI ROW ── */
+.kpi-row{display:grid;grid-template-columns:repeat(7,1fr);gap:10px;margin-bottom:16px}
+.kpi{background:var(--surface);border:1px solid var(--border2);border-radius:8px;padding:14px 14px 12px;position:relative;overflow:hidden;transition:border-color .2s,transform .15s}
+.kpi:hover{border-color:var(--border);transform:translateY(-1px)}
+.kpi::before{content:'';position:absolute;top:0;left:0;right:0;height:2px}
+.kpi.c-accent::before{background:var(--accent)}
+.kpi.c-green::before{background:var(--green)}
+.kpi.c-amber::before{background:var(--amber)}
+.kpi.c-red::before{background:var(--red)}
+.kpi.c-purple::before{background:var(--accent2)}
+.kpi-lbl{font-family:var(--mono);font-size:8px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:7px}
+.kpi-val{font-family:var(--mono);font-size:20px;font-weight:700;line-height:1;margin-bottom:5px}
+.kpi-sub{font-size:10px;color:var(--muted)}
+.up{color:var(--green)}.down{color:var(--red)}.warn{color:var(--amber)}
+
+/* ── MAIN GRID ── */
+.main-grid{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,1fr);gap:14px;margin-bottom:14px}
+.panel{background:var(--surface);border:1px solid var(--border2);border-radius:8px;padding:16px;position:relative}
+.panel-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid var(--border2)}
+.ptitle{font-family:var(--mono);font-size:9px;color:var(--accent);letter-spacing:2px;text-transform:uppercase}
+.pmeta{font-family:var(--mono);font-size:8px;color:var(--muted);letter-spacing:1px}
+
+/* chart */
+.chart-wrap{position:relative;height:200px}
+
+/* devices */
+.dev-row{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.dev-row:last-child{margin-bottom:0}
+.dev-name{font-family:var(--mono);font-size:9px;color:var(--muted);width:64px;flex-shrink:0;letter-spacing:1px}
+.dev-track{flex:1;height:7px;background:rgba(255,255,255,.04);border-radius:3px;overflow:hidden}
+.dev-fill{height:100%;border-radius:3px;transition:width 1.2s ease}
+.dev-val{font-family:var(--mono);font-size:10px;width:46px;text-align:right;flex-shrink:0}
+.dev-badge{font-family:var(--mono);font-size:8px;padding:2px 6px;border-radius:3px;letter-spacing:1px;flex-shrink:0;min-width:52px;text-align:center}
+
+/* campaigns */
+.camp-card{background:var(--surface2);border:1px solid var(--border2);border-radius:6px;padding:10px 12px;margin-bottom:8px}
+.camp-card:last-child{margin-bottom:0}
+.camp-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.camp-name{font-family:var(--mono);font-size:9px;color:var(--text);letter-spacing:1px}
+.grade-box{font-family:var(--mono);font-size:10px;font-weight:700;width:24px;height:24px;border-radius:3px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.camp-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.cs{text-align:center}
+.cs-v{font-family:var(--mono);font-size:12px;font-weight:700}
+.cs-l{font-family:var(--mono);font-size:7px;color:var(--muted);letter-spacing:1px;margin-top:2px}
+
+/* feed */
+.feed-item{padding:8px 0;border-bottom:1px solid var(--border2)}
+.feed-item:last-child{border-bottom:none}
+.feed-date{font-family:var(--mono);font-size:8px;color:var(--accent);letter-spacing:1px;margin-bottom:4px}
+.feed-txt{font-size:11px;color:var(--muted);line-height:1.5}
+.fdelta{display:inline-flex;align-items:center;gap:2px;font-family:var(--mono);font-size:9px;padding:1px 5px;border-radius:3px;margin:0 2px}
+
+/* ── BOTTOM GRID ── */
+.btm-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+
+/* states */
+.state-row{display:flex;align-items:center;gap:7px;padding:5px 0;border-bottom:1px solid var(--border2)}
+.state-row:last-child{border-bottom:none}
+.s-code{font-family:var(--mono);font-size:10px;color:var(--accent);width:24px;flex-shrink:0}
+.s-track{flex:1;height:4px;background:rgba(255,255,255,.04);border-radius:2px}
+.s-fill{height:100%;border-radius:2px;transition:width 1s ease}
+.s-count{font-family:var(--mono);font-size:9px;color:var(--muted);width:28px;text-align:right;flex-shrink:0}
+.s-status{font-family:var(--mono);font-size:8px;padding:1px 5px;border-radius:2px;flex-shrink:0;min-width:44px;text-align:center}
+
+/* heatmap */
+.heatmap{display:grid;grid-template-columns:repeat(8,1fr);gap:3px}
+.hcell{aspect-ratio:1;border-radius:3px;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:8px;cursor:default;transition:transform .1s;position:relative}
+.hcell:hover{transform:scale(1.3);z-index:10}
+.hm-leg{display:flex;align-items:center;justify-content:flex-end;gap:10px;margin-top:8px}
+.hm-li{display:flex;align-items:center;gap:4px;font-family:var(--mono);font-size:8px;color:var(--muted)}
+.hm-dot{width:7px;height:7px;border-radius:2px}
+
+/* projection */
+.proj-row{display:flex;align-items:center;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--border2)}
+.proj-row:last-child{border-bottom:none}
+.proj-lbl{font-family:var(--mono);font-size:9px;color:var(--muted);letter-spacing:1px}
+.proj-val{font-family:var(--mono);font-size:11px}
+.proj-bw{width:72px;height:4px;background:rgba(255,255,255,.04);border-radius:2px;flex-shrink:0}
+.proj-bf{height:100%;border-radius:2px;transition:width 1s ease}
+
+/* trend sparkline */
+.spark{display:flex;align-items:flex-end;gap:2px;height:32px;margin-top:6px}
+.spark-bar{flex:1;border-radius:1px 1px 0 0;min-width:4px;transition:height .5s ease}
+
+/* tooltip */
+.tooltip{display:none;position:absolute;background:#1e293b;border:1px solid var(--border);border-radius:5px;padding:6px 10px;font-family:var(--mono);font-size:9px;color:var(--text);letter-spacing:1px;white-space:nowrap;z-index:100;pointer-events:none;top:-36px;left:50%;transform:translateX(-50%)}
+.hcell:hover .tooltip{display:block}
+
+/* responsive */
+@media(max-width:1200px){.kpi-row{grid-template-columns:repeat(4,1fr)}.main-grid{grid-template-columns:1fr}.btm-grid{grid-template-columns:1fr 1fr}}
+@media(max-width:700px){.kpi-row{grid-template-columns:repeat(2,1fr)}.btm-grid{grid-template-columns:1fr}.header{flex-direction:column;gap:10px;align-items:flex-start}}
+
+/* Fade-in animation */
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.fade{animation:fadeUp .6s ease both}
+</style>
+</head>
+<body>
+
+<!-- Loading -->
+<div id="loadingOverlay">
+  <div class="loader-text">INITIALIZING MISSION CONTROL...</div>
+  <div class="loader-sub">CONNECTING TO DATA FEED</div>
+</div>
+
+<div class="wrap">
+
+  <!-- Header -->
+  <div class="header fade">
+    <div class="hdr-left">
+      <div class="logo"><div class="logo-dot"></div></div>
+      <div>
+        <div class="logo-text">GO Advertising · Mission Control</div>
+        <div class="logo-sub">Assurance Wireless · BGOA Partner Dashboard</div>
+      </div>
+    </div>
+    <div class="hdr-mid" id="clock">--</div>
+    <div class="hdr-right">
+      <div class="live-row"><div class="live-dot"></div><span id="liveStatus">CONNECTING...</span></div>
+      <div class="data-source" id="dataSource">SOURCE: GOOGLE SHEETS · AUTO-REFRESH</div>
+      <div class="data-source">AUTO-PUSH: APR 14, 2026</div>
+    </div>
+  </div>
+
+  <!-- Error -->
+  <div id="errorBanner">⚠ USING CACHED DATA — GOOGLE SHEETS CONNECTION UNAVAILABLE. UPDATE YOUR SHEET ID BELOW.</div>
+
+  <!-- KPI Row -->
+  <div class="kpi-row fade" style="animation-delay:.1s" id="kpiRow">
+    <div class="kpi c-accent"><div class="kpi-lbl">Total Activations</div><div class="kpi-val" style="color:var(--accent)" id="kv-activations">—</div><div class="kpi-sub" id="ks-activations">loading...</div></div>
+    <div class="kpi c-green"><div class="kpi-lbl">Total Revenue</div><div class="kpi-val" style="color:var(--green)" id="kv-revenue">—</div><div class="kpi-sub" id="ks-revenue">loading...</div></div>
+    <div class="kpi c-amber"><div class="kpi-lbl">Applications</div><div class="kpi-val" style="color:var(--amber)" id="kv-apps">—</div><div class="kpi-sub" id="ks-apps">loading...</div></div>
+    <div class="kpi c-purple"><div class="kpi-lbl">Approval Rate</div><div class="kpi-val" style="color:var(--accent2)" id="kv-approval">—</div><div class="kpi-sub" id="ks-approval">loading...</div></div>
+    <div class="kpi c-green"><div class="kpi-lbl">Ad Spend</div><div class="kpi-val" style="color:var(--green)" id="kv-spend">—</div><div class="kpi-sub" id="ks-spend">loading...</div></div>
+    <div class="kpi c-amber"><div class="kpi-lbl">Google CPA</div><div class="kpi-val" style="color:var(--amber)" id="kv-gcpa">—</div><div class="kpi-sub" id="ks-gcpa">loading...</div></div>
+    <div class="kpi c-red"><div class="kpi-lbl">Activation CPA</div><div class="kpi-val" style="color:var(--red)" id="kv-acpa">—</div><div class="kpi-sub" id="ks-acpa">loading...</div></div>
+  </div>
+
+  <!-- Main Grid -->
+  <div class="main-grid fade" style="animation-delay:.2s">
+
+    <!-- Left -->
+    <div>
+      <div class="panel" style="margin-bottom:14px">
+        <div class="panel-hdr">
+          <div class="ptitle">Daily Performance · Activations vs Ad Spend</div>
+          <div class="pmeta" id="chartRange">LAST 30 DAYS</div>
+        </div>
+        <div class="chart-wrap"><canvas id="mainChart"></canvas></div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-hdr">
+          <div class="ptitle">Device Performance · Google CPA</div>
+          <div class="pmeta">TARGET $6.41 · BREAKEVEN $12.85</div>
+        </div>
+        <div id="devicePanel">
+          <div class="dev-row"><div class="dev-name">DESKTOP</div><div class="dev-track"><div class="dev-fill" id="df-desktop" style="width:0%;background:var(--green)"></div></div><div class="dev-val" style="color:var(--green)" id="dv-desktop">—</div><div class="dev-badge" id="db-desktop" style="background:rgba(52,211,153,.1);color:var(--green)">—</div></div>
+          <div class="dev-row"><div class="dev-name">TABLETS</div><div class="dev-track"><div class="dev-fill" id="df-tablets" style="width:0%;background:var(--amber)"></div></div><div class="dev-val" style="color:var(--amber)" id="dv-tablets">—</div><div class="dev-badge" id="db-tablets" style="background:rgba(251,191,36,.1);color:var(--amber)">—</div></div>
+          <div class="dev-row"><div class="dev-name">MOBILE</div><div class="dev-track"><div class="dev-fill" id="df-mobile" style="width:0%;background:var(--red)"></div></div><div class="dev-val" style="color:var(--red)" id="dv-mobile">—</div><div class="dev-badge" id="db-mobile" style="background:rgba(248,113,113,.1);color:var(--red)">—</div></div>
+          <div style="margin-top:10px;padding:6px 10px;background:rgba(56,189,248,0.05);border-radius:4px;border-left:2px solid var(--accent);font-family:var(--mono);font-size:9px;color:var(--accent);letter-spacing:1px">
+            ⚡ BID ADJUSTMENTS ACTIVE APR 13-14 · COMPUTERS +20-25% · MOBILE -20-25% · TABLETS -100%
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right -->
+    <div>
+      <div class="panel" style="margin-bottom:14px">
+        <div class="panel-hdr">
+          <div class="ptitle">Campaign Scorecard</div>
+          <div class="pmeta" id="campMeta">LOADING...</div>
+        </div>
+        <div id="campCards">
+          <div style="font-family:var(--mono);font-size:10px;color:var(--muted);padding:20px;text-align:center;letter-spacing:2px">LOADING CAMPAIGN DATA...</div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-hdr">
+          <div class="ptitle">Daily Intel Feed</div>
+          <div class="pmeta">RECENT CHANGES</div>
+        </div>
+        <div id="intelFeed">
+          <div style="font-family:var(--mono);font-size:10px;color:var(--muted);padding:20px;text-align:center;letter-spacing:2px">LOADING FEED...</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Summary + Projection Banner -->
+  <div class="panel fade" style="animation-delay:.25s;margin-bottom:14px">
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:0">
+
+      <!-- Report Summary -->
+      <div style="padding:0 20px 0 0;border-right:1px solid var(--border2)">
+        <div class="ptitle" style="margin-bottom:12px">Report Period Summary</div>
+        <div id="summaryText" style="font-family:var(--mono);font-size:10px;color:var(--muted);line-height:1.9;letter-spacing:.5px"></div>
+      </div>
+
+      <!-- April Projection -->
+      <div style="padding:0 20px;border-right:1px solid var(--border2)">
+        <div class="ptitle" style="margin-bottom:12px">April Projection · Rest of Month</div>
+        <div id="projectionText" style="font-family:var(--mono);font-size:10px;color:var(--muted);line-height:1.9;letter-spacing:.5px"></div>
+      </div>
+
+      <!-- Closed Month Actuals -->
+      <div style="padding:0 0 0 20px">
+        <div class="ptitle" style="margin-bottom:12px">Closed Month Actuals · Assurance Paid</div>
+        <div style="font-family:var(--mono);font-size:10px;line-height:1.9;letter-spacing:.5px">
+          <div style="display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid var(--border2)">
+            <span style="color:var(--muted)">MAR 2026</span>
+            <span style="color:var(--amber)">AWAITING PAYMENT</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;padding:2px 0 4px;border-bottom:1px solid var(--border2)">
+            <span style="font-size:9px;color:var(--muted)">At close: 1,378 act · $34,450</span>
+            <span style="font-size:9px;color:var(--green)">Spend: $21,117.66</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid var(--border2)">
+            <span style="color:var(--muted)">FEB 2026</span>
+            <span style="color:var(--green)">552 act · $13,800 paid</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid var(--border2)">
+            <span style="color:var(--muted)">JAN 2026</span>
+            <span style="color:var(--green)">415 act · $10,375 paid</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid var(--border2)">
+            <span style="color:var(--muted)">DEC 2025</span>
+            <span style="color:var(--muted)">46 act · $1,150 paid</span>
+          </div>
+          <div style="padding:5px 0 3px;margin-top:4px;border-bottom:1px solid var(--border2)">
+            <div style="display:flex;justify-content:space-between">
+              <span style="color:var(--muted)">PAID TO DATE</span>
+              <span style="color:var(--green)">$25,325 confirmed</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;margin-top:2px">
+              <span style="color:var(--accent)">INCL. MAR PENDING</span>
+              <span style="color:var(--accent)">~$59,775 total</span>
+            </div>
+          </div>
+          <div style="font-size:9px;color:var(--muted);margin-top:6px;line-height:1.6">
+            30-day cookie window — activations backfill<br>
+            for 7-10+ days after month close.<br>
+            Mar Google baseline: $21,117.66 spend · 1,483 act
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Bottom -->
+  <div class="btm-grid fade" style="animation-delay:.3s">
+
+    <!-- States -->
+    <div class="panel">
+      <div class="panel-hdr">
+        <div class="ptitle">Top States · Applications</div>
+        <div class="pmeta">ALL TIME · BGOA</div>
+      </div>
+      <div id="stateList"></div>
+    </div>
+
+    <!-- Heatmap -->
+    <div class="panel">
+      <div class="panel-hdr">
+        <div class="ptitle">Hour of Day · Cost/Conv</div>
+        <div class="pmeta">GOOGLE ADS · LATEST</div>
+      </div>
+      <div class="heatmap" id="heatmap"></div>
+      <div class="hm-leg">
+        <div class="hm-li"><div class="hm-dot" style="background:var(--green)"></div>BEST &lt;$7</div>
+        <div class="hm-li"><div class="hm-dot" style="background:var(--amber)"></div>OK $7-10</div>
+        <div class="hm-li"><div class="hm-dot" style="background:var(--red)"></div>PAUSE $10+</div>
+        <div class="hm-li"><div class="hm-dot" style="background:var(--surface2)"></div>LOW</div>
+      </div>
+    </div>
+
+    <!-- Trajectory -->
+    <div class="panel">
+      <div class="panel-hdr">
+        <div class="ptitle">Business Trajectory</div>
+        <div class="pmeta">ACTUAL VS TARGET</div>
+      </div>
+      <div id="trajectory"></div>
+      <div style="margin-top:12px;padding-top:10px;border-top:1px solid var(--border2)">
+        <div class="spark" id="weekSpark"></div>
+        <div style="font-family:var(--mono);font-size:8px;color:var(--muted);letter-spacing:1px;margin-top:4px;text-align:center">DAILY ACTIVATIONS · LAST 14 DAYS</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script>
+// ============================================================
+// CONFIGURATION — UPDATE THESE TWO VALUES
+// ============================================================
+const SHEET_ID = '1ZLzpR9oGk5y2amRr0jS4QPVIIzC44m1VfBRIxDK64Vg';
+// Get this from your sheet URL:
+// https://docs.google.com/spreadsheets/d/SHEET_ID/edit
+// The sheet must be published: File → Share → Publish to web
+
+const SHEET_NAME = 'Daily Metrics';
+// This must match the exact tab name in your Google Sheet
+// ============================================================
+
+// Fallback data (your real historical data — updates when sheet connects)
+const FALLBACK = {
+  totals: {
+    activations: 785, revenue: 19625, applications: 1984,
+    approvals: 1458, spend: 16730.52, googleCPA: 9.71,
+    activationCPA: 14.25, estProfit: 2894
+  },
+  daily: [
+    {date:'Apr 01',activations:73,spend:1402.51,apps:136},
+    {date:'Apr 02',activations:86,spend:1400.58,apps:175},
+    {date:'Apr 03',activations:106,spend:1409.66,apps:173},
+    {date:'Apr 04',activations:45,spend:1060.34,apps:182},
+    {date:'Apr 05',activations:2,spend:0,apps:7},
+    {date:'Apr 06',activations:72,spend:1551.21,apps:165},
+    {date:'Apr 07',activations:108,spend:1883.18,apps:208},
+    {date:'Apr 08',activations:86,spend:1865.46,apps:204},
+    {date:'Apr 09',activations:64,spend:1568.67,apps:191},
+    {date:'Apr 10',activations:63,spend:1519.71,apps:162},
+    {date:'Apr 11',activations:49,spend:1140.27,apps:117},
+    {date:'Apr 12',activations:3,spend:0,apps:6},
+    {date:'Apr 13',activations:28,spend:1928.93,apps:192},
+    {date:'Apr 14',activations:0,spend:0,apps:66},
+  ],
+  devices: {desktop: 6.59, tablets: 8.57, mobile: 11.93},
+  campaigns: [
+    {name:'AW LIFELINE', spend:14168.99, conv:1432, cpa:9.89, ctr:'25.8%', grade:'B'},
+    {name:'AW SEARCH · SS', spend:13675.89, conv:1498, cpa:9.13, ctr:'23.4%', grade:'B'},
+    {name:'PRIME TIME · SS', spend:1831.01, conv:127, cpa:14.42, ctr:'31.6%', grade:'C'},
+  ],
+  states: [
+    {code:'CA',count:728},{code:'NY',count:268},{code:'TX',count:267},
+    {code:'NC',count:164},{code:'FL',count:145},{code:'TN',count:142},
+    {code:'KY',count:142},{code:'IL',count:139},{code:'NJ',count:87},
+    {code:'SC',count:83}
+  ],
+  hours: [
+    {h:0,cpa:9.55,spend:957},{h:1,cpa:10.88,spend:522},{h:2,cpa:11.22,spend:495},
+    {h:3,cpa:11.97,spend:427},{h:4,cpa:9.08,spend:363},{h:5,cpa:10.72,spend:399},
+    {h:6,cpa:11.81,spend:436},{h:7,cpa:11.80,spend:516},{h:8,cpa:6.91,spend:848},
+    {h:9,cpa:8.99,spend:1316},{h:10,cpa:9.97,spend:1654},{h:11,cpa:8.08,spend:2405},
+    {h:12,cpa:8.99,spend:2447},{h:13,cpa:8.40,spend:2295},{h:14,cpa:10.02,spend:2429},
+    {h:15,cpa:12.09,spend:2290},{h:16,cpa:9.68,spend:1986},{h:17,cpa:9.67,spend:1849},
+    {h:18,cpa:11.78,spend:1580},{h:19,cpa:9.54,spend:1296},{h:20,cpa:10.48,spend:986},
+    {h:21,cpa:10.63,spend:834},{h:22,cpa:12.26,spend:721},{h:23,cpa:9.84,spend:625}
+  ],
+  monthly: [
+    {label:'DEC 2025',val:46,target:3000,color:'var(--muted)'},
+    {label:'JAN 2026',val:415,target:3000,color:'var(--muted)'},
+    {label:'FEB 2026',val:552,target:3000,color:'var(--amber)'},
+    {label:'MAR 2026 SETTLED',val:1378,target:3000,color:'var(--green)'},
+    {label:'APR 2026 PROJ ~2,223',val:2223,target:3000,color:'var(--accent)'},
+    {label:'REVENUE PAID',val:25325,target:100000,color:'var(--green)'},
+    {label:'INCL. MAR PENDING',val:59775,target:100000,color:'var(--amber)'},
+  ]
+};
+
+// Clock
+function updateClock() {
+  const now = new Date();
+  document.getElementById('clock').textContent =
+    now.toLocaleString('en-US',{month:'short',day:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false}).toUpperCase();
+}
+updateClock();
+setInterval(updateClock, 1000);
+
+// Format helpers
+const $ = id => document.getElementById(id);
+function fmtMoney(n) { return '$' + Math.abs(n).toLocaleString('en-US',{minimumFractionDigits:0,maximumFractionDigits:0}); }
+function fmtCPA(n) { return '$' + parseFloat(n).toFixed(2); }
+function fmtPct(n) { return parseFloat(n).toFixed(1) + '%'; }
+function cpaColor(cpa) {
+  cpa = parseFloat(cpa);
+  if (cpa <= 5.51) return 'var(--green)';
+  if (cpa <= 6.89) return 'var(--amber)';
+  if (cpa <= 8.27) return 'var(--red)';
+  return 'var(--red)';
+}
+function cpaLabel(cpa) {
+  cpa = parseFloat(cpa);
+  if (cpa <= 5.51) return 'FANTASTIC';
+  if (cpa <= 6.89) return 'EXCELLENT';
+  if (cpa <= 8.27) return 'GOOD';
+  return 'POOR';
+}
+function actCpaLabel(actCpa) {
+  actCpa = parseFloat(actCpa);
+  if (actCpa <= 10) return 'FANTASTIC';
+  if (actCpa <= 12.5) return 'EXCELLENT';
+  if (actCpa <= 15) return 'GOOD';
+  return 'POOR';
+}
+function gradeColor(g) {
+  if (g === 'A') return '#34d399';
+  if (g === 'B') return '#38bdf8';
+  if (g === 'C') return '#fbbf24';
+  if (g === 'D') return '#fb923c';
+  return '#f87171';
+}
+
+// ── RENDER FUNCTIONS ── //
+
+let mainChartInstance = null;
+
+function renderChart(daily) {
+  const labels = daily.map(d => d.date);
+  const acts = daily.map(d => d.activations);
+  const spends = daily.map(d => +(d.spend / 1000).toFixed(2));
+  const ctx = $('mainChart').getContext('2d');
+  if (mainChartInstance) mainChartInstance.destroy();
+  mainChartInstance = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [
+        {label:'Activations',data:acts,backgroundColor:'rgba(56,189,248,0.45)',borderColor:'rgba(56,189,248,0.7)',borderWidth:1,borderRadius:2,yAxisID:'y'},
+        {label:'Ad Spend ($k)',data:spends,type:'line',borderColor:'rgba(251,191,36,0.65)',backgroundColor:'transparent',borderWidth:1.5,pointRadius:0,tension:0.35,yAxisID:'y2'}
+      ]
+    },
+    options: {
+      responsive:true, maintainAspectRatio:false,
+      plugins:{
+        legend:{display:false},
+        tooltip:{backgroundColor:'#111827',borderColor:'rgba(56,189,248,0.2)',borderWidth:1,titleColor:'#38bdf8',bodyColor:'#94a3b8',titleFont:{family:'Space Mono',size:9},bodyFont:{family:'Space Mono',size:9}}
+      },
+      scales:{
+        x:{grid:{color:'rgba(255,255,255,0.025)',drawBorder:false},ticks:{color:'#475569',font:{family:'Space Mono',size:8},maxRotation:45,maxTicksLimit:12}},
+        y:{position:'left',grid:{color:'rgba(255,255,255,0.035)',drawBorder:false},ticks:{color:'#475569',font:{family:'Space Mono',size:8}},title:{display:true,text:'Activations',color:'#38bdf8',font:{family:'Space Mono',size:8}}},
+        y2:{position:'right',grid:{display:false},ticks:{color:'#64748b',font:{family:'Space Mono',size:8},callback:v=>'$'+v+'k'},title:{display:true,text:'Spend $k',color:'#fbbf24',font:{family:'Space Mono',size:8}}}
+      }
+    }
+  });
+}
+
+function renderKPIs(t) {
+  const approvalRate = t.approvals && t.applications ? ((t.approvals / t.applications) * 100).toFixed(1) : 0;
+  $('kv-activations').textContent = t.activations.toLocaleString();
+  $('ks-activations').innerHTML = `<span class="up">↑ ${Math.round(t.activations * 0.37)} vs Feb</span>`;
+  $('kv-revenue').textContent = fmtMoney(t.revenue);
+  $('ks-revenue').textContent = '@ $25 per activation';
+  $('kv-apps').textContent = t.applications.toLocaleString();
+  $('ks-apps').innerHTML = `<span class="up">↑ 1,856 in March</span>`;
+  $('kv-approval').textContent = approvalRate + '%';
+  $('ks-approval').textContent = t.approvals.toLocaleString() + ' approvals';
+  $('kv-spend').textContent = fmtMoney(t.spend);
+  $('ks-spend').innerHTML = `<span class="warn">↑ trending up</span>`;
+  $('kv-gcpa').textContent = fmtCPA(t.googleCPA);
+  $('ks-gcpa').innerHTML = `<span class="warn">TARGET: $6.41</span>`;
+  $('kv-acpa').textContent = fmtCPA(t.activationCPA);
+  $('ks-acpa').innerHTML = `<span class="down">TARGET: ≤$10 FANTASTIC · $10.01-$12.50 EXCELLENT · $12.51-$15.00 GOOD · >$15 POOR</span>`;
+}
+
+function renderDevices(devs) {
+  const max = Math.max(devs.desktop, devs.tablets, devs.mobile);
+  ['desktop','tablets','mobile'].forEach(d => {
+    const cpa = devs[d];
+    const col = cpaColor(cpa);
+    const lbl = cpaLabel(cpa);
+    const pct = Math.round((cpa / max) * 100);
+    $('df-'+d).style.width = pct + '%';
+    $('df-'+d).style.background = col;
+    $('dv-'+d).textContent = fmtCPA(cpa);
+    $('dv-'+d).style.color = col;
+    $('db-'+d).textContent = lbl;
+    $('db-'+d).style.color = col;
+    $('db-'+d).style.background = col.replace(')',',0.1)').replace('var(','rgba(').replace('--green','52,211,153').replace('--amber','251,191,36').replace('--red','248,113,113');
+  });
+}
+
+function renderCampaigns(camps, period) {
+  $('campMeta').textContent = period || 'LATEST PERIOD';
+  $('campCards').innerHTML = camps.map(c => {
+    const gc = gradeColor(c.grade);
+    const cc = cpaColor(c.cpa);
+    return `<div class="camp-card">
+      <div class="camp-top">
+        <div class="camp-name">${c.name}</div>
+        <div class="grade-box" style="background:${gc}18;color:${gc}">${c.grade}</div>
+      </div>
+      <div class="camp-stats">
+        <div class="cs"><div class="cs-v" style="color:var(--accent)">${fmtMoney(c.spend)}</div><div class="cs-l">SPEND</div></div>
+        <div class="cs"><div class="cs-v" style="color:var(--green)">${Math.round(c.conv).toLocaleString()}</div><div class="cs-l">CONV</div></div>
+        <div class="cs"><div class="cs-v" style="color:${cc}">${fmtCPA(c.cpa)}</div><div class="cs-l">G.CPA</div></div>
+        <div class="cs"><div class="cs-v" style="color:var(--amber)">${c.ctr}</div><div class="cs-l">CTR</div></div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderFeed(daily) {
+  const feedItems = [
+    {date:'APR 13-14 · STRATEGY', txt:'Bid adjustments implemented: Computers +20-25%, Mobile -20-25%, Tablets -100% on Lifeline & Prime Time. Desktop CPA $6.20 vs Mobile $12.39 on Lifeline. Major strategic win.', color:'var(--green)'},
+    {date:'APR 13 · DATA', txt:'BGOA report delays resolved. Data normalized after last week\'s system issues affecting Apr 4-13 activation counts.', color:'var(--accent)'},
+    {date:'APR 04 · SPEND', txt:'Low spend day $1,060 due to Google inventory constraints. Activation numbers impacted — 45 vs 100+ on normal days.', color:'var(--amber)'},
+    {date:'MAR 27 · BUDGET', txt:'Daily budget scaled to $1,200/day. New bidding strategy implemented.', color:'var(--muted)'},
+    {date:'MAR 18 · BUDGET', txt:'Daily budget scaled to $800/day. Campaign restructure begins.', color:'var(--muted)'},
+  ];
+  document.getElementById('intelFeed').innerHTML = feedItems.map(item =>
+    `<div class="feed-item">
+      <div class="feed-date" style="color:${item.color}">${item.date}</div>
+      <div class="feed-txt">${item.txt}</div>
+    </div>`
+  ).join('');
+}
+
+function renderStates(states) {
+  const max = states[0].count;
+  const stateColors = {
+    PAUSE: 'var(--red)', REVIEW: 'var(--amber)', OK: 'var(--green)'
+  };
+  const getStatus = (code) => {
+    if (['PA','MI','SC','OH'].includes(code)) return 'REVIEW';
+    if (['NJ','MA','IL','NY'].includes(code)) return 'OK';
+    if (['CA','TX','TN','FL','KY'].includes(code)) return 'OK';
+    return 'OK';
+  };
+  $('stateList').innerHTML = states.map(s => {
+    const status = getStatus(s.code);
+    const col = stateColors[status];
+    return `<div class="state-row">
+      <div class="s-code">${s.code}</div>
+      <div class="s-track"><div class="s-fill" style="width:${Math.round(s.count/max*100)}%;background:${col}"></div></div>
+      <div class="s-count">${s.count}</div>
+      <div class="s-status" style="background:${col}18;color:${col}">${status}</div>
+    </div>`;
+  }).join('');
+}
+
+function renderHeatmap(hours) {
+  $('heatmap').innerHTML = hours.map(h => {
+    let bg, col;
+    if (h.spend < 10) { bg = 'rgba(255,255,255,0.03)'; col = '#374151'; }
+    else if (h.cpa < 7) { bg = 'rgba(52,211,153,0.2)'; col = '#34d399'; }
+    else if (h.cpa < 10) { bg = 'rgba(251,191,36,0.15)'; col = '#fbbf24'; }
+    else { bg = 'rgba(248,113,113,0.18)'; col = '#f87171'; }
+    return `<div class="hcell" style="background:${bg};color:${col}">
+      ${String(h.h).padStart(2,'0')}
+      <div class="tooltip">H${h.h} · $${h.cpa} CPA<br>$${Math.round(h.spend)} spend</div>
+    </div>`;
+  }).join('');
+}
+
+function renderTrajectory(monthly, daily) {
+  $('trajectory').innerHTML = monthly.map(m => {
+    const pct = m.isTarget ? 100 : Math.min(100, Math.round((m.val / m.target) * 100));
+    const display = m.isTarget
+      ? `<span style="color:var(--muted);opacity:.5">${m.val > 0 ? m.val.toLocaleString() : 'TARGET'}</span>`
+      : `<span style="color:${m.color}">${typeof m.val === 'number' && m.val > 999 ? fmtMoney(m.val) : m.val.toLocaleString()}</span>`;
+    return `<div class="proj-row">
+      <div class="proj-lbl">${m.label}</div>
+      ${display}
+      <div class="proj-bw"><div class="proj-bf" style="width:${pct}%;background:${m.color}${m.isTarget?';opacity:.2':''}"></div></div>
+    </div>`;
+  }).join('');
+
+  // Sparkline
+  const last14 = daily.slice(-14);
+  const maxA = Math.max(...last14.map(d => d.activations), 1);
+  $('weekSpark').innerHTML = last14.map(d => {
+    const h = Math.max(4, Math.round((d.activations / maxA) * 32));
+    const col = d.activations > 60 ? 'var(--green)' : d.activations > 30 ? 'var(--accent)' : d.activations > 0 ? 'var(--amber)' : 'var(--surface2)';
+    return `<div class="spark-bar" title="${d.date}: ${d.activations} activations" style="height:${h}px;background:${col}"></div>`;
+  }).join('');
+}
+
+// ── FETCH FROM GOOGLE SHEETS ── //
+async function fetchSheetData() {
+  if (!SHEET_ID || SHEET_ID.length < 10) {
+    return null;
+  }
+  try {
+    // Use allorigins CORS proxy to bypass Google Sheets cross-origin restrictions
+    const csvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQSGFATGsiH9UxFDJPklrDpdHoDTivZRDEm2zYxydUSZhyTRK91KnNFmYX7qRvjkMwRcP6eYypCF9z2/pub?gid=0&single=true&output=csv';
+    const proxyUrl = 'https://api.allorigins.win/raw?url=' + encodeURIComponent(csvUrl);
+    const res = await fetch(proxyUrl, { cache: 'no-store' });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const text = await res.text();
+    const lines = text.trim().split('\n');
+    if (lines.length < 2) return null;
+
+    // Parse CSV rows (skip header row 0)
+    // Columns: date,ad_spend,applications,google_cpa,activation_cpa,
+    //   est_activations,est_revenue,est_profit,desktop_cpa,mobile_cpa,tablet_cpa,
+    //   camp1_spend,camp2_spend,camp3_spend,status,grade
+    function parseCSVLine(line) {
+      const result = [];
+      let current = '', inQ = false;
+      for (const ch of line) {
+        if (ch === '"') { inQ = !inQ; }
+        else if (ch === ',' && !inQ) { result.push(current.trim()); current = ''; }
+        else { current += ch; }
+      }
+      result.push(current.trim());
+      return result;
+    }
+
+    const parsed = lines.slice(1).map(line => {
+      const c = parseCSVLine(line);
+      return {
+        date: c[0] || '',
+        spend: parseFloat(c[1]) || 0,
+        apps: parseFloat(c[2]) || 0,
+        googleCPA: parseFloat(c[3]) || 0,
+        activationCPA: parseFloat(c[4]) || 0,
+        activations: parseFloat(c[5]) || 0,
+        revenue: parseFloat(c[6]) || 0,
+        profit: parseFloat(c[7]) || 0,
+        desktopCPA: parseFloat(c[8]) || 0,
+        mobileCPA: parseFloat(c[9]) || 0,
+        tabletCPA: parseFloat(c[10]) || 0,
+        camp1Spend: parseFloat(c[11]) || 0,
+        camp2Spend: parseFloat(c[12]) || 0,
+        camp3Spend: parseFloat(c[13]) || 0,
+        grade: c[15] || 'D',
+      };
+    }).filter(r => r.date && r.date.length > 0);
+
+    // Build totals from all rows
+    const totals = {
+      activations: parsed.reduce((s, r) => s + r.activations, 0),
+      revenue: parsed.reduce((s, r) => s + r.revenue, 0),
+      applications: parsed.reduce((s, r) => s + r.apps, 0),
+      approvals: 0,
+      spend: parsed.reduce((s, r) => s + r.spend, 0),
+      googleCPA: parsed[parsed.length-1]?.googleCPA || 0,
+      activationCPA: parsed[parsed.length-1]?.activationCPA || 0,
+      estProfit: parsed.reduce((s, r) => s + r.profit, 0),
+    };
+
+    const latest = parsed[parsed.length - 1];
+    const devices = {
+      desktop: latest?.desktopCPA || FALLBACK.devices.desktop,
+      tablets: latest?.tabletCPA || FALLBACK.devices.tablets,
+      mobile: latest?.mobileCPA || FALLBACK.devices.mobile,
+    };
+
+    const daily = parsed.map(r => ({
+      date: r.date.substring(5), activations: r.activations,
+      spend: r.spend, apps: r.apps
+    }));
+
+    return { totals, daily, devices };
+  } catch(e) {
+    console.warn('Sheet fetch failed:', e);
+    return null;
+  }
+}
+
+
+function renderSummary(daily, totals) {
+  const APR_SPEND_TO_DATE = 16730.52;
+  const APR_ACTIVE_DAYS_ELAPSED = 11;
+  const APR_APPS_TO_DATE = 1984;
+  const APR_ACTS_TO_DATE = 785;
+  const DAILY_BUDGET_TARGET = 1800;
+  const DAILY_AVG_SPEND = APR_SPEND_TO_DATE / APR_ACTIVE_DAYS_ELAPSED;
+  const DAILY_AVG_APPS = (APR_APPS_TO_DATE - 66) / APR_ACTIVE_DAYS_ELAPSED; // excl today partial
+
+  // April: 26 active days total (no Sundays Apr 5,12,19,26)
+  const APR_ACTIVE_DAYS_TOTAL = 26;
+  const activeRemainingDays = APR_ACTIVE_DAYS_TOTAL - APR_ACTIVE_DAYS_ELAPSED;
+  const projRemainingSpend = activeRemainingDays * DAILY_AVG_SPEND;
+  const projTotalSpend = APR_SPEND_TO_DATE + projRemainingSpend;
+
+  // March Google baseline rates
+  const ACTIVATION_RATE = 0.5512;  // 55.12% of apps activate
+  const projRemainingApps = activeRemainingDays * DAILY_AVG_APPS;
+  const projTotalApps = APR_APPS_TO_DATE + projRemainingApps;
+  const projTotalActs = Math.round(projTotalApps * ACTIVATION_RATE);
+  const projRevenue = projTotalActs * 25;
+  const projProfit = projRevenue - projTotalSpend;
+  const projActCPA = projTotalSpend / projTotalActs;
+
+  document.getElementById('summaryText').innerHTML =
+    '<span style="color:var(--accent)">Period:</span> Mar 15 – Apr 13, 2026<br>' +
+    '<span style="color:var(--accent)">Apr spend to date:</span> $' + APR_SPEND_TO_DATE.toLocaleString() + ' (' + APR_ACTIVE_DAYS_ELAPSED + ' active days)<br>' +
+    '<span style="color:var(--accent)">Daily avg spend:</span> $' + Math.round(DAILY_AVG_SPEND).toLocaleString() + ' (target $' + DAILY_BUDGET_TARGET.toLocaleString() + ')<br>' +
+    '<span style="color:var(--accent)">Budget utilization:</span> <span style="color:' + (DAILY_AVG_SPEND >= 1600 ? 'var(--green)' : 'var(--amber)') + '">' + Math.round(DAILY_AVG_SPEND / DAILY_BUDGET_TARGET * 100) + '% of target</span><br>' +
+    '<span style="color:var(--accent)">Apr apps to date:</span> ' + APR_APPS_TO_DATE.toLocaleString() + ' · ' + APR_ACTS_TO_DATE + ' activations<br>' +
+    '<span style="color:var(--accent)">Blended activation CPA:</span> $9.71 Google · ~$14.25 act CPA<br>' +
+    '<span style="color:var(--accent)">Device insight:</span> <span style="color:var(--green)">Desktop $6.59 ✓</span> · <span style="color:var(--red)">Mobile $11.93 ↓</span>';
+
+  document.getElementById('projectionText').innerHTML =
+    '<span style="color:var(--accent)">Active days remaining:</span> ' + activeRemainingDays + ' (excl. 2 Sundays: Apr 19, 26)<br>' +
+    '<span style="color:var(--accent)">Proj. remaining spend:</span> $' + Math.round(projRemainingSpend).toLocaleString() + '<br>' +
+    '<span style="color:var(--accent)">Proj. April total spend:</span> ~$' + Math.round(projTotalSpend).toLocaleString() + '<br>' +
+    '<span style="color:var(--accent)">Proj. total apps:</span> ~' + Math.round(projTotalApps).toLocaleString() + '<br>' +
+    '<span style="color:var(--accent)">Activation rate (Mar Google):</span> 55.12%<br>' +
+    '<span style="color:var(--accent)">Proj. April activations:</span> <span style="color:var(--green)">~' + projTotalActs.toLocaleString() + '</span><br>' +
+    '<span style="color:var(--accent)">Proj. April revenue:</span> <span style="color:var(--green)">~$' + Math.round(projRevenue).toLocaleString() + '</span><br>' +
+    '<span style="color:var(--accent)">Proj. April profit:</span> <span style="color:' + (projProfit > 0 ? 'var(--green)' : 'var(--red)') + '">' + (projProfit > 0 ? '+' : '') + '$' + Math.round(projProfit).toLocaleString() + '</span><br>' +
+    '<span style="color:var(--accent)">Proj. activation CPA:</span> ~$' + projActCPA.toFixed(2) + ' <span style="color:var(--amber)">(GOOD)</span>';
+}
+
+// ── MAIN INIT ── //
+async function init() {
+  // Render with fallback immediately — wrapped so any error doesn't block page
+  try { renderKPIs(FALLBACK.totals); } catch(e) { console.warn('KPI error',e); }
+  try { renderChart(FALLBACK.daily); } catch(e) { console.warn('Chart error',e); }
+  try { renderDevices(FALLBACK.devices); } catch(e) { console.warn('Device error',e); }
+  try { renderCampaigns(FALLBACK.campaigns, 'APR 2026'); } catch(e) { console.warn('Camp error',e); }
+  try { renderFeed(FALLBACK.daily); } catch(e) { console.warn('Feed error',e); }
+  try { renderStates(FALLBACK.states); } catch(e) { console.warn('State error',e); }
+  try { renderHeatmap(FALLBACK.hours); } catch(e) { console.warn('Heatmap error',e); }
+  try { renderTrajectory(FALLBACK.monthly, FALLBACK.daily); } catch(e) { console.warn('Traj error',e); }
+  try { renderSummary(FALLBACK.daily, FALLBACK.totals); } catch(e) { console.warn('Summary error',e); }
+
+  // Hide loader
+  setTimeout(() => {
+    $('loadingOverlay').classList.add('hidden');
+  }, 800);
+
+  // Try live sheet
+  const live = await fetchSheetData();
+  if (live) {
+    try { renderKPIs(live.totals); } catch(e) {}
+    try { renderChart(live.daily); } catch(e) {}
+    try { renderDevices(live.devices); } catch(e) {}
+    try { renderFeed(live.daily); } catch(e) {}
+    try { renderSummary(live.daily, live.totals); } catch(e) {}
+    $('liveStatus').textContent = 'LIVE · GOOGLE SHEETS';
+    $('dataSource').textContent = 'SOURCE: GOOGLE SHEETS · LAST: ' + new Date().toLocaleTimeString();
+  } else {
+    if (!SHEET_ID || SHEET_ID.length < 10) {
+      $('errorBanner').style.display = 'block';
+      $('errorBanner').textContent = '⚠ SHOWING CACHED DATA — REPLACE 1ZLzpR9oGk5y2amRr0jS4QPVIIzC44m1VfBRIxDK64Vg WITH YOUR ACTUAL SHEET ID TO ENABLE LIVE UPDATES';
+    }
+    $('liveStatus').textContent = 'CACHED DATA';
+    $('liveStatus').style.color = 'var(--amber)';
+  }
+
+  // Auto-refresh every 5 minutes
+  setInterval(async () => {
+    const fresh = await fetchSheetData();
+    if (fresh) {
+      renderKPIs(fresh.totals);
+      renderChart(fresh.daily);
+      renderDevices(fresh.devices);
+      renderFeed(fresh.daily);
+      $('dataSource').textContent = 'SOURCE: GOOGLE SHEETS · LAST: ' + new Date().toLocaleTimeString();
+    }
+  }, 5 * 60 * 1000);
+}
+
+init();
+</script>
+</body>
+</html>
