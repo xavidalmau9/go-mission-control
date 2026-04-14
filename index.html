@@ -220,7 +220,7 @@ body::after{content:'';position:fixed;inset:0;background-image:linear-gradient(r
           <div class="dev-row"><div class="dev-name">TABLETS</div><div class="dev-track"><div class="dev-fill" id="df-tablets" style="width:0%;background:var(--amber)"></div></div><div class="dev-val" style="color:var(--amber)" id="dv-tablets">—</div><div class="dev-badge" id="db-tablets" style="background:rgba(251,191,36,.1);color:var(--amber)">—</div></div>
           <div class="dev-row"><div class="dev-name">MOBILE</div><div class="dev-track"><div class="dev-fill" id="df-mobile" style="width:0%;background:var(--red)"></div></div><div class="dev-val" style="color:var(--red)" id="dv-mobile">—</div><div class="dev-badge" id="db-mobile" style="background:rgba(248,113,113,.1);color:var(--red)">—</div></div>
           <div style="margin-top:10px;padding:6px 10px;background:rgba(56,189,248,0.05);border-radius:4px;border-left:2px solid var(--accent);font-family:var(--mono);font-size:9px;color:var(--accent);letter-spacing:1px">
-            ⚡ BID ADJUSTMENTS ACTIVE APR 13-14 · COMPUTERS +20-25% · MOBILE -20-25% · TABLETS -100%
+            ⚡ BID ADJUSTMENTS LIVE APR 13-14 · DESKTOP +20-25% · MOBILE -20-25% · TABLETS -100%
           </div>
         </div>
       </div>
@@ -275,35 +275,35 @@ body::after{content:'';position:fixed;inset:0;background-image:linear-gradient(r
             <span style="color:var(--amber)">AWAITING PAYMENT</span>
           </div>
           <div style="display:flex;justify-content:space-between;padding:2px 0 4px;border-bottom:1px solid var(--border2)">
-            <span style="font-size:9px;color:var(--muted)">At close: 1,378 act · $34,450</span>
-            <span style="font-size:9px;color:var(--green)">Spend: $21,117.66</span>
+            <span style="font-size:9px;color:var(--muted)">BGOA: 1,188 act · $29,700</span>
+            <span style="font-size:9px;color:var(--green)">Google proj: ~$37,068 pending</span>
           </div>
           <div style="display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid var(--border2)">
             <span style="color:var(--muted)">FEB 2026</span>
-            <span style="color:var(--green)">552 act · $13,800 paid</span>
+            <span style="color:var(--green)">552 act · $13,800 paid ✓</span>
           </div>
           <div style="display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid var(--border2)">
             <span style="color:var(--muted)">JAN 2026</span>
-            <span style="color:var(--green)">415 act · $10,375 paid</span>
+            <span style="color:var(--green)">415 act · $10,375 paid ✓</span>
           </div>
           <div style="display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid var(--border2)">
             <span style="color:var(--muted)">DEC 2025</span>
-            <span style="color:var(--muted)">46 act · $1,150 paid</span>
+            <span style="color:var(--muted)">46 act · $1,150 paid ✓</span>
           </div>
           <div style="padding:5px 0 3px;margin-top:4px;border-bottom:1px solid var(--border2)">
             <div style="display:flex;justify-content:space-between">
-              <span style="color:var(--muted)">PAID TO DATE</span>
+              <span style="color:var(--muted)">SETTLED TO DATE</span>
               <span style="color:var(--green)">$25,325 confirmed</span>
             </div>
             <div style="display:flex;justify-content:space-between;margin-top:2px">
-              <span style="color:var(--accent)">INCL. MAR PENDING</span>
-              <span style="color:var(--accent)">~$59,775 total</span>
+              <span style="color:var(--amber)">INCL. MAR PENDING</span>
+              <span style="color:var(--amber)">~$62,393 total</span>
             </div>
           </div>
           <div style="font-size:9px;color:var(--muted);margin-top:6px;line-height:1.6">
             30-day cookie window — activations backfill<br>
             for 7-10+ days after month close.<br>
-            Mar Google baseline: $21,117.66 spend · 1,483 act
+            Mar Google proj: $37,068 · spend $21,135.51
           </div>
         </div>
       </div>
@@ -417,10 +417,10 @@ const FALLBACK = {
     {label:'DEC 2025',val:46,target:3000,color:'var(--muted)'},
     {label:'JAN 2026',val:415,target:3000,color:'var(--muted)'},
     {label:'FEB 2026',val:552,target:3000,color:'var(--amber)'},
-    {label:'MAR 2026 SETTLED',val:1378,target:3000,color:'var(--green)'},
-    {label:'APR 2026 PROJ ~2,223',val:2223,target:3000,color:'var(--accent)'},
-    {label:'REVENUE PAID',val:25325,target:100000,color:'var(--green)'},
-    {label:'INCL. MAR PENDING',val:59775,target:100000,color:'var(--amber)'},
+    {label:'MAR 2026 PENDING',val:1483,target:3000,color:'var(--amber)'},
+    {label:'APR 2026 PROJ ~2,535',val:2535,target:3000,color:'var(--accent)'},
+    {label:'REVENUE SETTLED',val:25325,target:100000,color:'var(--green)'},
+    {label:'INCL. MAR PENDING',val:62393,target:100000,color:'var(--amber)'},
   ]
 };
 
@@ -442,7 +442,7 @@ function cpaColor(cpa) {
   cpa = parseFloat(cpa);
   if (cpa <= 5.51) return 'var(--green)';
   if (cpa <= 6.89) return 'var(--amber)';
-  if (cpa <= 8.27) return 'var(--red)';
+  if (cpa <= 8.27) return 'var(--amber)';
   return 'var(--red)';
 }
 function cpaLabel(cpa) {
@@ -504,7 +504,9 @@ function renderChart(daily) {
 function renderKPIs(t) {
   const approvalRate = t.approvals && t.applications ? ((t.approvals / t.applications) * 100).toFixed(1) : 0;
   $('kv-activations').textContent = t.activations.toLocaleString();
-  $('ks-activations').innerHTML = `<span class="up">↑ ${Math.round(t.activations * 0.37)} vs Feb</span>`;
+  const MAR_1_14 = 210; // Mar 1-14 activations (campaign just starting, days 1-9 = 0)
+  const deltaVsMar = t.activations - MAR_1_14;
+  $('ks-activations').innerHTML = `<span class="${deltaVsMar >= 0 ? 'up' : 'down'}">${deltaVsMar >= 0 ? '↑' : '↓'} ${Math.abs(deltaVsMar)} vs Mar MTD</span>`;
   $('kv-revenue').textContent = fmtMoney(t.revenue);
   $('ks-revenue').textContent = '@ $25 per activation';
   $('kv-apps').textContent = t.applications.toLocaleString();
@@ -557,14 +559,14 @@ function renderCampaigns(camps, period) {
 }
 
 function renderFeed(daily) {
-  const feedItems = [
-    {date:'APR 13-14 · STRATEGY', txt:'Bid adjustments implemented: Computers +20-25%, Mobile -20-25%, Tablets -100% on Lifeline & Prime Time. Desktop CPA $6.20 vs Mobile $12.39 on Lifeline. Major strategic win.', color:'var(--green)'},
-    {date:'APR 13 · DATA', txt:'BGOA report delays resolved. Data normalized after last week\'s system issues affecting Apr 4-13 activation counts.', color:'var(--accent)'},
-    {date:'APR 04 · SPEND', txt:'Low spend day $1,060 due to Google inventory constraints. Activation numbers impacted — 45 vs 100+ on normal days.', color:'var(--amber)'},
-    {date:'MAR 27 · BUDGET', txt:'Daily budget scaled to $1,200/day. New bidding strategy implemented.', color:'var(--muted)'},
-    {date:'MAR 18 · BUDGET', txt:'Daily budget scaled to $800/day. Campaign restructure begins.', color:'var(--muted)'},
+  const items = [
+    {date:'APR 13-14 · STRATEGY UPDATE', txt:'Bid adjustments live: Desktop +20-25%, Mobile -20-25%, Tablets -100% on Lifeline & Prime Time. Desktop CPA $6.59 vs Mobile $11.93. Major strategic win — expect CPA improvement through April.', color:'var(--green)'},
+    {date:'APR 13 · DATA NORMALIZED', txt:'BGOA report delays resolved after last week system issues. Activation counts for Apr 4-12 are backfilling — expect numbers to rise over next 7-10 days.', color:'var(--accent)'},
+    {date:'APR 04 · LOW SPEND DAY', txt:'$1,060 spend due to Google inventory constraints. Only 45 activations vs 86-108 on normal days. Not a trend — isolated inventory issue.', color:'var(--amber)'},
+    {date:'MAR 27 · BUDGET SCALED', txt:'Daily budget increased to $1,200/day. New bidding strategy implemented. March ended with 1,188 BGOA activations — Google projects 1,483 · $37,068 pending payment.', color:'var(--muted)'},
+    {date:'MAR 18 · STRATEGY CHANGE', txt:'Budget scaled to $800/day. Campaign restructure begins. February settled at 552 activations · $13,800 paid.', color:'var(--muted)'},
   ];
-  document.getElementById('intelFeed').innerHTML = feedItems.map(item =>
+  document.getElementById('intelFeed').innerHTML = items.map(item =>
     `<div class="feed-item">
       <div class="feed-date" style="color:${item.color}">${item.date}</div>
       <div class="feed-txt">${item.txt}</div>
@@ -717,47 +719,42 @@ async function fetchSheetData() {
 
 
 function renderSummary(daily, totals) {
-  const APR_SPEND_TO_DATE = 16730.52;
-  const APR_ACTIVE_DAYS_ELAPSED = 11;
-  const APR_APPS_TO_DATE = 1984;
-  const APR_ACTS_TO_DATE = 785;
-  const DAILY_BUDGET_TARGET = 1800;
-  const DAILY_AVG_SPEND = APR_SPEND_TO_DATE / APR_ACTIVE_DAYS_ELAPSED;
-  const DAILY_AVG_APPS = (APR_APPS_TO_DATE - 66) / APR_ACTIVE_DAYS_ELAPSED; // excl today partial
+  const APR_SPEND       = 16730.52;
+  const APR_ACTIVE_DAYS = 11;
+  const APR_APPS        = 1984;
+  const APR_APPS_FULL   = 1984 - 66; // exclude today's partial
+  const AVG_SPEND       = APR_SPEND / APR_ACTIVE_DAYS;       // $1,520.96
+  const AVG_APPS        = APR_APPS_FULL / APR_ACTIVE_DAYS;   // 174.4/day
+  const ACT_RATE        = 0.5512;
+  const PAYOUT          = 25;
+  const REMAINING_DAYS  = 15; // Apr 15-30 minus Sundays Apr 19 & 26
 
-  // April: 26 active days total (no Sundays Apr 5,12,19,26)
-  const APR_ACTIVE_DAYS_TOTAL = 26;
-  const activeRemainingDays = APR_ACTIVE_DAYS_TOTAL - APR_ACTIVE_DAYS_ELAPSED;
-  const projRemainingSpend = activeRemainingDays * DAILY_AVG_SPEND;
-  const projTotalSpend = APR_SPEND_TO_DATE + projRemainingSpend;
-
-  // March Google baseline rates
-  const ACTIVATION_RATE = 0.5512;  // 55.12% of apps activate
-  const projRemainingApps = activeRemainingDays * DAILY_AVG_APPS;
-  const projTotalApps = APR_APPS_TO_DATE + projRemainingApps;
-  const projTotalActs = Math.round(projTotalApps * ACTIVATION_RATE);
-  const projRevenue = projTotalActs * 25;
-  const projProfit = projRevenue - projTotalSpend;
-  const projActCPA = projTotalSpend / projTotalActs;
+  const projSpendRemaining = REMAINING_DAYS * AVG_SPEND;
+  const projTotalSpend     = APR_SPEND + projSpendRemaining;
+  const projTotalApps      = APR_APPS + (REMAINING_DAYS * AVG_APPS);
+  const projActs           = Math.round(projTotalApps * ACT_RATE);
+  const projRevenue        = projActs * PAYOUT;
+  const projProfit         = projRevenue - projTotalSpend;
+  const projActCPA         = projTotalSpend / projActs;
 
   document.getElementById('summaryText').innerHTML =
     '<span style="color:var(--accent)">Period:</span> Mar 15 – Apr 13, 2026<br>' +
-    '<span style="color:var(--accent)">Apr spend to date:</span> $' + APR_SPEND_TO_DATE.toLocaleString() + ' (' + APR_ACTIVE_DAYS_ELAPSED + ' active days)<br>' +
-    '<span style="color:var(--accent)">Daily avg spend:</span> $' + Math.round(DAILY_AVG_SPEND).toLocaleString() + ' (target $' + DAILY_BUDGET_TARGET.toLocaleString() + ')<br>' +
-    '<span style="color:var(--accent)">Budget utilization:</span> <span style="color:' + (DAILY_AVG_SPEND >= 1600 ? 'var(--green)' : 'var(--amber)') + '">' + Math.round(DAILY_AVG_SPEND / DAILY_BUDGET_TARGET * 100) + '% of target</span><br>' +
-    '<span style="color:var(--accent)">Apr apps to date:</span> ' + APR_APPS_TO_DATE.toLocaleString() + ' · ' + APR_ACTS_TO_DATE + ' activations<br>' +
-    '<span style="color:var(--accent)">Blended activation CPA:</span> $9.71 Google · ~$14.25 act CPA<br>' +
-    '<span style="color:var(--accent)">Device insight:</span> <span style="color:var(--green)">Desktop $6.59 ✓</span> · <span style="color:var(--red)">Mobile $11.93 ↓</span>';
+    '<span style="color:var(--accent)">Apr spend to date:</span> $16,730.52 (11 active days)<br>' +
+    '<span style="color:var(--accent)">Daily avg spend:</span> $' + Math.round(AVG_SPEND).toLocaleString() + ' · target $1,800<br>' +
+    '<span style="color:var(--accent)">Budget utilization:</span> <span style="color:var(--amber)">' + Math.round(AVG_SPEND/1800*100) + '% of target</span><br>' +
+    '<span style="color:var(--accent)">Apr apps / approvals:</span> 1,984 · 1,458 (73.49%)<br>' +
+    '<span style="color:var(--accent)">Apr activations (lagged):</span> 785 · filling in daily<br>' +
+    '<span style="color:var(--accent)">Device insight:</span> <span style="color:var(--green)">Desktop $6.59 ↑ bids</span> · <span style="color:var(--red)">Mobile $11.93 ↓ bids</span>';
 
   document.getElementById('projectionText').innerHTML =
-    '<span style="color:var(--accent)">Active days remaining:</span> ' + activeRemainingDays + ' (excl. 2 Sundays: Apr 19, 26)<br>' +
-    '<span style="color:var(--accent)">Proj. remaining spend:</span> $' + Math.round(projRemainingSpend).toLocaleString() + '<br>' +
+    '<span style="color:var(--accent)">Remaining active days:</span> 15 (excl. Sun Apr 19 & 26)<br>' +
+    '<span style="color:var(--accent)">Proj. remaining spend:</span> $' + Math.round(projSpendRemaining).toLocaleString() + '<br>' +
     '<span style="color:var(--accent)">Proj. April total spend:</span> ~$' + Math.round(projTotalSpend).toLocaleString() + '<br>' +
     '<span style="color:var(--accent)">Proj. total apps:</span> ~' + Math.round(projTotalApps).toLocaleString() + '<br>' +
     '<span style="color:var(--accent)">Activation rate (Mar Google):</span> 55.12%<br>' +
-    '<span style="color:var(--accent)">Proj. April activations:</span> <span style="color:var(--green)">~' + projTotalActs.toLocaleString() + '</span><br>' +
+    '<span style="color:var(--accent)">Proj. April activations:</span> <span style="color:var(--green)">~' + projActs.toLocaleString() + '</span><br>' +
     '<span style="color:var(--accent)">Proj. April revenue:</span> <span style="color:var(--green)">~$' + Math.round(projRevenue).toLocaleString() + '</span><br>' +
-    '<span style="color:var(--accent)">Proj. April profit:</span> <span style="color:' + (projProfit > 0 ? 'var(--green)' : 'var(--red)') + '">' + (projProfit > 0 ? '+' : '') + '$' + Math.round(projProfit).toLocaleString() + '</span><br>' +
+    '<span style="color:var(--accent)">Proj. April profit:</span> <span style="color:' + (projProfit>0?'var(--green)':'var(--red)') + '">' + (projProfit>0?'+':'') + '$' + Math.round(projProfit).toLocaleString() + '</span><br>' +
     '<span style="color:var(--accent)">Proj. activation CPA:</span> ~$' + projActCPA.toFixed(2) + ' <span style="color:var(--amber)">(GOOD)</span>';
 }
 
