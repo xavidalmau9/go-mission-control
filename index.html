@@ -35,7 +35,7 @@ body::after{content:'';position:fixed;inset:0;background-image:linear-gradient(r
 .wrap{position:relative;z-index:1;max-width:1440px;margin:0 auto;padding:20px}
 
 /* ── HEADER ── */
-.header{display:flex;align-items:center;justify-content:space-between;padding-bottom:18px;border-bottom:1px solid var(--border);margin-bottom:20px}
+.header{display:flex;align-items:center;justify-content:space-between;padding-bottom:16px;border-bottom:1px solid var(--border);margin-bottom:18px}
 .hdr-left{display:flex;align-items:center;gap:14px}
 .logo{width:34px;height:34px;border:1px solid var(--accent);border-radius:4px;display:flex;align-items:center;justify-content:center;position:relative;flex-shrink:0}
 .logo-dot{width:10px;height:10px;border-radius:50%;background:var(--accent);animation:lp 2s ease-in-out infinite}
@@ -60,8 +60,8 @@ body::after{content:'';position:fixed;inset:0;background-image:linear-gradient(r
 #errorBanner{display:none;background:rgba(248,113,113,.1);border:1px solid rgba(248,113,113,.3);border-radius:6px;padding:10px 16px;margin-bottom:16px;font-family:var(--mono);font-size:11px;color:var(--red);letter-spacing:1px}
 
 /* ── KPI ROW ── */
-.kpi-row{display:grid;grid-template-columns:repeat(7,1fr);gap:10px;margin-bottom:16px}
-.kpi{background:var(--surface);border:1px solid var(--border2);border-radius:8px;padding:14px 14px 12px;position:relative;overflow:hidden;transition:border-color .2s,transform .15s}
+.kpi-row{display:grid;grid-template-columns:repeat(7,1fr);gap:10px;margin-bottom:14px}
+.kpi{background:var(--surface);border:1px solid var(--border2);border-radius:8px;padding:13px 14px 11px;position:relative;overflow:hidden;transition:border-color .2s,transform .15s}
 .kpi:hover{border-color:var(--border);transform:translateY(-1px)}
 .kpi::before{content:'';position:absolute;top:0;left:0;right:0;height:2px}
 .kpi.c-accent::before{background:var(--accent)}
@@ -70,19 +70,19 @@ body::after{content:'';position:fixed;inset:0;background-image:linear-gradient(r
 .kpi.c-red::before{background:var(--red)}
 .kpi.c-purple::before{background:var(--accent2)}
 .kpi-lbl{font-family:var(--mono);font-size:8px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:7px}
-.kpi-val{font-family:var(--mono);font-size:20px;font-weight:700;line-height:1;margin-bottom:5px}
+.kpi-val{font-family:var(--mono);font-size:21px;font-weight:700;line-height:1;margin-bottom:5px}
 .kpi-sub{font-size:10px;color:var(--muted)}
 .up{color:var(--green)}.down{color:var(--red)}.warn{color:var(--amber)}
 
 /* ── MAIN GRID ── */
 .main-grid{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,1fr);gap:14px;margin-bottom:14px}
-.panel{background:var(--surface);border:1px solid var(--border2);border-radius:8px;padding:16px;position:relative}
-.panel-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid var(--border2)}
+.panel{background:var(--surface);border:1px solid var(--border2);border-radius:8px;padding:15px;position:relative}
+.panel-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;padding-bottom:10px;border-bottom:1px solid var(--border2)}
 .ptitle{font-family:var(--mono);font-size:9px;color:var(--accent);letter-spacing:2px;text-transform:uppercase}
 .pmeta{font-family:var(--mono);font-size:8px;color:var(--muted);letter-spacing:1px}
 
 /* chart */
-.chart-wrap{position:relative;height:200px}
+.chart-wrap{position:relative;height:410px}
 
 /* devices */
 .dev-row{display:flex;align-items:center;gap:8px;margin-bottom:10px}
@@ -376,6 +376,23 @@ const FALLBACK = {
     activationCPA: 14.25, estProfit: 2894
   },
   daily: [
+    {date:'Mar 15',activations:31,spend:603.31,apps:54},
+    {date:'Mar 16',activations:49,spend:666.22,apps:89},
+    {date:'Mar 17',activations:33,spend:634.47,apps:66},
+    {date:'Mar 18',activations:57,spend:806.24,apps:99},
+    {date:'Mar 19',activations:47,spend:794.12,apps:83},
+    {date:'Mar 20',activations:58,spend:844.38,apps:96},
+    {date:'Mar 21',activations:49,spend:721.46,apps:75},
+    {date:'Mar 22',activations:22,spend:611.12,apps:48},
+    {date:'Mar 23',activations:44,spend:1090.36,apps:102},
+    {date:'Mar 24',activations:50,spend:831.24,apps:96},
+    {date:'Mar 25',activations:48,spend:630.48,apps:92},
+    {date:'Mar 26',activations:59,spend:767.90,apps:96},
+    {date:'Mar 27',activations:63,spend:631.35,apps:97},
+    {date:'Mar 28',activations:38,spend:595.50,apps:80},
+    {date:'Mar 29',activations:3,spend:0,apps:8},
+    {date:'Mar 30',activations:59,spend:1311.22,apps:128},
+    {date:'Mar 31',activations:102,spend:1404.75,apps:192},
     {date:'Apr 01',activations:73,spend:1402.51,apps:136},
     {date:'Apr 02',activations:86,spend:1400.58,apps:175},
     {date:'Apr 03',activations:106,spend:1409.66,apps:173},
@@ -780,9 +797,7 @@ async function init() {
   const live = await fetchSheetData();
   if (live) {
     try { renderKPIs(live.totals); } catch(e) {}
-    try { renderChart(live.daily); } catch(e) {}
     try { renderDevices(live.devices); } catch(e) {}
-    try { renderFeed(live.daily); } catch(e) {}
     try { renderSummary(live.daily, live.totals); } catch(e) {}
     $('liveStatus').textContent = 'LIVE · GOOGLE SHEETS';
     $('dataSource').textContent = 'SOURCE: GOOGLE SHEETS · LAST: ' + new Date().toLocaleTimeString();
