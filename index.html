@@ -111,8 +111,8 @@ body::after{content:'';position:fixed;inset:0;background-image:linear-gradient(r
 /* feed */
 .feed-item{padding:8px 0;border-bottom:1px solid var(--border2)}
 .feed-item:last-child{border-bottom:none}
-.feed-date{font-family:var(--mono);font-size:8px;color:var(--accent);letter-spacing:1px;margin-bottom:4px}
-.feed-txt{font-size:11px;color:var(--muted);line-height:1.5}
+.feed-date{font-family:var(--mono);font-size:9px;color:var(--accent);letter-spacing:1px;margin-bottom:5px}
+.feed-txt{font-size:12px;color:var(--muted);line-height:1.6}
 .fdelta{display:inline-flex;align-items:center;gap:2px;font-family:var(--mono);font-size:9px;padding:1px 5px;border-radius:3px;margin:0 2px}
 
 /* ── BOTTOM GRID ── */
@@ -136,7 +136,7 @@ body::after{content:'';position:fixed;inset:0;background-image:linear-gradient(r
 .hm-dot{width:7px;height:7px;border-radius:2px}
 
 /* projection */
-.proj-row{display:flex;align-items:center;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--border2)}
+.proj-row{display:flex;align-items:center;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--border2)}
 .proj-row:last-child{border-bottom:none}
 .proj-lbl{font-family:var(--mono);font-size:9px;color:var(--muted);letter-spacing:1px}
 .proj-val{font-family:var(--mono);font-size:11px}
@@ -223,15 +223,15 @@ body::after{content:'';position:fixed;inset:0;background-image:linear-gradient(r
       <div class="panel" style="flex:1;display:flex;flex-direction:column">
         <div class="panel-hdr">
           <div class="ptitle">Device Performance · App &amp; Activation CPA</div>
-          <div class="pmeta">APP CPA TARGET $6.41 · BREAKEVEN $12.85</div>
+          <div class="pmeta" id="devicePeriod">MAR 15 – APR 13 · APP CPA TARGET $6.41</div>
         </div>
         <div id="devicePanel" style="flex:1;display:flex;flex-direction:column;justify-content:space-evenly;gap:8px"></div>
       </div>
     </div>
 
     <!-- Right -->
-    <div>
-      <div class="panel" style="margin-bottom:14px">
+    <div style="display:flex;flex-direction:column;gap:14px">
+      <div class="panel">
         <div class="panel-hdr">
           <div class="ptitle">Campaign Scorecard</div>
           <div class="pmeta" id="campMeta">LOADING...</div>
@@ -241,12 +241,12 @@ body::after{content:'';position:fixed;inset:0;background-image:linear-gradient(r
         </div>
       </div>
 
-      <div class="panel">
+      <div class="panel" style="flex:1;display:flex;flex-direction:column">
         <div class="panel-hdr">
           <div class="ptitle">Daily Intel Feed</div>
           <div class="pmeta">RECENT CHANGES</div>
         </div>
-        <div id="intelFeed">
+        <div id="intelFeed" style="flex:1;display:flex;flex-direction:column;justify-content:space-evenly">
           <div style="font-family:var(--mono);font-size:10px;color:var(--muted);padding:20px;text-align:center;letter-spacing:2px">LOADING FEED...</div>
         </div>
       </div>
@@ -260,19 +260,19 @@ body::after{content:'';position:fixed;inset:0;background-image:linear-gradient(r
       <!-- Report Summary -->
       <div style="padding:0 20px 0 0;border-right:1px solid var(--border2)">
         <div class="ptitle" style="margin-bottom:12px">Report Period Summary</div>
-        <div id="summaryText" style="font-family:var(--mono);font-size:10px;color:var(--muted);line-height:1.9;letter-spacing:.5px"></div>
+        <div id="summaryText" style="font-family:var(--mono);font-size:11.5px;color:var(--muted);line-height:2.1;letter-spacing:.3px"></div>
       </div>
 
       <!-- April Projection -->
       <div style="padding:0 20px;border-right:1px solid var(--border2)">
         <div class="ptitle" style="margin-bottom:12px">April Projection · Rest of Month</div>
-        <div id="projectionText" style="font-family:var(--mono);font-size:10px;color:var(--muted);line-height:1.9;letter-spacing:.5px"></div>
+        <div id="projectionText" style="font-family:var(--mono);font-size:11.5px;color:var(--muted);line-height:2.1;letter-spacing:.3px"></div>
       </div>
 
       <!-- Closed Month Actuals -->
       <div style="padding:0 0 0 20px">
         <div class="ptitle" style="margin-bottom:12px">Closed Month Actuals · Assurance Paid</div>
-        <div style="font-family:var(--mono);font-size:10px;line-height:1.9;letter-spacing:.5px">
+        <div style="font-family:var(--mono);font-size:11.5px;line-height:2.1;letter-spacing:.3px">
           <div style="display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid var(--border2)">
             <span style="color:var(--muted)">MAR 2026</span>
             <span style="color:var(--amber)">AWAITING PAYMENT</span>
@@ -347,7 +347,7 @@ body::after{content:'';position:fixed;inset:0;background-image:linear-gradient(r
         <div class="ptitle">Business Trajectory</div>
         <div class="pmeta">ACTUAL VS TARGET</div>
       </div>
-      <div id="trajectory"></div>
+      <div id="trajectory" style="display:flex;flex-direction:column;justify-content:space-evenly;min-height:280px"></div>
       <div style="margin-top:12px;padding-top:10px;border-top:1px solid var(--border2)">
         <div class="spark" id="weekSpark"></div>
         <div style="font-family:var(--mono);font-size:8px;color:var(--muted);letter-spacing:1px;margin-top:4px;text-align:center">DAILY ACTIVATIONS · LAST 14 DAYS</div>
@@ -413,9 +413,9 @@ const FALLBACK = {
   ],
   devices: {
     desktop: 6.59, tablets: 8.57, mobile: 11.93,
-    desktopApps: 1862, desktopActs: 1026,
-    tabletsApps: 508,  tabletsActs: 280,
-    mobileApps:  746,  mobileActs:  411,
+    desktopApps: 1243, desktopActs: 685,
+    tabletsApps: 46,   tabletsActs: 25,
+    mobileApps:  1769, mobileActs:  975,
   },
   campaigns: [
     {name:'AW LIFELINE', spend:14168.99, conv:1432, cpa:9.89, ctr:'25.8%', grade:'B'},
@@ -439,11 +439,11 @@ const FALLBACK = {
     {h:21,cpa:10.63,spend:834},{h:22,cpa:12.26,spend:721},{h:23,cpa:9.84,spend:625}
   ],
   monthly: [
-    {label:'DEC 2025',              val:46,    target:3000,   color:'var(--muted)'},
+    {label:'DEC 2025',              val:46,    target:3000,   color:'var(--muted)',  proj:0},
     {label:'JAN 2026',              val:415,   target:3000,   color:'var(--muted)',  proj:300},
     {label:'FEB 2026',              val:552,   target:3000,   color:'var(--amber)',  proj:500},
     {label:'MAR 2026 PENDING',      val:1483,  target:3000,   color:'var(--amber)',  proj:1000},
-    {label:'APR 2026 PROJ ~2,535',  val:2535,  target:3000,   color:'var(--accent)'},
+    {label:'APR 2026 PROJ ~2,535',  val:2535,  target:3000,   color:'var(--accent)', proj:2000, isProjOnly:true},
     {label:'REVENUE SETTLED',       val:25325, target:100000, color:'var(--green)',  isDollar:true},
     {label:'INCL. MAR PENDING',     val:62393, target:100000, color:'var(--amber)',  isDollar:true},
   ]
@@ -691,10 +691,18 @@ function renderTrajectory(monthly, daily) {
       valStr = `<span style="color:${m.color}">${m.val.toLocaleString()}</span>`;
     }
 
-    // Beat badge — show when actual surpassed projection
-    const beat = (!m.isTarget && m.proj && m.val > m.proj)
-      ? `<span style="font-family:var(--mono);font-size:8px;padding:2px 7px;border-radius:3px;background:rgba(52,211,153,0.15);color:var(--green);letter-spacing:1px;white-space:nowrap">▲ BEAT +${(m.val - m.proj).toLocaleString()}</span>`
-      : '';
+    // Beat badge — show when actual (or projection) surpassed the monthly target
+    let beat = '';
+    if (!m.isTarget && m.proj !== undefined && m.val > m.proj) {
+      const diff = (m.val - m.proj).toLocaleString();
+      if (m.isProjOnly) {
+        // Current month — projected beat, not confirmed yet
+        beat = `<span style="font-family:var(--mono);font-size:8px;padding:2px 7px;border-radius:3px;background:rgba(56,189,248,0.12);color:var(--accent);letter-spacing:1px;white-space:nowrap">▲ PROJ +${diff}</span>`;
+      } else {
+        // Closed month — confirmed beat
+        beat = `<span style="font-family:var(--mono);font-size:8px;padding:2px 7px;border-radius:3px;background:rgba(52,211,153,0.15);color:var(--green);letter-spacing:1px;white-space:nowrap">▲ BEAT +${diff}</span>`;
+      }
+    }
 
     return `<div class="proj-row">
       <div class="proj-lbl">${m.label}</div>
