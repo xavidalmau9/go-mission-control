@@ -121,11 +121,11 @@ body::after{content:'';position:fixed;inset:0;background-image:linear-gradient(r
 /* states */
 .state-row{display:flex;align-items:center;gap:7px;padding:5px 0;border-bottom:1px solid var(--border2)}
 .state-row:last-child{border-bottom:none}
-.s-code{font-family:var(--mono);font-size:10px;color:var(--accent);width:24px;flex-shrink:0}
-.s-track{flex:1;height:4px;background:rgba(255,255,255,.04);border-radius:2px}
-.s-fill{height:100%;border-radius:2px;transition:width 1s ease}
-.s-count{font-family:var(--mono);font-size:9px;color:var(--muted);width:28px;text-align:right;flex-shrink:0}
-.s-status{font-family:var(--mono);font-size:8px;padding:1px 5px;border-radius:2px;flex-shrink:0;min-width:44px;text-align:center}
+.s-code{font-family:var(--mono);font-size:12px;color:var(--accent);width:28px;flex-shrink:0}
+.s-track{flex:1;height:7px;background:rgba(255,255,255,.04);border-radius:3px}
+.s-fill{height:100%;border-radius:3px;transition:width 1s ease}
+.s-count{font-family:var(--mono);font-size:11px;color:var(--text);width:34px;text-align:right;flex-shrink:0}
+.s-status{font-family:var(--mono);font-size:8px;padding:2px 6px;border-radius:3px;flex-shrink:0;min-width:48px;text-align:center}
 
 /* heatmap */
 .heatmap{display:grid;grid-template-columns:repeat(8,1fr);gap:3px}
@@ -198,13 +198,13 @@ body::after{content:'';position:fixed;inset:0;background-image:linear-gradient(r
 
   <!-- KPI Row -->
   <div class="kpi-row fade" style="animation-delay:.1s" id="kpiRow">
-    <div class="kpi c-accent"><div class="kpi-lbl">Total Activations</div><div class="kpi-val" style="color:var(--accent)" id="kv-activations">—</div><div class="kpi-sub" id="ks-activations">loading...</div></div>
-    <div class="kpi c-green"><div class="kpi-lbl">Total Revenue</div><div class="kpi-val" style="color:var(--green)" id="kv-revenue">—</div><div class="kpi-sub" id="ks-revenue">loading...</div></div>
-    <div class="kpi c-amber"><div class="kpi-lbl">Applications</div><div class="kpi-val" style="color:var(--amber)" id="kv-apps">—</div><div class="kpi-sub" id="ks-apps">loading...</div></div>
-    <div class="kpi c-purple"><div class="kpi-lbl">Approval Rate</div><div class="kpi-val" style="color:var(--accent2)" id="kv-approval">—</div><div class="kpi-sub" id="ks-approval">loading...</div></div>
-    <div class="kpi c-green"><div class="kpi-lbl">Ad Spend</div><div class="kpi-val" style="color:var(--green)" id="kv-spend">—</div><div class="kpi-sub" id="ks-spend">loading...</div></div>
-    <div class="kpi c-amber"><div class="kpi-lbl">App CPA · Google</div><div class="kpi-val" style="color:var(--amber)" id="kv-gcpa">—</div><div class="kpi-sub" id="ks-gcpa">loading...</div></div>
-    <div class="kpi c-red"><div class="kpi-lbl">Activation CPA</div><div class="kpi-val" style="color:var(--red)" id="kv-acpa">—</div><div class="kpi-sub" id="ks-acpa">loading...</div></div>
+    <div class="kpi c-accent"><div class="kpi-lbl">Total Activations · MTD</div><div class="kpi-val" style="color:var(--accent)" id="kv-activations">—</div><div class="kpi-sub" id="ks-activations">loading...</div></div>
+    <div class="kpi c-green"><div class="kpi-lbl">Total Revenue · MTD</div><div class="kpi-val" style="color:var(--green)" id="kv-revenue">—</div><div class="kpi-sub" id="ks-revenue">loading...</div></div>
+    <div class="kpi c-amber"><div class="kpi-lbl">Applications · MTD</div><div class="kpi-val" style="color:var(--amber)" id="kv-apps">—</div><div class="kpi-sub" id="ks-apps">loading...</div></div>
+    <div class="kpi c-purple"><div class="kpi-lbl">Approval Rate · MTD</div><div class="kpi-val" style="color:var(--accent2)" id="kv-approval">—</div><div class="kpi-sub" id="ks-approval">loading...</div></div>
+    <div class="kpi c-green"><div class="kpi-lbl">Ad Spend · MTD</div><div class="kpi-val" style="color:var(--green)" id="kv-spend">—</div><div class="kpi-sub" id="ks-spend">loading...</div></div>
+    <div class="kpi c-amber"><div class="kpi-lbl">App CPA · Applications</div><div class="kpi-val" style="color:var(--amber)" id="kv-gcpa">—</div><div class="kpi-sub" id="ks-gcpa">loading...</div></div>
+    <div class="kpi c-red"><div class="kpi-lbl">Activation CPA · MTD</div><div class="kpi-val" style="color:var(--red)" id="kv-acpa">—</div><div class="kpi-sub" id="ks-acpa">loading...</div></div>
   </div>
 
   <!-- Main Grid -->
@@ -260,19 +260,19 @@ body::after{content:'';position:fixed;inset:0;background-image:linear-gradient(r
       <!-- Report Summary -->
       <div style="padding:0 20px 0 0;border-right:1px solid var(--border2)">
         <div class="ptitle" style="margin-bottom:12px">Report Period Summary</div>
-        <div id="summaryText" style="font-family:var(--mono);font-size:11.5px;color:var(--muted);line-height:2.1;letter-spacing:.3px"></div>
+        <div id="summaryText" style="font-family:var(--mono);font-size:13px;color:var(--muted);line-height:2.2;letter-spacing:.2px"></div>
       </div>
 
       <!-- April Projection -->
       <div style="padding:0 20px;border-right:1px solid var(--border2)">
         <div class="ptitle" style="margin-bottom:12px">April Projection · Rest of Month</div>
-        <div id="projectionText" style="font-family:var(--mono);font-size:11.5px;color:var(--muted);line-height:2.1;letter-spacing:.3px"></div>
+        <div id="projectionText" style="font-family:var(--mono);font-size:13px;color:var(--muted);line-height:2.2;letter-spacing:.2px"></div>
       </div>
 
       <!-- Closed Month Actuals -->
       <div style="padding:0 0 0 20px">
         <div class="ptitle" style="margin-bottom:12px">Closed Month Actuals · Assurance Paid</div>
-        <div style="font-family:var(--mono);font-size:11.5px;line-height:2.1;letter-spacing:.3px">
+        <div style="font-family:var(--mono);font-size:13px;line-height:2.2;letter-spacing:.2px">
           <div style="display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid var(--border2)">
             <span style="color:var(--muted)">MAR 2026</span>
             <span style="color:var(--amber)">AWAITING PAYMENT</span>
@@ -318,12 +318,12 @@ body::after{content:'';position:fixed;inset:0;background-image:linear-gradient(r
   <div class="btm-grid fade" style="animation-delay:.3s">
 
     <!-- States -->
-    <div class="panel">
+    <div class="panel" style="display:flex;flex-direction:column">
       <div class="panel-hdr">
         <div class="ptitle">Top States · Applications</div>
         <div class="pmeta">ALL TIME · BGOA</div>
       </div>
-      <div id="stateList"></div>
+      <div id="stateList" style="flex:1;display:flex;flex-direction:column;justify-content:space-evenly"></div>
     </div>
 
     <!-- Heatmap -->
@@ -547,17 +547,20 @@ function renderKPIs(t) {
   const deltaVsMar = t.activations - MAR_1_14;
   $('ks-activations').innerHTML = `<span class="${deltaVsMar >= 0 ? 'up' : 'down'}">${deltaVsMar >= 0 ? '↑' : '↓'} ${Math.abs(deltaVsMar)} vs Mar MTD</span>`;
   $('kv-revenue').textContent = fmtMoney(t.revenue);
-  $('ks-revenue').textContent = '@ $25 per activation';
+  $('ks-revenue').innerHTML = `<span style="color:var(--muted)">@ $25 per activation</span>`;
   $('kv-apps').textContent = t.applications.toLocaleString();
-  $('ks-apps').innerHTML = `<span class="up">↑ 1,856 in March</span>`;
+  const MAR_APPS_TOTAL = 1856;
+  const deltaApps = t.applications - MAR_APPS_TOTAL;
+  $('ks-apps').innerHTML = `<span class="${deltaApps >= 0 ? 'up' : 'down'}">${deltaApps >= 0 ? '↑' : '↓'} ${Math.abs(deltaApps)} vs Mar total</span>`;
   $('kv-approval').textContent = approvalRate + '%';
   $('ks-approval').textContent = t.approvals.toLocaleString() + ' approvals';
   $('kv-spend').textContent = fmtMoney(t.spend);
-  $('ks-spend').innerHTML = `<span class="warn">↑ trending up</span>`;
+  const PROJ_APR_SPEND = 39545;
+  $('ks-spend').innerHTML = `<span class="warn">Proj. Apr total: ~${fmtMoney(PROJ_APR_SPEND)}</span>`;
   $('kv-gcpa').textContent = fmtCPA(t.googleCPA);
   $('ks-gcpa').innerHTML = `<span class="warn">TARGET: $6.41</span>`;
   $('kv-acpa').textContent = fmtCPA(t.activationCPA);
-  $('ks-acpa').innerHTML = `<span class="down">TARGET: ≤$10 FANTASTIC · $10.01-$12.50 EXCELLENT · $12.51-$15.00 GOOD · >$15 POOR</span>`;
+  $('ks-acpa').innerHTML = `<span style="color:var(--green)">≤$10 FANTASTIC</span> · <span style="color:var(--accent)">≤$12.50 EXCELLENT</span> · <span style="color:var(--amber)">≤$15 GOOD</span> · <span style="color:var(--red)">$15+ POOR</span>`;
 }
 
 function renderDevices(devs) {
@@ -706,7 +709,7 @@ function renderTrajectory(monthly, daily) {
 
     return `<div class="proj-row">
       <div class="proj-lbl">${m.label}</div>
-      <div style="display:flex;align-items:center;gap:8px">${valStr}${beat}</div>
+      <div style="display:flex;align-items:center;justify-content:center;gap:8px;min-width:240px;text-align:center">${valStr}${beat}</div>
       <div class="proj-bw"><div class="proj-bf" style="width:${pct}%;background:${m.color}${m.isTarget?';opacity:.2':''}"></div></div>
     </div>`;
   }).join('');
