@@ -201,8 +201,8 @@ body::after{content:'';position:fixed;inset:0;background-image:linear-gradient(r
   <div class="main-grid fade" style="animation-delay:.2s">
 
     <!-- Left -->
-    <div>
-      <div class="panel" style="margin-bottom:14px">
+    <div style="display:flex;flex-direction:column;gap:14px">
+      <div class="panel">
         <div class="panel-hdr">
           <div class="ptitle">Daily Performance · Activations vs Ad Spend</div>
           <div class="pmeta" id="chartRange">LAST 30 DAYS</div>
@@ -210,16 +210,16 @@ body::after{content:'';position:fixed;inset:0;background-image:linear-gradient(r
         <div class="chart-wrap"><canvas id="mainChart"></canvas></div>
       </div>
 
-      <div class="panel">
+      <div class="panel" style="flex:1;display:flex;flex-direction:column">
         <div class="panel-hdr">
           <div class="ptitle">Device Performance · Google CPA</div>
           <div class="pmeta">TARGET $6.41 · BREAKEVEN $12.85</div>
         </div>
-        <div id="devicePanel">
+        <div id="devicePanel" style="flex:1;display:flex;flex-direction:column;justify-content:space-evenly">
           <div class="dev-row"><div class="dev-name">DESKTOP</div><div class="dev-track"><div class="dev-fill" id="df-desktop" style="width:0%;background:var(--green)"></div></div><div class="dev-val" style="color:var(--green)" id="dv-desktop">—</div><div class="dev-badge" id="db-desktop" style="background:rgba(52,211,153,.1);color:var(--green)">—</div></div>
           <div class="dev-row"><div class="dev-name">TABLETS</div><div class="dev-track"><div class="dev-fill" id="df-tablets" style="width:0%;background:var(--amber)"></div></div><div class="dev-val" style="color:var(--amber)" id="dv-tablets">—</div><div class="dev-badge" id="db-tablets" style="background:rgba(251,191,36,.1);color:var(--amber)">—</div></div>
           <div class="dev-row"><div class="dev-name">MOBILE</div><div class="dev-track"><div class="dev-fill" id="df-mobile" style="width:0%;background:var(--red)"></div></div><div class="dev-val" style="color:var(--red)" id="dv-mobile">—</div><div class="dev-badge" id="db-mobile" style="background:rgba(248,113,113,.1);color:var(--red)">—</div></div>
-          <div style="margin-top:10px;padding:6px 10px;background:rgba(56,189,248,0.05);border-radius:4px;border-left:2px solid var(--accent);font-family:var(--mono);font-size:9px;color:var(--accent);letter-spacing:1px">
+          <div style="padding:10px 12px;background:rgba(56,189,248,0.05);border-radius:4px;border-left:2px solid var(--accent);font-family:var(--mono);font-size:9px;color:var(--accent);letter-spacing:1px">
             ⚡ BID ADJUSTMENTS LIVE APR 13-14 · DESKTOP +20-25% · MOBILE -20-25% · TABLETS -100%
           </div>
         </div>
