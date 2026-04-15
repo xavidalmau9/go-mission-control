@@ -152,20 +152,26 @@ body::after{content:'';position:fixed;inset:0;background-image:linear-gradient(r
 .hcell:hover .tooltip{display:block}
 
 /* responsive */
+/* min-width:0 on grid/flex children prevents content from overflowing 1fr columns */
+.btm-grid > *, .main-grid > *, .kpi-row > * { min-width:0; }
 @media(max-width:1200px){.kpi-row{grid-template-columns:repeat(4,1fr)}.main-grid{grid-template-columns:1fr}.btm-grid{grid-template-columns:1fr 1fr}}
 @media(max-width:700px){
-  .wrap{padding:12px}
+  .wrap{padding:10px}
   .kpi-row{grid-template-columns:repeat(2,1fr)}
-  .btm-grid{grid-template-columns:1fr}
+  .btm-grid{grid-template-columns:1fr !important}
+  .main-grid{grid-template-columns:1fr !important}
   .header{flex-direction:column;gap:10px;align-items:flex-start}
   .hdr-mid{display:none}
-  .chart-wrap{height:260px}
+  .chart-wrap{height:240px}
   .heatmap{grid-template-columns:repeat(6,1fr)}
   .period-banner-right{display:none}
   .period-banner{flex-direction:column;gap:4px}
   .kpi-val{font-size:17px}
   .kpi{padding:10px 10px 8px}
-  .panel{padding:10px}
+  .panel{padding:10px;overflow:hidden}
+  .proj-row{flex-wrap:wrap;gap:4px}
+  .ptitle{white-space:normal;word-break:break-word}
+  .pmeta{white-space:normal}
 }
 
 /* Fade-in animation */
@@ -809,7 +815,7 @@ function renderTrajectory(monthly, daily) {
 
     return `<div class="proj-row">
       <div class="proj-lbl">${m.label}</div>
-      <div style="display:flex;align-items:center;justify-content:center;gap:8px;min-width:240px;text-align:center">${valStr}${beat}</div>
+      <div style="display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:6px;min-width:0;text-align:center">${valStr}${beat}</div>
       <div class="proj-bw"><div class="proj-bf" style="width:${pct}%;background:${m.color}${m.isTarget?';opacity:.2':''}"></div></div>
     </div>`;
   }).join('');
