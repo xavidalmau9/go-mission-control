@@ -126,10 +126,79 @@ Deploy: push to `main` → auto-deploys in ~1 min (hard refresh with ⌘+Shift+R
 
 ---
 
-## To Update Data Only (safe workflow)
+## n8n Automated Pipeline (DO NOT manually update data while this is active)
+
+**Workflow file:** `Assurance Ads Analysis.json`
+**Trigger:** Google Drive folder `GO Ads Reports — Current` — any new file created
+
+### How it works end-to-end
+
+1. **Watch GO Ads Folder** — Drive trigger fires when any CSV is uploaded
+2. **List All Files** — fetches all files in the folder
+3. **Download All Files** — downloads each file's content
+4. **Combine All Reports** (Code node) — parses all CSVs by filename pattern, returns:
+   - `combinedContext` — narrative text for the AI Agent
+   - `structured` — clean JSON: `{ totals, devices, campaigns, states, hours }`
+5. **AI Agent** — generates executive summary
+6. **Send Email** — delivers analysis email
+7. **Code in JavaScript1** (GitHub pusher) — **THE CRITICAL NODE**:
+   - Fetches live `index.html` from `https://raw.githubusercontent.com/xavidalmau9/go-mission-control/main/index.html` (no auth needed — public repo)
+   - Extracts and preserves the existing `daily[]` array (chart data)
+   - Builds new `FALLBACK` from `structured` CSV data
+   - Replaces only the `const FALLBACK = {...};` block — design/CSS/layout NEVER touched
+   - Returns patched HTML
+8. **GitHub API** — commits patched HTML to `main` branch → auto-deploys
+
+### What gets updated automatically on every upload
+
+| Data | Source CSV | Updates in dashboard |
+|---|---|---|
+| `totals` (activations, spend, CPAs, profit) | Campaign report | KPI row |
+| `devices` (CPA + volume per device type) | Device report | Device Performance panel |
+| `states` (CPA per state, top 20) | Location report | State Heatmap |
+| `hours` (hourly performance) | Hourly report | Hourly Heatmap |
+| `monthly[]` trajectory | Hardcoded in pusher (BGOA data) | Monthly Trajectory |
+| `daily[]` chart data | **Preserved from last manual update** | Daily Performance Chart |
+
+### ⚠️ Daily Data Gap
+
+The aggregate CSVs don't contain per-day rows. The `daily[]` array (used by the chart) is **preserved** from whatever was last in GitHub — it does NOT get overwritten. To update daily data:
+- Export a **Daily Report** from Google Ads (Date + Clicks + Cost + Conversions columns)
+- Name it `Daily Report.csv` and upload alongside the other CSVs
+- The Combine All Reports node will pick it up automatically (already coded to look for it)
+
+### CSV filenames the workflow recognizes (case-insensitive, partial match)
+
+| Filename contains | Parsed as |
+|---|---|
+| `campaign` | Campaign report |
+| `device` | Device report |
+| `location` or `state` | Location/State report |
+| `hourly` or `hour` | Hourly report |
+| `daily` | Daily report (chart data) |
+
+### To re-import the workflow into n8n
+
+1. Open n8n → open the **Assurance Ads Analysis** workflow
+2. Click the ⋯ three-dot menu (top right) → **Import from file**
+3. Select `/Users/305partners/Desktop/Assurance Ads Analysis.json`
+4. Click **Save**
+5. Verify credentials are still connected (Google Drive, GitHub, Gmail nodes)
+6. **Test**: upload any CSV to `GO Ads Reports — Current` in Drive → dashboard should update within ~2 minutes
+
+### monthly[] is hardcoded in the pusher — update manually when months close
+
+Inside the GitHub pusher node's code, find the `monthlyRows` array and update when:
+- A month completes (change `isProjOnly:true` to just `proj:N`, update `val`)
+- A new projection is set (add new entry with `isProjOnly:true`)
+- Revenue settles (update `REVENUE SETTLED` and `INCL. MAR PENDING` vals)
+
+---
+
+## To Update Data Only (manual fallback — only if n8n is down)
 
 1. Open `index.html`
 2. Find `const FALLBACK = {` (around line 372)
 3. Update numbers inside `totals`, `daily`, `devices`, `monthly`
-4. Save → `git add index.html && git commit -m "Data update [date]" && git push origin main`
+4. Save → `git add index.html && git commit -m "Data update [date]" && git push origin main --force`
 5. Hard refresh the live URL after ~1 minute
