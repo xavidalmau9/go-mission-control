@@ -153,7 +153,20 @@ body::after{content:'';position:fixed;inset:0;background-image:linear-gradient(r
 
 /* responsive */
 @media(max-width:1200px){.kpi-row{grid-template-columns:repeat(4,1fr)}.main-grid{grid-template-columns:1fr}.btm-grid{grid-template-columns:1fr 1fr}}
-@media(max-width:700px){.kpi-row{grid-template-columns:repeat(2,1fr)}.btm-grid{grid-template-columns:1fr}.header{flex-direction:column;gap:10px;align-items:flex-start}}
+@media(max-width:700px){
+  .wrap{padding:12px}
+  .kpi-row{grid-template-columns:repeat(2,1fr)}
+  .btm-grid{grid-template-columns:1fr}
+  .header{flex-direction:column;gap:10px;align-items:flex-start}
+  .hdr-mid{display:none}
+  .chart-wrap{height:260px}
+  .heatmap{grid-template-columns:repeat(6,1fr)}
+  .period-banner-right{display:none}
+  .period-banner{flex-direction:column;gap:4px}
+  .kpi-val{font-size:17px}
+  .kpi{padding:10px 10px 8px}
+  .panel{padding:10px}
+}
 
 /* Fade-in animation */
 @keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
@@ -182,8 +195,8 @@ body::after{content:'';position:fixed;inset:0;background-image:linear-gradient(r
     <div class="hdr-mid" id="clock">--</div>
     <div class="hdr-right">
       <div class="live-row"><div class="live-dot"></div><span id="liveStatus">CONNECTING...</span></div>
-      <div class="data-source" id="dataSource">SOURCE: GOOGLE SHEETS · AUTO-REFRESH</div>
-      <div class="data-source">AUTO-PUSH: APR 14, 2026</div>
+      <div class="data-source" id="dataSource" style="max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">SOURCE: GOOGLE SHEETS · AUTO-REFRESH</div>
+      <div class="data-source" style="max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">AUTO-PUSH: APR 14, 2026</div>
     </div>
   </div>
 
@@ -191,9 +204,9 @@ body::after{content:'';position:fixed;inset:0;background-image:linear-gradient(r
   <div id="errorBanner">⚠ USING CACHED DATA — GOOGLE SHEETS CONNECTION UNAVAILABLE. UPDATE YOUR SHEET ID BELOW.</div>
 
   <!-- Period Banner -->
-  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;padding:6px 12px;background:rgba(56,189,248,0.04);border:1px solid rgba(56,189,248,0.10);border-radius:6px">
-    <div style="font-family:var(--mono);font-size:9px;color:var(--accent);letter-spacing:2px" id="periodBanner">REPORT WINDOW: LOADING...</div>
-    <div style="font-family:var(--mono);font-size:9px;color:var(--muted);letter-spacing:1px">KPI TILES = MTD APR &nbsp;·&nbsp; CHART &amp; DEVICES = FULL WINDOW &nbsp;·&nbsp; TRAJECTORY = MONTHLY</div>
+  <div class="period-banner" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:4px;margin-bottom:10px;padding:6px 12px;background:rgba(56,189,248,0.04);border:1px solid rgba(56,189,248,0.10);border-radius:6px;min-width:0">
+    <div style="font-family:var(--mono);font-size:9px;color:var(--accent);letter-spacing:2px;min-width:0" id="periodBanner">REPORT WINDOW: LOADING...</div>
+    <div class="period-banner-right" style="font-family:var(--mono);font-size:9px;color:var(--muted);letter-spacing:1px;white-space:nowrap">KPI TILES = MTD APR &nbsp;·&nbsp; CHART &amp; DEVICES = FULL WINDOW &nbsp;·&nbsp; TRAJECTORY = MONTHLY</div>
   </div>
 
   <!-- KPI Row -->
