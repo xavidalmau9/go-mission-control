@@ -85,13 +85,17 @@ body::after{content:'';position:fixed;inset:0;background-image:linear-gradient(r
 .chart-wrap{position:relative;height:410px}
 
 /* devices */
-.dev-row{display:flex;align-items:center;gap:8px;margin-bottom:10px}
-.dev-row:last-child{margin-bottom:0}
+.dev-card{border-radius:6px;padding:10px 12px;border:1px solid var(--border2);background:var(--surface2);transition:border-color .2s,box-shadow .2s;cursor:default}
+.dev-card:hover{border-color:var(--border);box-shadow:0 0 12px rgba(56,189,248,.06)}
+.dev-top{display:flex;align-items:center;gap:8px;margin-bottom:8px}
 .dev-name{font-family:var(--mono);font-size:9px;color:var(--muted);width:64px;flex-shrink:0;letter-spacing:1px}
-.dev-track{flex:1;height:7px;background:rgba(255,255,255,.04);border-radius:3px;overflow:hidden}
+.dev-track{flex:1;height:5px;background:rgba(255,255,255,.04);border-radius:3px;overflow:hidden}
 .dev-fill{height:100%;border-radius:3px;transition:width 1.2s ease}
-.dev-val{font-family:var(--mono);font-size:10px;width:46px;text-align:right;flex-shrink:0}
-.dev-badge{font-family:var(--mono);font-size:8px;padding:2px 6px;border-radius:3px;letter-spacing:1px;flex-shrink:0;min-width:52px;text-align:center}
+.dev-badge{font-family:var(--mono);font-size:8px;padding:2px 7px;border-radius:3px;letter-spacing:1px;flex-shrink:0;min-width:58px;text-align:center}
+.dev-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:4px}
+.dstat{text-align:center;padding:4px 0}
+.dstat-v{font-family:var(--mono);font-size:11px;font-weight:700;line-height:1}
+.dstat-l{font-family:var(--mono);font-size:7px;color:var(--muted);letter-spacing:1px;margin-top:3px}
 
 /* campaigns */
 .camp-card{background:var(--surface2);border:1px solid var(--border2);border-radius:6px;padding:10px 12px;margin-bottom:8px}
@@ -186,6 +190,12 @@ body::after{content:'';position:fixed;inset:0;background-image:linear-gradient(r
   <!-- Error -->
   <div id="errorBanner">⚠ USING CACHED DATA — GOOGLE SHEETS CONNECTION UNAVAILABLE. UPDATE YOUR SHEET ID BELOW.</div>
 
+  <!-- Period Banner -->
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;padding:6px 12px;background:rgba(56,189,248,0.04);border:1px solid rgba(56,189,248,0.10);border-radius:6px">
+    <div style="font-family:var(--mono);font-size:9px;color:var(--accent);letter-spacing:2px" id="periodBanner">REPORT WINDOW: LOADING...</div>
+    <div style="font-family:var(--mono);font-size:9px;color:var(--muted);letter-spacing:1px">KPI TILES = MTD APR &nbsp;·&nbsp; CHART &amp; DEVICES = FULL WINDOW &nbsp;·&nbsp; TRAJECTORY = MONTHLY</div>
+  </div>
+
   <!-- KPI Row -->
   <div class="kpi-row fade" style="animation-delay:.1s" id="kpiRow">
     <div class="kpi c-accent"><div class="kpi-lbl">Total Activations</div><div class="kpi-val" style="color:var(--accent)" id="kv-activations">—</div><div class="kpi-sub" id="ks-activations">loading...</div></div>
@@ -193,7 +203,7 @@ body::after{content:'';position:fixed;inset:0;background-image:linear-gradient(r
     <div class="kpi c-amber"><div class="kpi-lbl">Applications</div><div class="kpi-val" style="color:var(--amber)" id="kv-apps">—</div><div class="kpi-sub" id="ks-apps">loading...</div></div>
     <div class="kpi c-purple"><div class="kpi-lbl">Approval Rate</div><div class="kpi-val" style="color:var(--accent2)" id="kv-approval">—</div><div class="kpi-sub" id="ks-approval">loading...</div></div>
     <div class="kpi c-green"><div class="kpi-lbl">Ad Spend</div><div class="kpi-val" style="color:var(--green)" id="kv-spend">—</div><div class="kpi-sub" id="ks-spend">loading...</div></div>
-    <div class="kpi c-amber"><div class="kpi-lbl">Google CPA</div><div class="kpi-val" style="color:var(--amber)" id="kv-gcpa">—</div><div class="kpi-sub" id="ks-gcpa">loading...</div></div>
+    <div class="kpi c-amber"><div class="kpi-lbl">App CPA · Google</div><div class="kpi-val" style="color:var(--amber)" id="kv-gcpa">—</div><div class="kpi-sub" id="ks-gcpa">loading...</div></div>
     <div class="kpi c-red"><div class="kpi-lbl">Activation CPA</div><div class="kpi-val" style="color:var(--red)" id="kv-acpa">—</div><div class="kpi-sub" id="ks-acpa">loading...</div></div>
   </div>
 
@@ -212,17 +222,10 @@ body::after{content:'';position:fixed;inset:0;background-image:linear-gradient(r
 
       <div class="panel" style="flex:1;display:flex;flex-direction:column">
         <div class="panel-hdr">
-          <div class="ptitle">Device Performance · Google CPA</div>
-          <div class="pmeta">TARGET $6.41 · BREAKEVEN $12.85</div>
+          <div class="ptitle">Device Performance · App &amp; Activation CPA</div>
+          <div class="pmeta">APP CPA TARGET $6.41 · BREAKEVEN $12.85</div>
         </div>
-        <div id="devicePanel" style="flex:1;display:flex;flex-direction:column;justify-content:space-evenly">
-          <div class="dev-row"><div class="dev-name">DESKTOP</div><div class="dev-track"><div class="dev-fill" id="df-desktop" style="width:0%;background:var(--green)"></div></div><div class="dev-val" style="color:var(--green)" id="dv-desktop">—</div><div class="dev-badge" id="db-desktop" style="background:rgba(52,211,153,.1);color:var(--green)">—</div></div>
-          <div class="dev-row"><div class="dev-name">TABLETS</div><div class="dev-track"><div class="dev-fill" id="df-tablets" style="width:0%;background:var(--amber)"></div></div><div class="dev-val" style="color:var(--amber)" id="dv-tablets">—</div><div class="dev-badge" id="db-tablets" style="background:rgba(251,191,36,.1);color:var(--amber)">—</div></div>
-          <div class="dev-row"><div class="dev-name">MOBILE</div><div class="dev-track"><div class="dev-fill" id="df-mobile" style="width:0%;background:var(--red)"></div></div><div class="dev-val" style="color:var(--red)" id="dv-mobile">—</div><div class="dev-badge" id="db-mobile" style="background:rgba(248,113,113,.1);color:var(--red)">—</div></div>
-          <div style="padding:10px 12px;background:rgba(56,189,248,0.05);border-radius:4px;border-left:2px solid var(--accent);font-family:var(--mono);font-size:9px;color:var(--accent);letter-spacing:1px">
-            ⚡ BID ADJUSTMENTS LIVE APR 13-14 · DESKTOP +20-25% · MOBILE -20-25% · TABLETS -100%
-          </div>
-        </div>
+        <div id="devicePanel" style="flex:1;display:flex;flex-direction:column;justify-content:space-evenly;gap:8px"></div>
       </div>
     </div>
 
@@ -408,7 +411,12 @@ const FALLBACK = {
     {date:'Apr 13',activations:28,spend:1928.93,apps:192},
     {date:'Apr 14',activations:0,spend:0,apps:66},
   ],
-  devices: {desktop: 6.59, tablets: 8.57, mobile: 11.93},
+  devices: {
+    desktop: 6.59, tablets: 8.57, mobile: 11.93,
+    desktopApps: 1862, desktopActs: 1026,
+    tabletsApps: 508,  tabletsActs: 280,
+    mobileApps:  746,  mobileActs:  411,
+  },
   campaigns: [
     {name:'AW LIFELINE', spend:14168.99, conv:1432, cpa:9.89, ctr:'25.8%', grade:'B'},
     {name:'AW SEARCH · SS', spend:13675.89, conv:1498, cpa:9.13, ctr:'23.4%', grade:'B'},
@@ -453,6 +461,20 @@ setInterval(updateClock, 1000);
 // Format helpers
 const $ = id => document.getElementById(id);
 function fmtMoney(n) { return '$' + Math.abs(n).toLocaleString('en-US',{minimumFractionDigits:0,maximumFractionDigits:0}); }
+
+// Derives the reporting window label from whatever daily array is loaded
+function getPeriodMeta(daily) {
+  if (!daily || daily.length === 0) return {label:'LAST 30 DAYS', short:'30-DAY PERIOD', banner:'REPORT WINDOW: LAST 30 DAYS'};
+  const start = daily[0].date.toUpperCase();
+  const end   = daily[daily.length - 1].date.toUpperCase();
+  const days  = daily.length;
+  return {
+    label:  `${start} – ${end}`,
+    short:  `${days}-DAY WINDOW`,
+    banner: `REPORT WINDOW: ${start} – ${end} · ${days} DAYS`,
+    days,   start, end,
+  };
+}
 function fmtCPA(n) { return '$' + parseFloat(n).toFixed(2); }
 function fmtPct(n) { return parseFloat(n).toFixed(1) + '%'; }
 function cpaColor(cpa) {
@@ -539,20 +561,47 @@ function renderKPIs(t) {
 }
 
 function renderDevices(devs) {
-  const max = Math.max(devs.desktop, devs.tablets, devs.mobile);
-  ['desktop','tablets','mobile'].forEach(d => {
-    const cpa = devs[d];
-    const col = cpaColor(cpa);
-    const lbl = cpaLabel(cpa);
-    const pct = Math.round((cpa / max) * 100);
-    $('df-'+d).style.width = pct + '%';
-    $('df-'+d).style.background = col;
-    $('dv-'+d).textContent = fmtCPA(cpa);
-    $('dv-'+d).style.color = col;
-    $('db-'+d).textContent = lbl;
-    $('db-'+d).style.color = col;
-    $('db-'+d).style.background = col.replace(')',',0.1)').replace('var(','rgba(').replace('--green','52,211,153').replace('--amber','251,191,36').replace('--red','248,113,113');
-  });
+  const MULT = 1.814; // activation CPA multiplier
+  const devices = [
+    {key:'desktop', label:'DESKTOP'},
+    {key:'tablets', label:'TABLETS'},
+    {key:'mobile',  label:'MOBILE'},
+  ];
+  const maxCpa = Math.max(devs.desktop, devs.tablets, devs.mobile);
+
+  function colBg(col) {
+    return col.replace('var(--green)','rgba(52,211,153,0.12)')
+              .replace('var(--amber)','rgba(251,191,36,0.12)')
+              .replace('var(--red)','rgba(248,113,113,0.12)')
+              .replace('var(--muted)','rgba(100,116,139,0.12)');
+  }
+
+  $('devicePanel').innerHTML = devices.map(({key, label}) => {
+    const appCpa  = devs[key];
+    const actCpa  = appCpa * MULT;
+    const col     = cpaColor(appCpa);
+    const grade   = cpaLabel(appCpa);
+    const pct     = Math.round((appCpa / maxCpa) * 100);
+    const apps    = devs[key+'Apps'] || 0;
+    const acts    = devs[key+'Acts'] || 0;
+    return `
+    <div class="dev-card">
+      <div class="dev-top">
+        <div class="dev-name">${label}</div>
+        <div class="dev-track"><div class="dev-fill" style="width:${pct}%;background:${col}"></div></div>
+        <div class="dev-badge" style="background:${colBg(col)};color:${col}">${grade}</div>
+      </div>
+      <div class="dev-stats">
+        <div class="dstat"><div class="dstat-v" style="color:${col}">${fmtCPA(appCpa)}</div><div class="dstat-l">APP CPA</div></div>
+        <div class="dstat"><div class="dstat-v" style="color:${col}">${fmtCPA(actCpa)}</div><div class="dstat-l">ACT CPA</div></div>
+        <div class="dstat"><div class="dstat-v" style="color:var(--text)">${apps > 0 ? apps.toLocaleString() : '—'}</div><div class="dstat-l">APPS</div></div>
+        <div class="dstat"><div class="dstat-v" style="color:var(--accent)">${acts > 0 ? acts.toLocaleString() : '—'}</div><div class="dstat-l">ACTS</div></div>
+      </div>
+    </div>`;
+  }).join('') + `
+  <div style="padding:9px 12px;background:rgba(56,189,248,0.05);border-radius:4px;border-left:2px solid var(--accent);font-family:var(--mono);font-size:9px;color:var(--accent);letter-spacing:1px">
+    ⚡ BID ADJUSTMENTS LIVE APR 13-14 · DESKTOP +20-25% · MOBILE -20-25% · TABLETS -100%
+  </div>`;
 }
 
 function renderCampaigns(camps, period) {
@@ -790,6 +839,11 @@ function renderSummary(daily, totals) {
 
 // ── MAIN INIT ── //
 async function init() {
+  // Derive reporting window from daily data — adapts automatically to any upload period
+  const period = getPeriodMeta(FALLBACK.daily);
+  $('chartRange').textContent   = period.label;
+  $('periodBanner').textContent = period.banner;
+
   // Render with fallback immediately — wrapped so any error doesn't block page
   try { renderKPIs(FALLBACK.totals); } catch(e) { console.warn('KPI error',e); }
   try { renderChart(FALLBACK.daily); } catch(e) { console.warn('Chart error',e); }
