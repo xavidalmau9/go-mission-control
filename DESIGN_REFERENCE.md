@@ -18,8 +18,27 @@ Inside `index.html`, find the `const FALLBACK = { ... }` block and update:
 | `totals.estProfit` | FALLBACK.totals | Estimated profit |
 | `daily[]` | FALLBACK.daily | Per-day rows (last 30 days) |
 | `devices{}` | FALLBACK.devices | Desktop/tablet/mobile CPA |
-| `monthly[]` | FALLBACK.monthly | Monthly trajectory bars |
-| `MAR_1_14` | renderKPIs() | Mar 1–14 activations for MTD comparison |
+| `monthly[]` | FALLBACK.monthly | Monthly trajectory bars (see rules below) |
+| `MAR_1_14` | renderKPIs() | Prior month 1–14 activations for MTD comparison |
+
+### monthly[] entry rules — MUST follow these exactly
+
+Each entry has: `label`, `val`, `target`, `color`, and optionally `isDollar` and `proj`.
+
+- **Activation rows** (DEC, JAN, FEB, MAR, APR): NO `isDollar` field. `val` = activation count. Will display as plain number e.g. `1,483` — never with `$`.
+- **Revenue rows** (REVENUE SETTLED, INCL. MAR PENDING): MUST have `isDollar: true`. `val` = dollar amount. Will display with `$`.
+- **`proj` field**: Set on completed months where a projection existed. Drives the green `▲ BEAT +X` badge. Only set when actual surpassed the projection.
+
+```javascript
+// CORRECT example
+{label:'FEB 2026',         val:552,   target:3000,   color:'var(--amber)',  proj:500},   // activation, beats proj
+{label:'REVENUE SETTLED',  val:25325, target:100000, color:'var(--green)',  isDollar:true}, // dollar row
+```
+
+Current projection baselines (update when targets change):
+- JAN 2026: proj 300 → actual 415 → ▲ BEAT +115
+- FEB 2026: proj 500 → actual 552 → ▲ BEAT +52
+- MAR 2026: proj 1,000 → actual 1,483 → ▲ BEAT +483
 
 ---
 

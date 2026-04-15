@@ -431,13 +431,13 @@ const FALLBACK = {
     {h:21,cpa:10.63,spend:834},{h:22,cpa:12.26,spend:721},{h:23,cpa:9.84,spend:625}
   ],
   monthly: [
-    {label:'DEC 2025',val:46,target:3000,color:'var(--muted)'},
-    {label:'JAN 2026',val:415,target:3000,color:'var(--muted)'},
-    {label:'FEB 2026',val:552,target:3000,color:'var(--amber)'},
-    {label:'MAR 2026 PENDING',val:1483,target:3000,color:'var(--amber)'},
-    {label:'APR 2026 PROJ ~2,535',val:2535,target:3000,color:'var(--accent)'},
-    {label:'REVENUE SETTLED',val:25325,target:100000,color:'var(--green)'},
-    {label:'INCL. MAR PENDING',val:62393,target:100000,color:'var(--amber)'},
+    {label:'DEC 2025',              val:46,    target:3000,   color:'var(--muted)'},
+    {label:'JAN 2026',              val:415,   target:3000,   color:'var(--muted)',  proj:300},
+    {label:'FEB 2026',              val:552,   target:3000,   color:'var(--amber)',  proj:500},
+    {label:'MAR 2026 PENDING',      val:1483,  target:3000,   color:'var(--amber)',  proj:1000},
+    {label:'APR 2026 PROJ ~2,535',  val:2535,  target:3000,   color:'var(--accent)'},
+    {label:'REVENUE SETTLED',       val:25325, target:100000, color:'var(--green)',  isDollar:true},
+    {label:'INCL. MAR PENDING',     val:62393, target:100000, color:'var(--amber)',  isDollar:true},
   ]
 };
 
@@ -631,12 +631,25 @@ function renderHeatmap(hours) {
 function renderTrajectory(monthly, daily) {
   $('trajectory').innerHTML = monthly.map(m => {
     const pct = m.isTarget ? 100 : Math.min(100, Math.round((m.val / m.target) * 100));
-    const display = m.isTarget
-      ? `<span style="color:var(--muted);opacity:.5">${m.val > 0 ? m.val.toLocaleString() : 'TARGET'}</span>`
-      : `<span style="color:${m.color}">${typeof m.val === 'number' && m.val > 999 ? fmtMoney(m.val) : m.val.toLocaleString()}</span>`;
+
+    // Format value — isDollar flag controls $, not val size
+    let valStr;
+    if (m.isTarget) {
+      valStr = `<span style="color:var(--muted);opacity:.5">${m.val > 0 ? m.val.toLocaleString() : 'TARGET'}</span>`;
+    } else if (m.isDollar) {
+      valStr = `<span style="color:${m.color}">${fmtMoney(m.val)}</span>`;
+    } else {
+      valStr = `<span style="color:${m.color}">${m.val.toLocaleString()}</span>`;
+    }
+
+    // Beat badge — show when actual surpassed projection
+    const beat = (!m.isTarget && m.proj && m.val > m.proj)
+      ? `<span style="font-family:var(--mono);font-size:8px;padding:2px 7px;border-radius:3px;background:rgba(52,211,153,0.15);color:var(--green);letter-spacing:1px;white-space:nowrap">▲ BEAT +${(m.val - m.proj).toLocaleString()}</span>`
+      : '';
+
     return `<div class="proj-row">
       <div class="proj-lbl">${m.label}</div>
-      ${display}
+      <div style="display:flex;align-items:center;gap:8px">${valStr}${beat}</div>
       <div class="proj-bw"><div class="proj-bf" style="width:${pct}%;background:${m.color}${m.isTarget?';opacity:.2':''}"></div></div>
     </div>`;
   }).join('');
