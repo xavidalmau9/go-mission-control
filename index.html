@@ -511,9 +511,11 @@ function gradeColor(g) {
 let mainChartInstance = null;
 
 function renderChart(daily) {
-  const labels = daily.map(d => d.date);
-  const acts = daily.map(d => d.activations);
-  const spends = daily.map(d => +(d.spend / 1000).toFixed(2));
+  const labels  = daily.map(d => d.date);
+  const acts    = daily.map(d => d.activations);
+  const appRem  = daily.map(d => Math.max(0, (d.apps || 0) - d.activations)); // apps above activations
+  const spends  = daily.map(d => +(d.spend / 1000).toFixed(2));
+  const rawApps = daily.map(d => d.apps || 0);
   const ctx = $('mainChart').getContext('2d');
   if (mainChartInstance) mainChartInstance.destroy();
   mainChartInstance = new Chart(ctx, {
@@ -521,20 +523,102 @@ function renderChart(daily) {
     data: {
       labels,
       datasets: [
-        {label:'Activations',data:acts,backgroundColor:'rgba(56,189,248,0.45)',borderColor:'rgba(56,189,248,0.7)',borderWidth:1,borderRadius:2,yAxisID:'y'},
-        {label:'Ad Spend ($k)',data:spends,type:'line',borderColor:'rgba(251,191,36,0.65)',backgroundColor:'transparent',borderWidth:1.5,pointRadius:0,tension:0.35,yAxisID:'y2'}
+        {
+          label: 'Activations',
+          data: acts,
+          backgroundColor: 'rgba(56,189,248,0.55)',
+          borderColor: 'rgba(56,189,248,0.8)',
+          borderWidth: 1,
+          borderRadius: {topLeft:0,topRight:0,bottomLeft:2,bottomRight:2},
+          borderSkipped: 'bottom',
+          stack: 'apps',
+          yAxisID: 'y'
+        },
+        {
+          label: 'Applications (remaining)',
+          data: appRem,
+          backgroundColor: 'rgba(129,140,248,0.30)',
+          borderColor: 'rgba(129,140,248,0.5)',
+          borderWidth: 1,
+          borderRadius: {topLeft:2,topRight:2,bottomLeft:0,bottomRight:0},
+          borderSkipped: 'bottom',
+          stack: 'apps',
+          yAxisID: 'y'
+        },
+        {
+          label: 'Ad Spend ($k)',
+          data: spends,
+          type: 'line',
+          borderColor: 'rgba(251,191,36,0.75)',
+          backgroundColor: 'transparent',
+          borderWidth: 2,
+          pointRadius: 0,
+          tension: 0.35,
+          yAxisID: 'y2'
+        }
       ]
     },
     options: {
-      responsive:true, maintainAspectRatio:false,
-      plugins:{
-        legend:{display:false},
-        tooltip:{backgroundColor:'#111827',borderColor:'rgba(56,189,248,0.2)',borderWidth:1,titleColor:'#38bdf8',bodyColor:'#94a3b8',titleFont:{family:'Space Mono',size:9},bodyFont:{family:'Space Mono',size:9}}
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          display: true,
+          position: 'top',
+          align: 'end',
+          labels: {
+            color: '#64748b',
+            font: {family:'Space Mono', size:8},
+            boxWidth: 10,
+            boxHeight: 6,
+            padding: 12,
+            usePointStyle: false
+          }
+        },
+        tooltip: {
+          backgroundColor: '#111827',
+          borderColor: 'rgba(56,189,248,0.2)',
+          borderWidth: 1,
+          titleColor: '#38bdf8',
+          bodyColor: '#94a3b8',
+          titleFont: {family:'Space Mono', size:9},
+          bodyFont: {family:'Space Mono', size:9},
+          callbacks: {
+            title: items => items[0].label,
+            beforeBody: items => {
+              const i = items[0].dataIndex;
+              const a = acts[i], ap = rawApps[i], sp = spends[i];
+              const rate = ap > 0 ? ((a/ap)*100).toFixed(1) : '—';
+              return [
+                `Activations:  ${a}`,
+                `Applications: ${ap}`,
+                `Act. Rate:    ${rate}%`,
+                `Ad Spend:     $${(sp*1000).toLocaleString()}`
+              ];
+            },
+            label: () => null
+          }
+        }
       },
-      scales:{
-        x:{grid:{color:'rgba(255,255,255,0.025)',drawBorder:false},ticks:{color:'#475569',font:{family:'Space Mono',size:8},maxRotation:45,maxTicksLimit:12}},
-        y:{position:'left',grid:{color:'rgba(255,255,255,0.035)',drawBorder:false},ticks:{color:'#475569',font:{family:'Space Mono',size:8}},title:{display:true,text:'Activations',color:'#38bdf8',font:{family:'Space Mono',size:8}}},
-        y2:{position:'right',grid:{display:false},ticks:{color:'#64748b',font:{family:'Space Mono',size:8},callback:v=>'$'+v+'k'},title:{display:true,text:'Spend $k',color:'#fbbf24',font:{family:'Space Mono',size:8}}}
+      scales: {
+        x: {
+          stacked: true,
+          grid: {color:'rgba(255,255,255,0.025)',drawBorder:false},
+          ticks: {color:'#475569',font:{family:'Space Mono',size:8},maxRotation:45,maxTicksLimit:12}
+        },
+        y: {
+          stacked: true,
+          position: 'left',
+          grid: {color:'rgba(255,255,255,0.035)',drawBorder:false},
+          ticks: {color:'#475569',font:{family:'Space Mono',size:8}},
+          title: {display:true,text:'Apps / Acts',color:'#94a3b8',font:{family:'Space Mono',size:8}}
+        },
+        y2: {
+          position: 'right',
+          grid: {display:false},
+          ticks: {color:'#64748b',font:{family:'Space Mono',size:8},callback:v=>'$'+v+'k'},
+          title: {display:true,text:'Spend $k',color:'#fbbf24',font:{family:'Space Mono',size:8}}
+        }
       }
     }
   });
