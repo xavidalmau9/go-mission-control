@@ -320,8 +320,8 @@ body::after{content:'';position:fixed;inset:0;background-image:linear-gradient(r
     <!-- States -->
     <div class="panel" style="display:flex;flex-direction:column">
       <div class="panel-hdr">
-        <div class="ptitle">Top States · Applications</div>
-        <div class="pmeta">ALL TIME · BGOA</div>
+        <div class="ptitle">Top States · Applications & App CPA</div>
+        <div class="pmeta" id="statePeriod">MAR 15 – APR 13 · 20 OF 48 STATES</div>
       </div>
       <div id="stateList" style="flex:1;display:flex;flex-direction:column;justify-content:space-evenly"></div>
     </div>
@@ -423,10 +423,13 @@ const FALLBACK = {
     {name:'PRIME TIME · SS', spend:1831.01, conv:127, cpa:14.42, ctr:'31.6%', grade:'C'},
   ],
   states: [
-    {code:'CA',count:728},{code:'NY',count:268},{code:'TX',count:267},
-    {code:'NC',count:164},{code:'FL',count:145},{code:'TN',count:142},
-    {code:'KY',count:142},{code:'IL',count:139},{code:'NJ',count:87},
-    {code:'SC',count:83}
+    {code:'CA',count:728,cpa:9.07},{code:'NY',count:268,cpa:7.76},{code:'TX',count:267,cpa:9.62},
+    {code:'NC',count:164,cpa:8.13},{code:'FL',count:145,cpa:9.56},{code:'TN',count:142,cpa:9.64},
+    {code:'KY',count:142,cpa:9.55},{code:'IL',count:139,cpa:6.80},{code:'NJ',count:87,cpa:6.07},
+    {code:'SC',count:83,cpa:11.51},{code:'OH',count:76,cpa:11.15},{code:'MA',count:72,cpa:6.70},
+    {code:'MO',count:48,cpa:8.49},{code:'PA',count:46,cpa:14.76},{code:'MI',count:45,cpa:13.52},
+    {code:'IN',count:42,cpa:14.32},{code:'CT',count:39,cpa:6.99},{code:'VA',count:37,cpa:17.13},
+    {code:'WA',count:36,cpa:12.57},{code:'NM',count:36,cpa:7.17},
   ],
   hours: [
     {h:0,cpa:9.55,spend:957},{h:1,cpa:10.88,spend:522},{h:2,cpa:11.22,spend:495},
@@ -729,23 +732,23 @@ function renderFeed(daily) {
 
 function renderStates(states) {
   const max = states[0].count;
-  const stateColors = {
-    PAUSE: 'var(--red)', REVIEW: 'var(--amber)', OK: 'var(--green)'
-  };
-  const getStatus = (code) => {
-    if (['PA','MI','SC','OH'].includes(code)) return 'REVIEW';
-    if (['NJ','MA','IL','NY'].includes(code)) return 'OK';
-    if (['CA','TX','TN','FL','KY'].includes(code)) return 'OK';
-    return 'OK';
+  // CPA-based status using real app CPA tiers (breakeven = $12.85)
+  const getStatusFromCpa = (cpa) => {
+    if (!cpa) return {label:'—', col:'var(--muted)'};
+    if (cpa <= 6.89)  return {label:'EXCELLENT', col:'var(--green)'};
+    if (cpa <= 8.27)  return {label:'GOOD',      col:'var(--accent)'};
+    if (cpa <= 12.85) return {label:'OK',         col:'var(--amber)'};
+    return {label:'POOR', col:'var(--red)'};
   };
   $('stateList').innerHTML = states.map(s => {
-    const status = getStatus(s.code);
-    const col = stateColors[status];
+    const {label, col} = getStatusFromCpa(s.cpa);
+    const cpaStr = s.cpa ? '$'+parseFloat(s.cpa).toFixed(2) : '—';
     return `<div class="state-row">
       <div class="s-code">${s.code}</div>
       <div class="s-track"><div class="s-fill" style="width:${Math.round(s.count/max*100)}%;background:${col}"></div></div>
       <div class="s-count">${s.count}</div>
-      <div class="s-status" style="background:${col}18;color:${col}">${status}</div>
+      <div style="font-family:var(--mono);font-size:10px;color:${col};width:44px;text-align:right;flex-shrink:0">${cpaStr}</div>
+      <div class="s-status" style="background:${col}18;color:${col};min-width:64px">${label}</div>
     </div>`;
   }).join('');
 }
