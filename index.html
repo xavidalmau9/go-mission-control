@@ -676,6 +676,29 @@ function getSettledRateLabel() {
   return 'Mar 26 settled';
 }
 
+// Compute ACTUAL activation rate for the selected date range from BGOA daily data.
+// Excludes the last LAG_DAYS (5) days because activations take ~5 days to settle.
+// Returns { rate, days, acts, apps } or null if not enough settled data.
+function getPeriodActRate(from, to) {
+  const LAG_DAYS = 5;
+  const cutoff = new Date();
+  cutoff.setDate(cutoff.getDate() - LAG_DAYS);
+  const cutoffStr = cutoff.toISOString().substring(0, 10);
+  const settledTo = (!to || to > cutoffStr) ? cutoffStr : to;
+  if (!from || settledTo < from) return null;
+
+  const rows = RAW.bgoa.map(parseBGOARow).filter(r =>
+    r && r.date >= from && r.date <= settledTo && r.applications > 0
+  );
+  if (rows.length < 3) return null; // need at least 3 settled days
+
+  const totalActs = rows.reduce((s, r) => s + r.activations, 0);
+  const totalApps = rows.reduce((s, r) => s + r.applications, 0);
+  if (totalApps < 30) return null; // not enough volume to be meaningful
+
+  return { rate: totalActs / totalApps, days: rows.length, acts: totalActs, apps: totalApps };
+}
+
 // Map US zip code (5 digits) → state name via 3-digit prefix ranges
 function zipToStateName(zip) {
   const z = String(zip).replace(/\D/g, '').padStart(5, '0');
@@ -921,8 +944,17 @@ function renderKPIs(kpis) {
 
   $('kv-apps').textContent = Math.round(conversions).toLocaleString();
   $('ks-apps').innerHTML = `<span style="color:var(--muted)">Google conversions</span>`;
-  $('kv-approval').textContent = fmtPct(ACT_RATE * 100);
-  $('ks-approval').innerHTML = `<span style="color:var(--muted);font-size:9px">${getSettledRateLabel()}</span>`;
+  // Activation rate: use actual period data from BGOA (excluding last 5 unsettled days)
+  // Falls back to settled monthly rate, then baseline
+  const { from: arFrom, to: arTo } = getDateRange();
+  const periodRate = getPeriodActRate(arFrom, arTo);
+  if (periodRate) {
+    $('kv-approval').textContent = fmtPct(periodRate.rate * 100);
+    $('ks-approval').innerHTML = `<span style="color:var(--green);font-size:9px">✓ REAL · ${periodRate.days}d · ${periodRate.acts}/${periodRate.apps} apps</span>`;
+  } else {
+    $('kv-approval').textContent = fmtPct(ACT_RATE * 100);
+    $('ks-approval').innerHTML = `<span style="color:var(--muted);font-size:9px">${getSettledRateLabel()} · fallback</span>`;
+  }
   $('kv-spend').textContent = fmtMoney(spend);
 
   // Live daily budget: sum from CampaignMeta if loaded, else show 7-day avg
