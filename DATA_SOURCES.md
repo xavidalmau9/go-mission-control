@@ -8,6 +8,7 @@ Last updated: April 2026
 
 **Spreadsheet ID:** `1ZLzpR9oGk5y2amRr0jS4QPVIIzC44m1VfBRIxDK64Vg`
 **Script location:** Google Ads → Tools → Scripts → "Mission Control Data Push"
+**Canonical script file:** `/Users/305partners/assurance/google-ads-script.js`
 **Schedule:** Every hour
 **Access email:** `goadvertising9@gmail.com` (must be editor on sheet)
 
@@ -161,12 +162,22 @@ Last updated: April 2026
 
 **Session 2 (Apr 15-16, 2026):**
 - Activation Rate tile: was showing `activations/google_conversions` (garbage) → now shows real period rate from BGOA via `getPeriodActRate()`
-- Geo panel: zip codes → state names via `zipToStateName()` + handles 7-digit Google criterion IDs
+- Geo panel v1: zip codes → state names via `zipToStateName()` + handles 7-digit Google criterion IDs
 - Projections vs Reality: numbers were shifted +1 month — fixed to correct values, actuals now pulled live from BGOA+BGOC
 - Keywords/Search Terms not date-filtering: Phase 2 background callback was calling `renderKeywords(RAW.keywords)` directly (bypasses date filter) → fixed to call `applyFilters()`
 - `maxCpa` in device panel was comparing CPA against spend values — fixed to only compare 3 CPA values
 - All build functions in `applyFilters()` wrapped in try/catch so errors don't kill downstream panels
 - `CLAUDE.md` created as permanent project memory file
+
+**Session 3 (Apr 16, 2026):**
+- **`MULT` undefined → devices frozen**: `renderDevices` used `appCpa * MULT` but `MULT` was never defined. JavaScript threw silent `ReferenceError` caught by try/catch → panel stuck at "AWAITING LIVE DATA". Fixed: `const actCpa = ACT_RATE > 0 ? appCpa / ACT_RATE : 0`
+- **Geo showing only MD and CA (root cause found)**: All Google state criterion IDs 21132–21183 start with "211x". `zipToStateName("211xx")` mapped them all to Maryland (zip prefix 211 = Maryland range). The 9070xx California metro IDs happened to map to CA. Only 2 states ever showed regardless of date range.
+- **Google Ads Script geo field fix**: `Region` is NOT a valid AWQL field in `GEO_PERFORMANCE_REPORT` (throws InputError). Rewrote `pushGeo()` to use `RegionCriteriaId` + `US_STATE_CRITERIA` lookup table. Script now writes full state names ("Maryland", "California") directly. Ran successfully: 5,738 state-level rows across 50 states.
+- **`normDateStr()` added**: Google Sheets tabs write dates in different formats (M/D/YYYY vs YYYY-MM-DD). Raw string comparison silently filtered out all rows. `normDateStr()` normalizes before any date comparison — fixes devices, geo, keywords, and search terms date filtering.
+- **`getMostRecentWeek()` fallback**: When filtered date range has no geo/device data (e.g. TODAY view), falls back to last 7 available days rather than all history or nothing.
+- **Device badge readable**: Badge on colored bar was red-on-red. Fixed to use `var(--surface)` background with colored border/text.
+- **State list layout**: `justify-content:space-evenly` spread 2–3 rows to top/bottom of tall panel. Fixed to `flex-start` with `min-height:0` for compact scrollable list.
+- **`google-ads-script.js`** created as canonical script file (copy into Google Ads → Tools → Scripts to update)
 
 ---
 
