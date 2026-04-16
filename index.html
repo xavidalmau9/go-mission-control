@@ -941,7 +941,7 @@ function renderChart(daily) {
 }
 
 function renderKPIs(kpis) {
-  const { spend, googleOnlySpend, conversions, activations, googleCPA, activationCPA, revenue,
+  const { spend, conversions, activations, googleCPA, activationCPA, revenue,
           isConfirmed, confirmedDays, confirmedSources } = kpis;
   const isToday = activeDateRange === 'today';
   const isSingleCampaign = activeCampaign && activeCampaign !== 'all';
@@ -989,28 +989,24 @@ function renderKPIs(kpis) {
   }
   $('kv-spend').textContent = fmtMoney(spend);
 
-  // Spend tile subtitle: show source breakdown + MTD avg
-  // When BGOA+BGOC confirmed: show "GOOGLE + META" so it's clear this is all-channel total
-  // When single campaign or no confirmed data: show MTD avg from Google Ads DailyCampaign
+  // Spend tile subtitle: campaign count + MTD avg
+  // Shows how many campaigns are included so we can spot immediately if one is missing
   const spendSubtitle = (() => {
-    if (isConfirmed && confirmedSources && !isSingleCampaign) {
-      const gOnly = googleOnlySpend > 0 ? ` (G:${fmtMoney(googleOnlySpend)})` : '';
-      return `<span style="color:var(--green);font-size:9px">✓ ALL CHANNELS · ${confirmedSources}${gOnly}</span>`;
-    }
+    const campNames = [...new Set(RAW.daily.map(r => r.CampaignName).filter(Boolean))];
+    const campCount = isSingleCampaign ? `1 of ${campNames.length} campaigns` : `${campNames.length} campaign${campNames.length !== 1 ? 's' : ''}`;
     if (RAW.campaignMeta && RAW.campaignMeta.length > 0) {
       const total = RAW.campaignMeta.filter(r => r.Status === 'ENABLED').reduce((s,r) => s + (parseFloat(r.DailyBudget)||0), 0);
-      if (total > 0) return `<span style="color:var(--muted)">LIVE BUDGET: ${fmtMoney(total)}</span>`;
+      if (total > 0) return `<span style="color:var(--muted)">LIVE BUDGET: ${fmtMoney(total)} · ${campCount}</span>`;
     }
-    // Fallback: MTD avg from Google Ads DailyCampaign
-    // normDateStr required — raw Date field may be M/D/YYYY which breaks startsWith('YYYY-MM')
+    // Fallback: MTD avg from Google Ads DailyCampaign (all campaigns)
     const byDate = {};
     RAW.daily.forEach(r => { const d = normDateStr(r.Date||''); if (d) { byDate[d] = (byDate[d]||0) + (parseFloat(r.Cost)||0); } });
     const _n = new Date(); const thisMonth = `${_n.getFullYear()}-${String(_n.getMonth()+1).padStart(2,'0')}`;
     const mtdDates = Object.keys(byDate).filter(d => d.startsWith(thisMonth)).sort();
     const useDates = mtdDates.length >= 3 ? mtdDates : Object.keys(byDate).sort().slice(-7);
     const label = mtdDates.length >= 3 ? 'MTD AVG/DAY' : '7D AVG/DAY';
-    if (useDates.length > 0) { const avg = useDates.reduce((s,d)=>s+byDate[d],0)/useDates.length; return `<span style="color:var(--muted)">${label}: ${fmtMoney(avg)}</span>`; }
-    return `<span style="color:var(--muted)">daily spend</span>`;
+    if (useDates.length > 0) { const avg = useDates.reduce((s,d)=>s+byDate[d],0)/useDates.length; return `<span style="color:var(--muted)">${label}: ${fmtMoney(avg)} · ${campCount}</span>`; }
+    return `<span style="color:var(--muted)">${campCount}</span>`;
   })();
   $('ks-spend').innerHTML = spendSubtitle;
 
@@ -2172,25 +2168,19 @@ function buildKPIs(daily) {
   const hasBGOA  = bgoaRows.length > 0;
   const hasBGOC  = bgocRows.length > 0;
 
-  let activations, revenue, isConfirmed, confirmedDays, confirmedSources, totalSpend;
+  let activations, revenue, isConfirmed, confirmedDays, confirmedSources;
   if (hasBGOA || hasBGOC) {
-    const bgoaActs  = bgoaRows.reduce((s,r) => s + r.activations, 0);
-    const bgocActs  = bgocRows.reduce((s,r) => s + r.activations, 0);
-    const bgoaRev   = bgoaRows.reduce((s,r) => s + r.revenue, 0);
-    const bgocRev   = bgocRows.reduce((s,r) => s + r.revenue, 0);
-    // #1 Rule: use confirmed BGOA+BGOC spend as total — this is Google Ads + Meta combined,
-    // the real number we spent. Google Ads DailyCampaign only captures one channel.
-    const bgoaSpend = bgoaRows.reduce((s,r) => s + r.spend, 0);
-    const bgocSpend = bgocRows.reduce((s,r) => s + r.spend, 0);
-    totalSpend       = (bgoaSpend + bgocSpend) > 0 ? bgoaSpend + bgocSpend : spend;
+    const bgoaActs = bgoaRows.reduce((s,r) => s + r.activations, 0);
+    const bgocActs = bgocRows.reduce((s,r) => s + r.activations, 0);
+    const bgoaRev  = bgoaRows.reduce((s,r) => s + r.revenue, 0);
+    const bgocRev  = bgocRows.reduce((s,r) => s + r.revenue, 0);
     activations      = bgoaActs + bgocActs;
     revenue          = bgoaRev  + bgocRev;
     isConfirmed      = true;
     confirmedDays    = Math.max(bgoaRows.length, bgocRows.length);
     confirmedSources = [hasBGOA ? 'BGOA' : null, hasBGOC ? 'BGOC' : null].filter(Boolean).join('+');
   } else {
-    // No confirmed data (or single campaign selected) — use Google Ads DailyCampaign spend
-    totalSpend       = spend;
+    // No confirmed data (or single campaign selected) — fall back to Google conv estimate
     activations      = Math.round(conversions * ACT_RATE);
     revenue          = activations * PAYOUT;
     isConfirmed      = false;
@@ -2198,11 +2188,20 @@ function buildKPIs(daily) {
     confirmedSources = isSingleCampaign ? 'CAMPAIGN ESTIMATE' : '';
   }
 
-  const activationCPA = activations > 0 ? totalSpend / activations : 0;
-  const profit        = revenue - totalSpend;
-  return { spend: totalSpend, googleOnlySpend: spend, clicks, impressions, conversions,
-           activations, googleCPA, activationCPA, revenue, profit,
-           isConfirmed, confirmedDays, confirmedSources };
+  // Spend always comes from Google Ads DailyCampaign — all campaigns summed
+  const activationCPA = activations > 0 ? spend / activations : 0;
+  const profit        = revenue - spend;
+
+  // Log campaign breakdown to console so we can diagnose missing campaigns
+  const campTotals = {};
+  daily.forEach(r => {
+    const c = r.CampaignName || '(no name)';
+    campTotals[c] = (campTotals[c] || 0) + (parseFloat(r.Cost) || 0);
+  });
+  console.log('[MC] Spend breakdown by campaign:', campTotals, '| Total:', spend.toFixed(2));
+
+  return { spend, clicks, impressions, conversions, activations, googleCPA, activationCPA,
+           revenue, profit, isConfirmed, confirmedDays, confirmedSources };
 }
 
 // Build chart daily from raw rows
