@@ -1028,7 +1028,8 @@ function renderDevices(devData) {
   const dp = $('devicePeriod');
   if (dp) { const { from, to } = getDateRange(); dp.textContent = from && to ? from.substring(5) + ' → ' + to.substring(5) : 'LIVE DATA'; }
   if (!devData || (!devData.desktop && !devData.mobile && !devData.tablets)) {
-    panel.innerHTML = '<div class="no-data-state"><div class="nd-icon">📱</div><div class="nd-title">NO DEVICE DATA</div><div class="nd-sub">No device breakdown available for this period</div></div>';
+    const hint = activeDateRange === 'today' ? 'Device data arrives T+1 — try Yesterday or Last 7 Days' : 'No device breakdown for this period — no spend or conversions found';
+    panel.innerHTML = `<div class="no-data-state"><div class="nd-icon">📱</div><div class="nd-title">NO DEVICE DATA</div><div class="nd-sub">${hint}</div></div>`;
     return;
   }
   const devices = [{key:'desktop',label:'DESKTOP'},{key:'tablets',label:'TABLETS'},{key:'mobile',label:'MOBILE'}];
@@ -1159,7 +1160,8 @@ function renderFeed(daily) {
 
 function renderStates(states) {
   if (!states || !states.length) {
-    $('stateList').innerHTML = '<div class="no-data-state"><div class="nd-icon">🗺</div><div class="nd-title">NO GEO DATA</div></div>';
+    const hint = activeDateRange === 'today' ? 'Geo data arrives T+1 — try Last 7 Days' : 'No geo data for this period';
+    $('stateList').innerHTML = `<div class="no-data-state"><div class="nd-icon">🗺</div><div class="nd-title">NO GEO DATA</div><div class="nd-sub">${hint}</div></div>`;
     return;
   }
   const max = Math.max(...states.map(s => s.conv || s.count || 0));
@@ -1295,8 +1297,8 @@ function renderKeywords(keywords, campaign) {
   if (!keywords || !keywords.length) {
     const rawCount = RAW.keywords ? RAW.keywords.length : 0;
     const sub = rawCount > 0
-      ? `${rawCount} rows loaded — none match the selected date range. Try "Last 7 Days" or "Last 30 Days".`
-      : 'Keywords sheet not yet loaded — waiting for Phase 2 data fetch.';
+      ? `${rawCount} rows loaded but none match the selected campaign filter.`
+      : 'Keywords sheet not yet loaded — data arrives in Phase 2 fetch (up to 60s after load).';
     $('keywordsPanel').innerHTML = `<div class="no-data-state"><div class="nd-icon">🔑</div><div class="nd-title">NO KEYWORD DATA</div><div class="nd-sub">${sub}</div></div>`;
     return;
   }
@@ -1333,7 +1335,7 @@ function renderKeywords(keywords, campaign) {
     return `<span style="font-size:8px;padding:1px 5px;border-radius:2px;background:${col};font-family:var(--mono)">${(mt||'—').toUpperCase()}</span>`;
   };
 
-  $('kwMeta').textContent = `LIVE · ${rows.length} KEYWORDS BY SPEND`;
+  $('kwMeta').textContent = `LAST 60 DAYS · ${rows.length} KEYWORDS BY SPEND`;
   $('keywordsPanel').innerHTML = `<div class="data-table-wrap"><table class="data-table">
     <thead><tr>
       <th>Keyword</th><th>Match</th><th class="dt-num">Impr</th><th class="dt-num">Clicks</th><th class="dt-num">CTR</th><th class="dt-num">Cost</th><th class="dt-num">Conv</th><th class="dt-num">CPA</th><th>Action</th>
@@ -1361,8 +1363,8 @@ function renderSearchTerms(searchTerms, campaign) {
   if (!searchTerms || !searchTerms.length) {
     const rawCount = RAW.searchTerms ? RAW.searchTerms.length : 0;
     const sub = rawCount > 0
-      ? `${rawCount} rows loaded — none match the selected date range. Try "Last 7 Days" or "Last 30 Days".`
-      : 'Search Terms sheet not yet loaded — waiting for Phase 2 data fetch.';
+      ? `${rawCount} rows loaded but none match the selected campaign filter.`
+      : 'Search Terms sheet not yet loaded — data arrives in Phase 2 fetch (up to 60s after load).';
     $('searchTermsPanel').innerHTML = `<div class="no-data-state"><div class="nd-icon">🔍</div><div class="nd-title">NO SEARCH TERM DATA</div><div class="nd-sub">${sub}</div></div>`;
     return;
   }
@@ -1393,7 +1395,7 @@ function renderSearchTerms(searchTerms, campaign) {
     return ['badge-watch', '— MONITOR'];
   }
 
-  $('stMeta').textContent = `LIVE · ${rows.length} SEARCH TERMS BY SPEND`;
+  $('stMeta').textContent = `LAST 60 DAYS · ${rows.length} SEARCH TERMS BY SPEND`;
   $('searchTermsPanel').innerHTML = `<div class="data-table-wrap"><table class="data-table">
     <thead><tr>
       <th>Search Term</th><th class="dt-num">Impr</th><th class="dt-num">Clicks</th><th class="dt-num">CTR</th><th class="dt-num">Cost</th><th class="dt-num">Conv</th><th class="dt-num">CPA</th><th>Action</th>
@@ -2118,12 +2120,11 @@ function filterData() {
     if (camp !== 'all' && r.CampaignName !== camp) return false;
     return true;
   };
-  // Keywords/SearchTerms: normalize date to YYYY-MM-DD before comparing so that
-  // both "2026-04-15" and "4/15/2026" formats work correctly.
-  // Rows with no recognizable date are treated as "always in range" (aggregate rows).
-  const filterKW = r => {
-    const date = normDateStr(r.Date || r.date || '');
-    if (date && (date < from || date > to)) return false;
+  // Keywords + Search Terms: NOT date-filtered.
+  // They are a 60-day performance snapshot from the script — a strategic ranking view,
+  // not day-by-day metrics. Date picker applies to KPIs/chart/geo/devices only.
+  // Only filter by campaign so the table respects the campaign selector.
+  const filterCampOnly = r => {
     if (camp !== 'all' && r.CampaignName !== camp) return false;
     return true;
   };
@@ -2132,8 +2133,8 @@ function filterData() {
     devices:     RAW.devices.filter(filterRow),
     geo:         RAW.geo.filter(filterRow),
     hourly:      RAW.hourly.filter(r => camp === 'all' || r.CampaignName === camp),
-    keywords:    RAW.keywords.filter(filterKW),
-    searchTerms: RAW.searchTerms.filter(filterKW),
+    keywords:    RAW.keywords.filter(filterCampOnly),
+    searchTerms: RAW.searchTerms.filter(filterCampOnly),
   };
 }
 
