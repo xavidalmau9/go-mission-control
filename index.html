@@ -1305,8 +1305,8 @@ function renderKeywords(keywords, campaign) {
   if (!keywords || !keywords.length) {
     const rawCount = RAW.keywords ? RAW.keywords.length : 0;
     const sub = rawCount > 0
-      ? `${rawCount} rows loaded but none match the selected campaign filter.`
-      : 'Keywords sheet not yet loaded — data arrives in Phase 2 fetch (up to 60s after load).';
+      ? `${rawCount} rows in sheet — none in this date range. Try Last 7 Days or Last 30 Days.`
+      : 'Keywords not yet loaded — arrives in Phase 2 (up to 60s after page load).';
     $('keywordsPanel').innerHTML = `<div class="no-data-state"><div class="nd-icon">🔑</div><div class="nd-title">NO KEYWORD DATA</div><div class="nd-sub">${sub}</div></div>`;
     return;
   }
@@ -1343,7 +1343,7 @@ function renderKeywords(keywords, campaign) {
     return `<span style="font-size:8px;padding:1px 5px;border-radius:2px;background:${col};font-family:var(--mono)">${(mt||'—').toUpperCase()}</span>`;
   };
 
-  $('kwMeta').textContent = `LAST 60 DAYS · ${rows.length} KEYWORDS BY SPEND`;
+  $('kwMeta').textContent = `LIVE · ${rows.length} KEYWORDS BY SPEND`;
   $('keywordsPanel').innerHTML = `<div class="data-table-wrap"><table class="data-table">
     <thead><tr>
       <th>Keyword</th><th>Match</th><th class="dt-num">Impr</th><th class="dt-num">Clicks</th><th class="dt-num">CTR</th><th class="dt-num">Cost</th><th class="dt-num">Conv</th><th class="dt-num">CPA</th><th>Action</th>
@@ -1371,8 +1371,8 @@ function renderSearchTerms(searchTerms, campaign) {
   if (!searchTerms || !searchTerms.length) {
     const rawCount = RAW.searchTerms ? RAW.searchTerms.length : 0;
     const sub = rawCount > 0
-      ? `${rawCount} rows loaded but none match the selected campaign filter.`
-      : 'Search Terms sheet not yet loaded — data arrives in Phase 2 fetch (up to 60s after load).';
+      ? `${rawCount} rows in sheet — none in this date range. Try Last 7 Days or Last 30 Days.`
+      : 'Search terms not yet loaded — arrives in Phase 2 (up to 60s after page load).';
     $('searchTermsPanel').innerHTML = `<div class="no-data-state"><div class="nd-icon">🔍</div><div class="nd-title">NO SEARCH TERM DATA</div><div class="nd-sub">${sub}</div></div>`;
     return;
   }
@@ -1403,7 +1403,7 @@ function renderSearchTerms(searchTerms, campaign) {
     return ['badge-watch', '— MONITOR'];
   }
 
-  $('stMeta').textContent = `LAST 60 DAYS · ${rows.length} SEARCH TERMS BY SPEND`;
+  $('stMeta').textContent = `LIVE · ${rows.length} SEARCH TERMS BY SPEND`;
   $('searchTermsPanel').innerHTML = `<div class="data-table-wrap"><table class="data-table">
     <thead><tr>
       <th>Search Term</th><th class="dt-num">Impr</th><th class="dt-num">Clicks</th><th class="dt-num">CTR</th><th class="dt-num">Cost</th><th class="dt-num">Conv</th><th class="dt-num">CPA</th><th>Action</th>
@@ -2128,21 +2128,13 @@ function filterData() {
     if (camp !== 'all' && r.CampaignName !== camp) return false;
     return true;
   };
-  // Keywords + Search Terms: NOT date-filtered.
-  // They are a 60-day performance snapshot from the script — a strategic ranking view,
-  // not day-by-day metrics. Date picker applies to KPIs/chart/geo/devices only.
-  // Only filter by campaign so the table respects the campaign selector.
-  const filterCampOnly = r => {
-    if (camp !== 'all' && r.CampaignName !== camp) return false;
-    return true;
-  };
   return {
     daily:       RAW.daily.filter(filterRow),
     devices:     RAW.devices.filter(filterRow),
     geo:         RAW.geo.filter(filterRow),
     hourly:      RAW.hourly.filter(r => camp === 'all' || r.CampaignName === camp),
-    keywords:    RAW.keywords.filter(filterCampOnly),
-    searchTerms: RAW.searchTerms.filter(filterCampOnly),
+    keywords:    RAW.keywords.filter(filterRow),
+    searchTerms: RAW.searchTerms.filter(filterRow),
   };
 }
 
