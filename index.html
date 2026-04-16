@@ -1021,12 +1021,15 @@ function renderKPIs(kpis) {
     : `<span style="color:${acpaCol}">${actCpaLabel(activationCPA)}</span> · TARGET ≤$${ACT_TIERS.FANTASTIC}`;
 }
 
-function renderDevices(devData) {
+function renderDevices(devData, sourceLabel) {
   const panel = $('devicePanel');
   if (!panel) return;
-  // Always update period label first
   const dp = $('devicePeriod');
-  if (dp) { const { from, to } = getDateRange(); dp.textContent = from && to ? from.substring(5) + ' → ' + to.substring(5) : 'LIVE DATA'; }
+  if (dp) {
+    const { from, to } = getDateRange();
+    const periodStr = from && to ? from.substring(5) + ' → ' + to.substring(5) : 'LIVE DATA';
+    dp.textContent = sourceLabel ? `LATEST: ${sourceLabel}` : periodStr;
+  }
   if (!devData || (!devData.desktop && !devData.mobile && !devData.tablets)) {
     const hint = activeDateRange === 'today' ? 'Device data arrives T+1 — try Yesterday or Last 7 Days' : 'No device breakdown for this period — no spend or conversions found';
     panel.innerHTML = `<div class="no-data-state"><div class="nd-icon">📱</div><div class="nd-title">NO DEVICE DATA</div><div class="nd-sub">${hint}</div></div>`;
@@ -1041,7 +1044,7 @@ function renderDevices(devData) {
   const devHtml = devices.map(({key,label}) => {
     const appCpa = devData[key] || 0;
     if (!appCpa) return '';
-    const actCpa = appCpa * MULT;
+    const actCpa = ACT_RATE > 0 ? appCpa / ACT_RATE : 0;
     const col = cpaColor(appCpa), grade = cpaLabel(appCpa);
     const pct = Math.round((appCpa / maxCpa) * 100);
     const apps = devData[key+'Apps'] || 0, acts = devData[key+'Acts'] || 0;
@@ -1158,10 +1161,15 @@ function renderFeed(daily) {
   }).join('');
 }
 
-function renderStates(states) {
+function renderStates(states, sourceLabel) {
+  const sp = $('statePeriod');
+  if (sp) {
+    const { from, to } = getDateRange();
+    const periodStr = from && to ? from.substring(5) + ' → ' + to.substring(5) : 'LIVE DATA';
+    sp.textContent = sourceLabel ? `LATEST: ${sourceLabel}` : periodStr;
+  }
   if (!states || !states.length) {
-    const hint = activeDateRange === 'today' ? 'Geo data arrives T+1 — try Last 7 Days' : 'No geo data for this period';
-    $('stateList').innerHTML = `<div class="no-data-state"><div class="nd-icon">🗺</div><div class="nd-title">NO GEO DATA</div><div class="nd-sub">${hint}</div></div>`;
+    $('stateList').innerHTML = `<div class="no-data-state"><div class="nd-icon">🗺</div><div class="nd-title">NO GEO DATA</div><div class="nd-sub">No geo data available</div></div>`;
     return;
   }
   const max = Math.max(...states.map(s => s.conv || s.count || 0));
@@ -2347,12 +2355,21 @@ function applyFilters() {
   $('errorBanner').style.display = 'none';
 
   const f = filterData();
-  // NO FALLBACKS — if a period has no data, show empty state, not all history.
-  // Wrong data is worse than no data.
   const daily   = f.daily;
-  const devices = f.devices;
-  const geo     = f.geo;
   const hourly  = f.hourly;
+
+  // Geo and devices are T+1 — TODAY never has data. When the filtered set is empty,
+  // fall back to the most recent available date in the raw data (NOT all history).
+  // This shows current state without showing misleading all-time aggregates.
+  function getMostRecentRows(rawArr) {
+    if (!rawArr.length) return [];
+    const dates = rawArr.map(r => normDateStr(r.Date || r.date || '')).filter(Boolean);
+    if (!dates.length) return rawArr; // no dates → return as-is
+    const latest = dates.sort().pop();
+    return rawArr.filter(r => normDateStr(r.Date || r.date || '') === latest);
+  }
+  const geo     = f.geo.length     ? f.geo     : getMostRecentRows(RAW.geo);
+  const devices = f.devices.length ? f.devices : getMostRecentRows(RAW.devices);
 
   // If no Google Ads data for the selected period, show a clear message instead of garbage
   if (!daily.length) {
@@ -2383,8 +2400,14 @@ function applyFilters() {
 
   try { renderKPIs(kpis); }              catch(e) { console.error('KPI',e); }
   try { renderChart(chartData); }        catch(e) { console.error('Chart',e); }
-  try { renderDevices(buildDevices(devices)); } catch(e) { console.error('Devices',e); }
-  try { renderStates(buildStates(geo)); }      catch(e) { console.error('States',e); }
+  // Compute source label — if using fallback date, show it in the panel header
+  const geoDate    = geo.length    ? normDateStr(geo[0].Date    || geo[0].date    || '') : '';
+  const devDate    = devices.length ? normDateStr(devices[0].Date || devices[0].date || '') : '';
+  const { from: selFrom } = getDateRange();
+  const geoLabel   = (geoDate && geoDate !== selFrom) ? geoDate.substring(5) : '';
+  const devLabel   = (devDate && devDate !== selFrom) ? devDate.substring(5) : '';
+  try { renderDevices(buildDevices(devices), devLabel); } catch(e) { console.error('Devices',e); }
+  try { renderStates(buildStates(geo), geoLabel); }       catch(e) { console.error('States',e); }
   try { renderHeatmap(buildHourly(hourly)); }  catch(e) { console.error('Heatmap',e); }
   try { renderFeed(chartData); }               catch(e) { console.error('Feed',e); }
   try { renderSummary(chartData, kpis); }      catch(e) { console.error('Summary',e); }
