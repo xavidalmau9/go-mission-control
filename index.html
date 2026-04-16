@@ -509,7 +509,7 @@ body::after{content:'';position:fixed;inset:0;background-image:linear-gradient(r
     <div class="panel-hdr">
       <div class="ptitle">⚡ Today's Brief · <span id="briefDate">—</span></div>
 
-      <div class="pmeta">YESTERDAY VS DAY BEFORE · CPA TARGETS: ACT &lt;$10 · APP &lt;$6.41</div>
+      <div class="pmeta" id="briefMeta">YESTERDAY VS DAY BEFORE · ACT CPA TIERS: ≤$10 FANTASTIC · ≤$12.50 EXCELLENT · ≤$15 GOOD · >$25 FATAL</div>
     </div>
     <div id="briefPanel">
       <div class="no-data-state"><div class="nd-icon">📋</div><div class="nd-title">AWAITING LIVE DATA</div><div class="nd-sub">Your daily performance brief will appear here once data loads — comparing yesterday against the day before with action items for today</div></div>
@@ -605,9 +605,68 @@ const SHEET_URLS = {
   // Projections vs Reality tracking
   projVsReal:  'https://docs.google.com/spreadsheets/d/e/2PACX-1vQ02ZfKSDaRCTuBhGkzwR_OMFObJiaG0-t7BNUOvKGFaSyG_pVygMw9EbhWozB-_gNQDjW6-Zm4xLc4/pub?gid=849051862&single=true&output=csv',
 };
-const ACT_RATE = 0.5512;
-const PAYOUT   = 25;
-const MULT     = 1.814; // activation CPA multiplier from app CPA
+const PAYOUT   = 25; // $25 per confirmed activation — fixed by Assurance
+
+// ── HARDCODED FACTS: Activation CPA tiers (based on $25 payout) ──
+// These are the only hardcoded business constants. Everything else derives from them.
+const ACT_TIERS = {
+  FANTASTIC: 10.00,  // ≤$10.00  — target zone
+  EXCELLENT: 12.50,  // ≤$12.50
+  GOOD:      15.00,  // ≤$15.00
+  POOR:      25.00,  // ≤$25.00  — losing money above this (= payout)
+  // >$25 = FATAL: spending more per activation than we earn
+};
+
+// Baseline activation rate (Google conversions → confirmed BGOA activations, Mar 2026)
+// Updated live from BGOA data via getLiveActRate()
+const ACT_RATE_BASELINE = 0.5512;
+let ACT_RATE = ACT_RATE_BASELINE; // updated by getLiveActRate() after BGOA loads
+
+// Return live activation rate from BGOA data.
+// Uses the last SETTLED month (data is final ~15 days after month close).
+// March 2026 is our first full tracked month — use it as the benchmark.
+// After the 15th of each month, the prior month is considered settled.
+function getLiveActRate() {
+  const rows = (RAW && RAW.bgoa) ? RAW.bgoa.map(parseBGOARow).filter(Boolean) : [];
+  if (rows.length === 0) return ACT_RATE_BASELINE;
+
+  const today = new Date();
+  const dayOfMonth = today.getDate();
+
+  // Determine which month to use: prior month if past the 15th, else 2 months ago
+  const settledDate = new Date(today.getFullYear(), today.getMonth() - (dayOfMonth >= 15 ? 1 : 2), 1);
+  const settledMonth = settledDate.toISOString().substring(0, 7); // YYYY-MM
+
+  // First try: settled prior month
+  const settledRows = rows.filter(r => r.date.startsWith(settledMonth));
+  if (settledRows.length >= 15) {
+    const acts = settledRows.reduce((s,r) => s + r.activations, 0);
+    const apps = settledRows.reduce((s,r) => s + r.applications, 0);
+    if (apps > 50 && acts > 0) return acts / apps;
+  }
+
+  // Fallback: March 2026 — first full settled month with Google conv tracking
+  const marchRows = rows.filter(r => r.date.startsWith('2026-03'));
+  if (marchRows.length >= 15) {
+    const acts = marchRows.reduce((s,r) => s + r.activations, 0);
+    const apps = marchRows.reduce((s,r) => s + r.applications, 0);
+    if (apps > 50 && acts > 0) return acts / apps;
+  }
+
+  return ACT_RATE_BASELINE;
+}
+
+// App CPA thresholds derived from Act CPA tiers × activation rate
+// At 55.12%: FANTASTIC≤$5.51 · EXCELLENT≤$6.89 · GOOD≤$8.27 · FATAL>$13.78
+function getAppTiers(actRate) {
+  const r = actRate || ACT_RATE;
+  return {
+    FANTASTIC: ACT_TIERS.FANTASTIC * r,
+    EXCELLENT: ACT_TIERS.EXCELLENT * r,
+    GOOD:      ACT_TIERS.GOOD      * r,
+    FATAL:     ACT_TIERS.POOR      * r,  // >payout threshold
+  };
+}
 
 // Clock
 function updateClock() {
@@ -632,19 +691,43 @@ function delta(a, b, lower_is_better) {
   const col = good ? 'var(--green)' : 'var(--red)';
   return `<span style="color:${col};font-family:var(--mono);font-size:10px">${arrow}${pct}% vs prev</span>`;
 }
-function cpaColor(cpa) {
-  cpa = parseFloat(cpa);
-  if (cpa <= 5.51) return 'var(--green)';
-  if (cpa <= 6.89) return 'var(--amber)';
-  if (cpa <= 8.27) return 'var(--amber)';
-  return 'var(--red)';
+// App CPA color/label — thresholds derived from activation tiers
+function cpaColor(appCpa) {
+  const t = getAppTiers(); appCpa = parseFloat(appCpa);
+  if (appCpa <= 0)           return 'var(--muted)';
+  if (appCpa <= t.FANTASTIC) return 'var(--green)';
+  if (appCpa <= t.EXCELLENT) return 'var(--accent)';
+  if (appCpa <= t.GOOD)      return 'var(--amber)';
+  if (appCpa <= t.FATAL)     return 'var(--red)';
+  return '#ef4444'; // FATAL — over $25 act CPA equivalent
 }
-function cpaLabel(cpa) {
-  cpa = parseFloat(cpa);
-  if (cpa <= 5.51) return 'FANTASTIC';
-  if (cpa <= 6.89) return 'EXCELLENT';
-  if (cpa <= 8.27) return 'GOOD';
-  return 'POOR';
+function cpaLabel(appCpa) {
+  const t = getAppTiers(); appCpa = parseFloat(appCpa);
+  if (appCpa <= 0)           return '—';
+  if (appCpa <= t.FANTASTIC) return 'FANTASTIC';
+  if (appCpa <= t.EXCELLENT) return 'EXCELLENT';
+  if (appCpa <= t.GOOD)      return 'GOOD';
+  if (appCpa <= t.FATAL)     return 'POOR';
+  return '⚠ FATAL';
+}
+// Activation CPA color/label — use tiers directly
+function actCpaColor(actCpa) {
+  actCpa = parseFloat(actCpa);
+  if (actCpa <= 0)                   return 'var(--muted)';
+  if (actCpa <= ACT_TIERS.FANTASTIC) return 'var(--green)';
+  if (actCpa <= ACT_TIERS.EXCELLENT) return 'var(--accent)';
+  if (actCpa <= ACT_TIERS.GOOD)      return 'var(--amber)';
+  if (actCpa <  ACT_TIERS.POOR)      return 'var(--red)';
+  return '#ef4444'; // FATAL
+}
+function actCpaLabel(actCpa) {
+  actCpa = parseFloat(actCpa);
+  if (actCpa <= 0)                   return '—';
+  if (actCpa <= ACT_TIERS.FANTASTIC) return 'FANTASTIC';
+  if (actCpa <= ACT_TIERS.EXCELLENT) return 'EXCELLENT';
+  if (actCpa <= ACT_TIERS.GOOD)      return 'GOOD';
+  if (actCpa <  ACT_TIERS.POOR)      return 'POOR';
+  return '⚠ FATAL';
 }
 function gradeColor(g) {
   if (g === 'A') return '#34d399';
@@ -768,15 +851,16 @@ function renderKPIs(kpis) {
     ? `<span style="color:var(--muted)">${liveBudget.label}: ${fmtMoney(liveBudget.val)}</span>`
     : `<span style="color:var(--muted)">daily spend</span>`;
 
+  const t = getAppTiers();
   $('kv-gcpa').textContent = fmtCPA(googleCPA);
-  const gcpaCol = googleCPA <= 6.41 ? 'var(--green)' : googleCPA <= 9 ? 'var(--amber)' : 'var(--red)';
-  $('ks-gcpa').innerHTML = `<span style="color:${gcpaCol}">TARGET: $6.41</span>`;
-  const acpaCol = activationCPA <= 10 ? 'var(--green)' : activationCPA <= 12.5 ? 'var(--accent)' : activationCPA <= 15 ? 'var(--amber)' : 'var(--red)';
+  $('kv-gcpa').style.color = cpaColor(googleCPA);
+  $('ks-gcpa').innerHTML = `<span style="color:var(--muted)">FANTASTIC ≤${fmtCPA(t.FANTASTIC)}</span>`;
+  const acpaCol = actCpaColor(activationCPA);
   $('kv-acpa').textContent = isToday ? '—' : fmtCPA(activationCPA);
   $('kv-acpa').style.color = isToday ? 'var(--muted)' : acpaCol;
   $('ks-acpa').innerHTML = isToday
     ? `<span style="color:var(--muted);font-size:9px">REPORTS T+1</span>`
-    : `<span style="color:${acpaCol}">${activationCPA <= 10 ? 'FANTASTIC ✓' : activationCPA <= 12.5 ? 'EXCELLENT' : activationCPA <= 15 ? 'GOOD' : 'NEEDS WORK'}</span> · TARGET &lt;$10`;
+    : `<span style="color:${acpaCol}">${actCpaLabel(activationCPA)}</span> · TARGET ≤$${ACT_TIERS.FANTASTIC}`;
 }
 
 function renderDevices(devData) {
@@ -862,7 +946,7 @@ function renderFeed(daily) {
   $('intelFeed').innerHTML = sorted.map((d, i) => {
     const prev = sorted[i + 1];
     const appCPA = d.spend > 0 && d.apps > 0 ? d.spend / d.apps : 0;
-    const cpaCol = appCPA <= 6.41 ? 'var(--green)' : appCPA <= 9 ? 'var(--amber)' : 'var(--red)';
+    const cpaCol = cpaColor(appCPA);
     const acts = Math.round(d.apps * ACT_RATE);
     const actCPA = acts > 0 ? d.spend / acts : 0;
 
@@ -890,7 +974,7 @@ function renderFeed(daily) {
       .sort((a,b) => b[1].spend - a[1].spend).slice(0, 3)
       .map(([name, c]) => {
         const ccpa = c.conv > 0 ? c.spend/c.conv : 0;
-        const cc = ccpa <= 6.41 ? 'var(--green)' : ccpa <= 9 ? 'var(--amber)' : 'var(--red)';
+        const cc = cpaColor(ccpa);
         return `<span style="color:var(--muted)">${name}</span> <span style="color:${cc}">${fmtCPA(ccpa)}</span> <span style="color:var(--muted);font-size:8px">${fmtMoney(c.spend)}</span>`;
       }).join('<span style="color:var(--border);padding:0 4px">|</span>');
 
@@ -914,10 +998,7 @@ function renderStates(states) {
   const max = Math.max(...states.map(s => s.conv || s.count || 0));
   const getStatus = (cpa) => {
     if (!cpa) return {label:'—',col:'var(--muted)'};
-    if (cpa <= 6.89)  return {label:'EXCELLENT',col:'var(--green)'};
-    if (cpa <= 8.27)  return {label:'GOOD',      col:'var(--accent)'};
-    if (cpa <= 12.85) return {label:'OK',         col:'var(--amber)'};
-    return {label:'POOR',col:'var(--red)'};
+    return { label: cpaLabel(cpa), col: cpaColor(cpa) };
   };
   $('stateList').innerHTML = states.map(s => {
     const code = s.code || s.state || '??';
@@ -1063,10 +1144,11 @@ function renderKeywords(keywords, campaign) {
 
   function getAction(r) {
     if (r.cost > 50 && r.conv === 0) return ['badge-neg', '⛔ NEGATIVE'];
-    if (r.cpa > 15) return ['badge-neg', '⛔ PAUSE'];
-    if (r.cpa > 10 && r.cpa <= 15) return ['badge-pause', '⚠ LOWER BID'];
-    if (r.cpa > 0 && r.cpa <= 6.41) return ['badge-scale', '✓ SCALE UP'];
-    if (r.cpa > 0 && r.cpa <= 9) return ['badge-keep', '✓ KEEP'];
+    const t2 = getAppTiers();
+    if (r.cpa > t2.FATAL)     return ['badge-neg',   '⛔ PAUSE'];
+    if (r.cpa > t2.GOOD)      return ['badge-pause', '⚠ LOWER BID'];
+    if (r.cpa > 0 && r.cpa <= t2.FANTASTIC) return ['badge-scale', '✓ SCALE UP'];
+    if (r.cpa > 0 && r.cpa <= t2.GOOD)      return ['badge-keep',  '✓ KEEP'];
     if (r.impressions > 500 && r.clicks < 10) return ['badge-watch', '👁 LOW CTR'];
     return ['badge-watch', '— MONITOR'];
   }
@@ -1124,10 +1206,11 @@ function renderSearchTerms(searchTerms, campaign) {
 
   function getAction(r) {
     if (r.cost > 30 && r.conv === 0) return ['badge-neg', '⛔ ADD NEGATIVE'];
-    if (r.cpa > 15) return ['badge-neg', '⛔ ADD NEGATIVE'];
-    if (r.cpa > 10 && r.cpa <= 15) return ['badge-pause', '⚠ MONITOR'];
-    if (r.cpa > 0 && r.cpa <= 6.41 && r.conv >= 2) return ['badge-exact', '✓ ADD AS EXACT'];
-    if (r.cpa > 0 && r.cpa <= 9) return ['badge-keep', '✓ KEEP'];
+    const t3 = getAppTiers();
+    if (r.cpa > t3.FATAL)     return ['badge-neg',   '⛔ ADD NEGATIVE'];
+    if (r.cpa > t3.GOOD)      return ['badge-pause', '⚠ MONITOR'];
+    if (r.cpa > 0 && r.cpa <= t3.FANTASTIC && r.conv >= 2) return ['badge-exact', '✓ ADD AS EXACT'];
+    if (r.cpa > 0 && r.cpa <= t3.GOOD)      return ['badge-keep',  '✓ KEEP'];
     if (r.impressions > 200 && r.conv === 0 && r.cost > 10) return ['badge-neg', '⛔ ADD NEGATIVE'];
     return ['badge-watch', '— MONITOR'];
   }
@@ -1221,9 +1304,9 @@ function renderBrief(dailyRaw, keywordsRaw, searchTermsRaw) {
     .sort((a,b) => (parseFloat(b.Cost)||0) - (parseFloat(a.Cost)||0))
     .slice(0, 3);
 
-  // Best keywords
+  // Best keywords — those in FANTASTIC tier
   const bestKW = (keywordsRaw||[])
-    .filter(r => { const c = parseFloat(r.Conversions)||0, s = parseFloat(r.Cost)||0; return c > 0 && (s/c) < 6.41; })
+    .filter(r => { const c = parseFloat(r.Conversions)||0, s = parseFloat(r.Cost)||0; return c > 0 && (s/c) <= getAppTiers().FANTASTIC; })
     .sort((a,b) => (parseFloat(b.Conversions)||0) - (parseFloat(a.Conversions)||0))
     .slice(0, 3);
 
@@ -1277,7 +1360,7 @@ function renderBrief(dailyRaw, keywordsRaw, searchTermsRaw) {
   if (campEntries.length > 1) {
     const campBreakdown = campEntries.map(([name, d]) => {
       const cpa = d.conv > 0 ? d.spend/d.conv : 0;
-      const col = cpa <= 6.41 ? 'var(--green)' : cpa <= 9 ? 'var(--amber)' : 'var(--red)';
+      const col = cpaColor(cpa);
       return `<b style="color:${col}">${name}</b>: ${fmtMoney(d.spend)} spend · ${d.conv.toFixed(1)} conv · ${cpa > 0 ? fmtCPA(cpa) + ' CPA' : 'no conv'}`;
     }).join(' &nbsp;|&nbsp; ');
     actions.push({ type:'', icon:'📣', text:`Yesterday by campaign: ${campBreakdown}` });
@@ -1706,6 +1789,14 @@ async function fetchAllSheets() {
     else { failed.push(priority[i]); console.warn(`[MC] ${priority[i]} failed:`, r.reason?.message); }
   });
 
+  // Refresh live activation rate now that BGOA data is loaded
+  ACT_RATE = getLiveActRate();
+  const liveT = getAppTiers();
+  console.log(`[MC] Live act rate: ${(ACT_RATE*100).toFixed(2)}% | App CPA tiers: FANTASTIC≤${fmtCPA(liveT.FANTASTIC)} EXCELLENT≤${fmtCPA(liveT.EXCELLENT)} GOOD≤${fmtCPA(liveT.GOOD)} FATAL>${fmtCPA(liveT.FATAL)}`);
+  // Update brief meta with live-derived app CPA thresholds
+  const bm = $('briefMeta');
+  if (bm) bm.textContent = `YESTERDAY VS DAY BEFORE · ACT CPA: ≤$${ACT_TIERS.FANTASTIC} FANTASTIC · ≤$${ACT_TIERS.EXCELLENT} EXCELLENT · ≤$${ACT_TIERS.GOOD} GOOD · APP CPA: ≤${fmtCPA(liveT.FANTASTIC)} FANTASTIC (${(ACT_RATE*100).toFixed(1)}% act rate)`;
+
   // Render what we have immediately after priority sheets
   if (RAW.bgoa.length) try { renderAssuranceIntelligence(); } catch(e) { console.error('AssuranceIntel', e); }
   if (RAW.daily.length) {
@@ -1991,7 +2082,7 @@ function applyFilters() {
       conv:  c.conv,
       cpa:   c.conv > 0 ? c.spend/c.conv : 0,
       ctr:   c.impressions > 0 ? (c.clicks/c.impressions*100).toFixed(1)+'%' : '—',
-      grade: (() => { const cpa = c.conv > 0 ? c.spend/c.conv : 99; return cpa<=5.51?'A':cpa<=6.89?'B':cpa<=8.27?'C':cpa<=10?'D':'F'; })()
+      grade: (() => { const cpa = c.conv > 0 ? c.spend/c.conv : 99; const t=getAppTiers(); return cpa<=t.FANTASTIC?'A':cpa<=t.EXCELLENT?'B':cpa<=t.GOOD?'C':cpa<=t.FATAL?'D':'F'; })()
     })).sort((a,b) => b.spend - a.spend);
     renderCampaigns(camps, period.label);
   } catch(e) { console.error('Camps',e); }
