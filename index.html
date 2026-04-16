@@ -118,7 +118,7 @@ body::after{content:'';position:fixed;inset:0;background-image:linear-gradient(r
 .btm-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
 
 /* states */
-.state-row{display:flex;align-items:center;gap:7px;padding:5px 0;border-bottom:1px solid var(--border2)}
+.state-row{display:flex;align-items:center;gap:7px;padding:4px 0;border-bottom:1px solid var(--border2)}
 .state-row:last-child{border-bottom:none}
 .s-code{font-family:var(--mono);font-size:11px;color:var(--accent);width:26px;flex-shrink:0;text-align:center}
 .s-track{flex:1;height:7px;background:rgba(255,255,255,.04);border-radius:3px}
@@ -439,7 +439,7 @@ body::after{content:'';position:fixed;inset:0;background-image:linear-gradient(r
         <div class="ptitle">Top States · Applications & App CPA</div>
         <div class="pmeta" id="statePeriod">LIVE DATA</div>
       </div>
-      <div id="stateList" style="flex:1;display:flex;flex-direction:column;justify-content:space-evenly">
+      <div id="stateList" style="flex:1;display:flex;flex-direction:column;justify-content:flex-start;gap:2px;overflow-y:auto">
         <div class="no-data-state"><div class="nd-icon">🗺</div><div class="nd-title">AWAITING LIVE DATA</div></div>
       </div>
     </div>
