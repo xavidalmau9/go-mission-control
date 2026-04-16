@@ -224,11 +224,11 @@ body::after{content:'';position:fixed;inset:0;background-image:linear-gradient(r
       <option value="all">All Campaigns</option>
     </select>
     <div style="display:flex;gap:6px;flex-wrap:wrap;">
-      <button class="dr-btn active" data-range="last30" onclick="setDateRange('last30',this)">Last 30</button>
-      <button class="dr-btn" data-range="last14" onclick="setDateRange('last14',this)">Last 14</button>
-      <button class="dr-btn" data-range="last7" onclick="setDateRange('last7',this)">Last 7</button>
+      <button class="dr-btn active" data-range="today" onclick="setDateRange('today',this)">Today</button>
       <button class="dr-btn" data-range="yesterday" onclick="setDateRange('yesterday',this)">Yesterday</button>
-      <button class="dr-btn" data-range="today" onclick="setDateRange('today',this)">Today</button>
+      <button class="dr-btn" data-range="last7" onclick="setDateRange('last7',this)">Last 7</button>
+      <button class="dr-btn" data-range="last14" onclick="setDateRange('last14',this)">Last 14</button>
+      <button class="dr-btn" data-range="last30" onclick="setDateRange('last30',this)">Last 30</button>
       <button class="dr-btn" data-range="lastmonth" onclick="setDateRange('lastmonth',this)">Last Month</button>
       <button class="dr-btn" data-range="custom" onclick="setDateRange('custom',this)">Custom</button>
     </div>
@@ -859,7 +859,7 @@ function renderTrajectory(monthly, daily) {
 // Global state
 let RAW = { daily: [], devices: [], geo: [], hourly: [] };
 let activeCampaign = 'all';
-let activeDateRange = 'last30';
+let activeDateRange = 'today';
 let customFrom = null, customTo = null;
 
 // CSV parser
@@ -1053,17 +1053,28 @@ function applyFilters() {
     customTo   = document.getElementById('custom-to')?.value || null;
   }
   const f = filterData();
-  if (!f.daily.length) return;
-  const kpis    = buildKPIs(f.daily);
-  const chart   = buildChartDaily(f.daily);
-  const devices = buildDevices(f.devices);
-  const states  = buildStates(f.geo);
-  const hourly  = buildHourly(f.hourly);
+  // If no live data at all, render FALLBACK so buttons still respond visually
+  if (!RAW.daily.length) {
+    try { renderKPIs(FALLBACK.totals); } catch(e) {}
+    try { renderChart(FALLBACK.daily); } catch(e) {}
+    try { renderDevices(FALLBACK.devices); } catch(e) {}
+    try { renderStates(FALLBACK.states); } catch(e) {}
+    try { renderHeatmap(FALLBACK.hours); } catch(e) {}
+    try { renderFeed(FALLBACK.daily); } catch(e) {}
+    return;
+  }
+  // Live data available — use filtered results
+  const daily   = f.daily.length   ? f.daily   : RAW.daily;
+  const devices = f.devices.length ? f.devices : RAW.devices;
+  const geo     = f.geo.length     ? f.geo     : RAW.geo;
+  const hourly  = f.hourly.length  ? f.hourly  : RAW.hourly;
+  const kpis    = buildKPIs(daily);
+  const chart   = buildChartDaily(daily);
   try { renderKPIs(kpis); } catch(e) {}
   try { renderChart(chart); } catch(e) {}
-  try { renderDevices(devices); } catch(e) {}
-  try { renderStates(states); } catch(e) {}
-  try { renderHeatmap(hourly); } catch(e) {}
+  try { renderDevices(buildDevices(devices)); } catch(e) {}
+  try { renderStates(buildStates(geo)); } catch(e) {}
+  try { renderHeatmap(buildHourly(hourly)); } catch(e) {}
   try { renderFeed(chart); } catch(e) {}
   const { from, to } = getDateRange();
   $('chartRange').textContent = from + ' → ' + to;
