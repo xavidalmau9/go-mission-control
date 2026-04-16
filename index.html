@@ -311,7 +311,7 @@ body::after{content:'';position:fixed;inset:0;background-image:linear-gradient(r
     <div class="kpi c-accent"><div class="kpi-lbl">Total Activations</div><div class="kpi-val" style="color:var(--accent)" id="kv-activations">—</div><div class="kpi-sub" id="ks-activations">loading...</div></div>
     <div class="kpi c-green"><div class="kpi-lbl">Total Revenue</div><div class="kpi-val" style="color:var(--green)" id="kv-revenue">—</div><div class="kpi-sub" id="ks-revenue">loading...</div></div>
     <div class="kpi c-amber"><div class="kpi-lbl">Applications</div><div class="kpi-val" style="color:var(--amber)" id="kv-apps">—</div><div class="kpi-sub" id="ks-apps">loading...</div></div>
-    <div class="kpi c-purple"><div class="kpi-lbl">Approval Rate</div><div class="kpi-val" style="color:var(--accent2)" id="kv-approval">—</div><div class="kpi-sub" id="ks-approval">loading...</div></div>
+    <div class="kpi c-purple"><div class="kpi-lbl">Activation Rate</div><div class="kpi-val" style="color:var(--accent2)" id="kv-approval">—</div><div class="kpi-sub" id="ks-approval">loading...</div></div>
     <div class="kpi c-green"><div class="kpi-lbl">Ad Spend</div><div class="kpi-val" style="color:var(--green)" id="kv-spend">—</div><div class="kpi-sub" id="ks-spend">loading...</div></div>
     <div class="kpi c-amber"><div class="kpi-lbl">App CPA</div><div class="kpi-val" style="color:var(--amber)" id="kv-gcpa">—</div><div class="kpi-sub" id="ks-gcpa">loading...</div></div>
     <div class="kpi c-red"><div class="kpi-lbl">Activation CPA</div><div class="kpi-val" style="color:var(--red)" id="kv-acpa">—</div><div class="kpi-sub" id="ks-acpa">loading...</div></div>
@@ -656,6 +656,87 @@ function getLiveActRate() {
   return ACT_RATE_BASELINE;
 }
 
+// Return the label for the settled month used in getLiveActRate()
+function getSettledRateLabel() {
+  const rows = (RAW && RAW.bgoa) ? RAW.bgoa.map(parseBGOARow).filter(Boolean) : [];
+  if (rows.length === 0) return 'baseline';
+  const today = new Date();
+  const dayOfMonth = today.getDate();
+  const settledDate = new Date(today.getFullYear(), today.getMonth() - (dayOfMonth >= 15 ? 1 : 2), 1);
+  const settledMonth = settledDate.toISOString().substring(0, 7);
+  const settledRows = rows.filter(r => r.date.startsWith(settledMonth));
+  if (settledRows.length >= 15) {
+    const acts = settledRows.reduce((s,r) => s + r.activations, 0);
+    const apps = settledRows.reduce((s,r) => s + r.applications, 0);
+    if (apps > 50 && acts > 0) {
+      const mo = settledDate.toLocaleString('default', { month: 'short', year: '2-digit' });
+      return mo + ' settled';
+    }
+  }
+  return 'Mar 26 settled';
+}
+
+// Map US zip code (5 digits) → state name via 3-digit prefix ranges
+function zipToStateName(zip) {
+  const z = String(zip).replace(/\D/g, '').padStart(5, '0');
+  const n = parseInt(z.substring(0, 3));
+  if (n >= 10 && n <= 27)   return 'Massachusetts';
+  if (n >= 28 && n <= 29)   return 'Rhode Island';
+  if (n >= 30 && n <= 38)   return 'New Hampshire';
+  if (n >= 39 && n <= 49)   return 'Maine';
+  if ((n >= 50 && n <= 52) || (n >= 53 && n <= 57)) return 'Vermont';
+  if (n >= 60 && n <= 69)   return 'Connecticut';
+  if (n >= 70 && n <= 89)   return 'New Jersey';
+  if (n >= 90 && n <= 149)  return 'New York';
+  if (n >= 150 && n <= 196) return 'Pennsylvania';
+  if (n >= 197 && n <= 199) return 'Delaware';
+  if (n >= 200 && n <= 205) return 'Washington DC';
+  if (n >= 206 && n <= 219) return 'Maryland';
+  if (n >= 220 && n <= 246) return 'Virginia';
+  if (n >= 247 && n <= 268) return 'West Virginia';
+  if (n >= 270 && n <= 289) return 'North Carolina';
+  if (n >= 290 && n <= 299) return 'South Carolina';
+  if (n >= 300 && n <= 319) return 'Georgia';
+  if (n >= 320 && n <= 349) return 'Florida';
+  if (n >= 350 && n <= 369) return 'Alabama';
+  if (n >= 370 && n <= 385) return 'Tennessee';
+  if (n >= 386 && n <= 397) return 'Mississippi';
+  if (n >= 398 && n <= 399) return 'Georgia';
+  if (n >= 400 && n <= 427) return 'Kentucky';
+  if (n >= 430 && n <= 459) return 'Ohio';
+  if (n >= 460 && n <= 479) return 'Indiana';
+  if (n >= 480 && n <= 499) return 'Michigan';
+  if (n >= 500 && n <= 528) return 'Iowa';
+  if (n >= 530 && n <= 549) return 'Wisconsin';
+  if (n >= 550 && n <= 567) return 'Minnesota';
+  if (n >= 570 && n <= 577) return 'South Dakota';
+  if (n >= 580 && n <= 588) return 'North Dakota';
+  if (n >= 590 && n <= 599) return 'Montana';
+  if (n >= 600 && n <= 629) return 'Illinois';
+  if (n >= 630 && n <= 658) return 'Missouri';
+  if (n >= 660 && n <= 679) return 'Kansas';
+  if (n >= 680 && n <= 693) return 'Nebraska';
+  if (n >= 700 && n <= 714) return 'Louisiana';
+  if (n >= 716 && n <= 729) return 'Arkansas';
+  if (n >= 730 && n <= 749) return 'Oklahoma';
+  if (n >= 750 && n <= 799) return 'Texas';
+  if (n >= 800 && n <= 816) return 'Colorado';
+  if (n >= 820 && n <= 831) return 'Wyoming';
+  if (n >= 832 && n <= 839) return 'Idaho';
+  if (n >= 840 && n <= 847) return 'Utah';
+  if (n >= 850 && n <= 865) return 'Arizona';
+  if (n >= 870 && n <= 884) return 'New Mexico';
+  if (n >= 885 && n <= 885) return 'Texas';
+  if (n >= 890 && n <= 898) return 'Nevada';
+  if (n >= 900 && n <= 961) return 'California';
+  if (n >= 967 && n <= 968) return 'Hawaii';
+  if (n >= 970 && n <= 979) return 'Oregon';
+  if (n >= 980 && n <= 994) return 'Washington';
+  if (n >= 995 && n <= 999) return 'Alaska';
+  if (n >= 6   && n <= 9)   return 'Puerto Rico';
+  return null;
+}
+
 // App CPA thresholds derived from Act CPA tiers × activation rate
 // At 55.12%: FANTASTIC≤$5.51 · EXCELLENT≤$6.89 · GOOD≤$8.27 · FATAL>$13.78
 function getAppTiers(actRate) {
@@ -807,7 +888,7 @@ function renderChart(daily) {
 
 function renderKPIs(kpis) {
   const { spend, conversions, activations, googleCPA, activationCPA, revenue,
-          isConfirmed, confirmedDays } = kpis;
+          isConfirmed, confirmedDays, confirmedSources } = kpis;
   const isToday = activeDateRange === 'today';
 
   if (isToday) {
@@ -821,13 +902,13 @@ function renderKPIs(kpis) {
     $('kv-revenue').style.color = 'var(--muted)';
     $('ks-revenue').innerHTML = `<span style="color:var(--muted);font-size:9px">CONFIRMED T+1 · ${yest ? fmtMoney(yest.revenue) + ' YESTERDAY' : 'SEE BGOA'}</span>`;
   } else if (isConfirmed) {
-    // BGOA confirmed data available for this range
+    // Confirmed data from BGOA and/or BGOC
     $('kv-activations').textContent = activations.toLocaleString();
     $('kv-activations').style.color = 'var(--green)';
-    $('ks-activations').innerHTML = `<span style="color:var(--green);font-size:9px">✓ CONFIRMED · ${confirmedDays}d BGOA</span>`;
+    $('ks-activations').innerHTML = `<span style="color:var(--green);font-size:9px">✓ CONFIRMED · ${confirmedSources}</span>`;
     $('kv-revenue').textContent = fmtMoney(revenue);
     $('kv-revenue').style.color = '';
-    $('ks-revenue').innerHTML = `<span style="color:var(--green);font-size:9px">✓ CONFIRMED · $${PAYOUT}/activation</span>`;
+    $('ks-revenue').innerHTML = `<span style="color:var(--green);font-size:9px">✓ CONFIRMED · ${confirmedSources} · $${PAYOUT}/act</span>`;
   } else {
     // No BGOA data for range — show Google conv estimate
     $('kv-activations').textContent = activations.toLocaleString();
@@ -840,8 +921,8 @@ function renderKPIs(kpis) {
 
   $('kv-apps').textContent = Math.round(conversions).toLocaleString();
   $('ks-apps').innerHTML = `<span style="color:var(--muted)">Google conversions</span>`;
-  $('kv-approval').textContent = conversions > 0 ? fmtPct(activations / conversions * 100) : '—';
-  $('ks-approval').textContent = 'act / app rate';
+  $('kv-approval').textContent = fmtPct(ACT_RATE * 100);
+  $('ks-approval').innerHTML = `<span style="color:var(--muted);font-size:9px">${getSettledRateLabel()}</span>`;
   $('kv-spend').textContent = fmtMoney(spend);
 
   // Live daily budget: sum from CampaignMeta if loaded, else show 7-day avg
@@ -878,12 +959,18 @@ function renderKPIs(kpis) {
 }
 
 function renderDevices(devData) {
+  const panel = $('devicePanel');
+  if (!panel) return;
   if (!devData || (!devData.desktop && !devData.mobile && !devData.tablets)) {
-    $('devicePanel').innerHTML = '<div class="no-data-state"><div class="nd-icon">📱</div><div class="nd-title">NO DEVICE DATA</div></div>';
+    panel.innerHTML = '<div class="no-data-state"><div class="nd-icon">📱</div><div class="nd-title">NO DEVICE DATA</div><div class="nd-sub">Devices tab may still be loading or has no data for this period</div></div>';
     return;
   }
+  // Set period label
+  const dp = $('devicePeriod');
+  if (dp) { const { from, to } = getDateRange(); dp.textContent = from && to ? from.substring(5) + ' → ' + to.substring(5) : 'LIVE DATA'; }
   const devices = [{key:'desktop',label:'DESKTOP'},{key:'tablets',label:'TABLETS'},{key:'mobile',label:'MOBILE'}];
-  const maxCpa = Math.max(...Object.values(devData).filter(v => typeof v === 'number'));
+  // Only compare the three CPA values (not spend/apps which would dwarf them)
+  const maxCpa = Math.max(devData.desktop || 0, devData.mobile || 0, devData.tablets || 0) || 1;
   function colBg(col) {
     return col.replace('var(--green)','rgba(52,211,153,0.12)').replace('var(--amber)','rgba(251,191,36,0.12)').replace('var(--red)','rgba(248,113,113,0.12)').replace('var(--muted)','rgba(100,116,139,0.12)');
   }
@@ -961,8 +1048,9 @@ function renderFeed(daily) {
     const prev = sorted[i + 1];
     const appCPA = d.spend > 0 && d.apps > 0 ? d.spend / d.apps : 0;
     const cpaCol = cpaColor(appCPA);
-    const acts = Math.round(d.apps * ACT_RATE);
-    const actCPA = acts > 0 ? d.spend / acts : 0;
+    // d.activations is already BGOA-confirmed (or estimated for days without BGOA data)
+    const acts = d.activations || 0;
+    const actCPA = acts > 0 && d.spend > 0 ? d.spend / acts : 0;
 
     // Day-over-day deltas
     let deltaHtml = '';
@@ -1106,7 +1194,7 @@ function renderSummary(chartDaily, kpis) {
   const avgSpend = kpis.spend / days;
   const avgApps  = kpis.conversions / days;
   const avgActs  = kpis.activations / days;
-  const estMonthlyRev = kpis.estRevenue;
+  const estMonthlyRev = kpis.revenue; // BGOA confirmed where available
   $('summaryText').innerHTML =
     `<span style="color:var(--accent)">Period days:</span> ${days} days<br>` +
     `<span style="color:var(--accent)">Total spend:</span> ${fmtMoney(kpis.spend)}<br>` +
@@ -1290,11 +1378,16 @@ function renderBrief(dailyRaw, keywordsRaw, searchTermsRaw) {
   }
 
   const yApps = yData.conv, ySpend = yData.spend;
-  const yAppCPA   = yApps > 0 ? ySpend / yApps : 0;
-  const yActs     = Math.round(yApps * ACT_RATE);
-  const yActCPA   = yActs > 0 ? ySpend / yActs : 0;
-  const yRevenue  = yActs * PAYOUT;
-  const yProfit   = yRevenue - ySpend;
+  const yAppCPA = yApps > 0 ? ySpend / yApps : 0;
+
+  // Use BGOA confirmed activations for yesterday — this is what we get paid on
+  const bgoaYest = RAW.bgoa.map(parseBGOARow).filter(Boolean).find(r => r.date === yStr);
+  const bgoaDB   = RAW.bgoa.map(parseBGOARow).filter(Boolean).find(r => r.date === dbStr);
+  const yActs    = bgoaYest ? bgoaYest.activations : Math.round(yApps * ACT_RATE);
+  const yActsConfirmed = !!bgoaYest;
+  const yActCPA  = yActs > 0 ? ySpend / yActs : 0;
+  const yRevenue = yActs * PAYOUT;
+  const yProfit  = yRevenue - ySpend;
   const yCTR      = yData.impressions > 0 ? yData.clicks / yData.impressions * 100 : 0;
 
   const dbApps   = dbData ? dbData.conv    : null;
@@ -1917,8 +2010,8 @@ function filterData() {
     devices:     RAW.devices.filter(filterRow),
     geo:         RAW.geo.filter(filterRow),
     hourly:      RAW.hourly.filter(r => camp === 'all' || r.CampaignName === camp),
-    keywords:    RAW.keywords.filter(r => camp === 'all' || r.CampaignName === camp),
-    searchTerms: RAW.searchTerms.filter(r => camp === 'all' || r.CampaignName === camp),
+    keywords:    RAW.keywords.filter(filterRow),
+    searchTerms: RAW.searchTerms.filter(filterRow),
   };
 }
 
@@ -1930,28 +2023,37 @@ function buildKPIs(daily) {
   const impressions = daily.reduce((s,r) => s + (parseFloat(r.Impressions)||0), 0);
   const googleCPA   = conversions > 0 ? spend / conversions : 0;
 
-  // Pull confirmed activations from BGOA for this date range
+  // Pull confirmed activations from BGOA + BGOC — this is what we actually get paid on
   const { from, to } = getDateRange();
   const bgoaRows = RAW.bgoa.map(parseBGOARow).filter(r => r && r.date >= from && r.date <= to);
+  const bgocRows = RAW.bgoc.map(parseBGOARow).filter(r => r && r.date >= from && r.date <= to);
+  const hasBGOA  = bgoaRows.length > 0;
+  const hasBGOC  = bgocRows.length > 0;
 
-  let activations, revenue, isConfirmed, confirmedDays;
-  if (bgoaRows.length > 0) {
-    activations   = bgoaRows.reduce((s,r) => s + r.activations, 0);
-    revenue       = bgoaRows.reduce((s,r) => s + r.revenue, 0);
-    isConfirmed   = true;
-    confirmedDays = bgoaRows.length;
+  let activations, revenue, isConfirmed, confirmedDays, confirmedSources;
+  if (hasBGOA || hasBGOC) {
+    const bgoaActs = bgoaRows.reduce((s,r) => s + r.activations, 0);
+    const bgocActs = bgocRows.reduce((s,r) => s + r.activations, 0);
+    const bgoaRev  = bgoaRows.reduce((s,r) => s + r.revenue, 0);
+    const bgocRev  = bgocRows.reduce((s,r) => s + r.revenue, 0);
+    activations      = bgoaActs + bgocActs;
+    revenue          = bgoaRev  + bgocRev;
+    isConfirmed      = true;
+    confirmedDays    = Math.max(bgoaRows.length, bgocRows.length);
+    confirmedSources = [hasBGOA ? 'BGOA' : null, hasBGOC ? 'BGOC' : null].filter(Boolean).join('+');
   } else {
-    // No BGOA data for range — fall back to Google conv estimate
-    activations   = Math.round(conversions * ACT_RATE);
-    revenue       = activations * PAYOUT;
-    isConfirmed   = false;
-    confirmedDays = 0;
+    // No confirmed data — fall back to Google conv estimate
+    activations      = Math.round(conversions * ACT_RATE);
+    revenue          = activations * PAYOUT;
+    isConfirmed      = false;
+    confirmedDays    = 0;
+    confirmedSources = '';
   }
 
   const activationCPA = activations > 0 ? spend / activations : 0;
   const profit        = revenue - spend;
   return { spend, clicks, impressions, conversions, activations, googleCPA, activationCPA,
-           revenue, profit, isConfirmed, confirmedDays };
+           revenue, profit, isConfirmed, confirmedDays, confirmedSources };
 }
 
 // Build chart daily from raw rows
@@ -2031,13 +2133,19 @@ function buildDevices(devices) {
   return result;
 }
 
-// Build states
+// Build states — aggregates zip-level geo data into state names
 function buildStates(geo) {
   if (!geo.length) return [];
   const byRegion = {};
   geo.forEach(r => {
-    const region = r.Region || r.RegionName || '';
+    let region = r.Region || r.RegionName || r.State || r.state || '';
     if (!region) return;
+    // If region looks like a zip code (4-5 digits), map to state name
+    const isZip = /^\d{4,5}$/.test(region.trim());
+    if (isZip) {
+      const stateName = zipToStateName(region.trim());
+      region = stateName || ('Zip ' + region.trim()); // fallback: "Zip XXXXX"
+    }
     if (!byRegion[region]) byRegion[region] = { cost:0, conv:0 };
     byRegion[region].cost += parseFloat(r.Cost)||0;
     byRegion[region].conv += parseFloat(r.Conversions)||0;
@@ -2107,9 +2215,10 @@ function applyFilters() {
   const geo     = f.geo.length     ? f.geo     : RAW.geo;
   const hourly  = f.hourly.length  ? f.hourly  : RAW.hourly;
 
-  const kpis      = buildKPIs(daily);
-  const chartData = buildChartDaily(daily);
-  const period    = getPeriodMeta(daily);
+  let kpis, chartData, period;
+  try { kpis      = buildKPIs(daily); }      catch(e) { console.error('buildKPIs',e); kpis = { spend:0, clicks:0, impressions:0, conversions:0, activations:0, googleCPA:0, activationCPA:0, revenue:0, profit:0, isConfirmed:false, confirmedDays:0, confirmedSources:'' }; }
+  try { chartData = buildChartDaily(daily); } catch(e) { console.error('buildChart',e); chartData = []; }
+  try { period    = getPeriodMeta(daily); }   catch(e) { console.error('getPeriod',e); period = { label:'—', banner:'REPORT WINDOW: ERROR', days:0, start:'', end:'' }; }
 
   $('periodBanner').textContent = period.banner;
   $('chartRange').textContent   = period.label;
@@ -2145,7 +2254,7 @@ function applyFilters() {
     renderCampaigns(camps, period.label);
   } catch(e) { console.error('Camps',e); }
 
-  // Keywords & search terms (not date-filtered — show full picture)
+  // Keywords & search terms — date + campaign filtered
   try { renderKeywords(f.keywords.length ? f.keywords : RAW.keywords, activeCampaign); } catch(e) { console.error('KW',e); }
   try { renderSearchTerms(f.searchTerms.length ? f.searchTerms : RAW.searchTerms, activeCampaign); } catch(e) { console.error('ST',e); }
 
