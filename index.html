@@ -439,7 +439,7 @@ body::after{content:'';position:fixed;inset:0;background-image:linear-gradient(r
         <div class="ptitle">Top States · Applications & App CPA</div>
         <div class="pmeta" id="statePeriod">LIVE DATA</div>
       </div>
-      <div id="stateList" style="flex:1;display:flex;flex-direction:column;justify-content:flex-start;gap:2px;overflow-y:auto">
+      <div id="stateList" style="flex:1;display:flex;flex-direction:column;justify-content:flex-start;gap:0;overflow-y:auto;min-height:0">
         <div class="no-data-state"><div class="nd-icon">🗺</div><div class="nd-title">AWAITING LIVE DATA</div></div>
       </div>
     </div>
@@ -2351,17 +2351,17 @@ function applyFilters() {
   const hourly  = f.hourly;
 
   // Geo and devices are T+1 — TODAY never has data. When the filtered set is empty,
-  // fall back to the most recent available date in the raw data (NOT all history).
-  // This shows current state without showing misleading all-time aggregates.
-  function getMostRecentRows(rawArr) {
+  // fall back to the most recent 7 available days (NOT all history, NOT just 1 day).
+  // 7 days gives a representative geographic/device breakdown instead of a single-day slice.
+  function getMostRecentWeek(rawArr) {
     if (!rawArr.length) return [];
-    const dates = rawArr.map(r => normDateStr(r.Date || r.date || '')).filter(Boolean);
-    if (!dates.length) return rawArr; // no dates → return as-is
-    const latest = dates.sort().pop();
-    return rawArr.filter(r => normDateStr(r.Date || r.date || '') === latest);
+    const dates = [...new Set(rawArr.map(r => normDateStr(r.Date || r.date || '')).filter(Boolean))].sort();
+    if (!dates.length) return rawArr;
+    const recent7 = new Set(dates.slice(-7));
+    return rawArr.filter(r => recent7.has(normDateStr(r.Date || r.date || '')));
   }
-  const geo     = f.geo.length     ? f.geo     : getMostRecentRows(RAW.geo);
-  const devices = f.devices.length ? f.devices : getMostRecentRows(RAW.devices);
+  const geo     = f.geo.length     ? f.geo     : getMostRecentWeek(RAW.geo);
+  const devices = f.devices.length ? f.devices : getMostRecentWeek(RAW.devices);
 
   // If no Google Ads data for the selected period, show a clear message instead of garbage
   if (!daily.length) {
@@ -2392,12 +2392,18 @@ function applyFilters() {
 
   try { renderKPIs(kpis); }              catch(e) { console.error('KPI',e); }
   try { renderChart(chartData); }        catch(e) { console.error('Chart',e); }
-  // Compute source label — if using fallback date, show it in the panel header
-  const geoDate    = geo.length    ? normDateStr(geo[0].Date    || geo[0].date    || '') : '';
-  const devDate    = devices.length ? normDateStr(devices[0].Date || devices[0].date || '') : '';
-  const { from: selFrom } = getDateRange();
-  const geoLabel   = (geoDate && geoDate !== selFrom) ? geoDate.substring(5) : '';
-  const devLabel   = (devDate && devDate !== selFrom) ? devDate.substring(5) : '';
+  // If using T+1 fallback data, show the actual date range in the panel header
+  const { from: selFrom, to: selTo } = getDateRange();
+  function getFallbackLabel(rows) {
+    if (!rows.length) return '';
+    const dates = [...new Set(rows.map(r => normDateStr(r.Date || r.date || '')).filter(Boolean))].sort();
+    if (!dates.length) return '';
+    const first = dates[0], last = dates[dates.length - 1];
+    if (first === selFrom && last === selTo) return ''; // matches selection, no label needed
+    return first === last ? first.substring(5) : first.substring(5) + ' → ' + last.substring(5);
+  }
+  const geoLabel = getFallbackLabel(f.geo.length ? f.geo : geo);
+  const devLabel = getFallbackLabel(f.devices.length ? f.devices : devices);
   try { renderDevices(buildDevices(devices), devLabel); } catch(e) { console.error('Devices',e); }
   try { renderStates(buildStates(geo), geoLabel); }       catch(e) { console.error('States',e); }
   try { renderHeatmap(buildHourly(hourly)); }  catch(e) { console.error('Heatmap',e); }
