@@ -1,6 +1,6 @@
 # Mission Control Dashboard — Claude Project Instructions
 **GO Advertising · Assurance Wireless / BGOA Partner Dashboard**
-**Last updated: April 16, 2026**
+**Last updated: April 16, 2026 (session 2)**
 
 > This file is read by Claude at the start of every session. Update it whenever significant decisions are made.
 
@@ -177,8 +177,12 @@ Derives App CPA thresholds from ACT_TIERS × activation rate. NEVER hardcode app
 - Returns `{ ..., googleApps, confirmedApps }` so `renderKPIs` can show which source won in subtitle
 
 ### `renderKPIs(kpis)`
-Applications tile subtitle shows: `✓ [source] (higher/fresher) · Assurance: N · Google: N`
-Always transparent about both numbers and which won.
+- **App CPA tile** (`kv-gcpa`) uses `appCPA` = `spend / applications`. NOT `googleCPA`. Never swap these — `googleCPA` = spend/conversions which is a different (wrong) number.
+- **Applications tile** subtitle shows: `✓ [source] (higher/fresher) · Assurance: N · Google: N`
+- **Activation Rate tile** (`kv-approval`):
+  - TODAY view → always shows `PROJECTED` in amber (T+1 lag means no confirmed rate)
+  - Has confirmed period data → shows `✓ REAL` in green
+  - Fallback (not enough data) → shows `PROJECTED` in muted — never implies it's a confirmed number
 
 ### `buildChartDaily(daily)`
 Merges Google Ads rows with BGOA confirmed activations. Includes Sundays with $0 spend that still have BGOA activations (30-day cookie window).
@@ -230,6 +234,10 @@ Renders monthly table, CPA trend, BGOC panel, Projections vs Reality. `ORIG_PROJ
 | Ad spend showing only $1,161 instead of $2,244 | Two bugs: (1) `WHERE Impressions > 0` missed campaigns with low impressions; (2) AWQL comma bug: `parseFloat("1,083.67")` = 1 | (1) Changed to `WHERE Cost > 0`; (2) Added `cleanNum()` in script + `pn()` in dashboard |
 | Spend source wrong | Was using BGOA manual entry for spend — can have mistakes, no per-campaign breakdown | Always use Google DailyCampaign for spend |
 | Applications showing lower number | Was always using BGOA confirmed, but Google has fresher same-day data | `Math.max(confirmedApps, googleApps)` — always use whichever is higher |
+| App CPA tile showing wrong number | `kv-gcpa` was rendering `googleCPA` (spend/conversions=$12.47) instead of `appCPA` (spend/applications=$9.23) | Fixed to use `appCPA` — the tile is labeled "App CPA" so it must use applications not conversions |
+| All states data wrong — CA showing 1 conversion | Same AWQL comma bug in `pushGeo`, `pushKeywords`, `pushSearchTerms` — `parseFloat("1,234")` = 1 | Applied `cleanNum()` to all numeric fields in all 6 script functions |
+| Remaining `parseFloat` calls in dashboard | `renderBrief`, `buildDevices`, keyword CPA list still used raw `parseFloat()` | All converted to `pn()` |
+| Activation Rate showing confirmed % for TODAY | TODAY has no confirmed activation data (T+1) — showing 55.8% implied it was real | TODAY and fallback views now show "PROJECTED" label in amber |
 
 ---
 
@@ -280,7 +288,10 @@ A `US_STATE_CRITERIA` lookup table in the script converts these to state names (
 
 ## What NOT to Do
 
-- **Never use `parseFloat(r.Cost)` directly** — always use `pn(r.Cost)` (AWQL adds commas to numbers ≥ 1000)
+- **Never use `parseFloat()` on any Google Ads CSV field** — always use `pn(r.Cost)`, `pn(r.Conversions)`, `pn(r.Clicks)`, `pn(r.Impressions)`. AWQL adds comma separators to numbers ≥ 1000 and `parseFloat("1,234")` = 1. This affected DailyCampaign, Devices, Hourly, Geo, Keywords, SearchTerms — every sheet. The `pn()` helper strips commas before parsing.
+- **Never use `parseFloat()` in the Google Ads script either** — always use `cleanNum()` for the same reason
+- **Never render `googleCPA` in the App CPA tile** — `googleCPA` = spend/conversions; App CPA tile must use `appCPA` = spend/applications
+- **Never show Activation Rate without a PROJECTED label for TODAY or fallback views** — only show `✓ REAL` when confirmed period data from BGOA exists
 - **Never use BGOA Ad Spend as the spend source** — always use Google DailyCampaign for spend
 - **Never use only one source for applications** — always `Math.max(confirmedApps, googleApps)`
 - **Never hardcode App CPA thresholds** — always derive from `getAppTiers(ACT_RATE)`
@@ -306,6 +317,28 @@ Inline SVG data URI in `<head>` — black rounded square with bold white "GO". N
 ```html
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,...">
 ```
+
+---
+
+## The AWQL Comma Bug — Full History
+
+**This is the most destructive bug in this project. It affected every single sheet.**
+
+AWQL (Google Ads Query Language, used by Google Ads Scripts) returns numeric values with comma separators for numbers ≥ 1,000. Examples:
+- `"1,083.67"` for a $1,083.67 cost
+- `"1,234"` for 1,234 impressions
+- `"2,702"` for 2,702 clicks
+
+`parseFloat("1,083.67")` = **1** in JavaScript — it stops at the first non-numeric character.
+
+**Impact per sheet:**
+- `DailyCampaign`: "Assurance Wireless Search | SS" showed $1/day instead of $1,083/day → total spend $1,161 instead of $2,244
+- `Geo`: California showed 1 conversion instead of actual count → appeared last instead of #1
+- `Devices`: Any device with clicks/cost > 999 had wrong CPA
+- `Keywords`, `SearchTerms`: Any high-traffic keyword had wrong cost/conv numbers
+- `Hourly`: Any hour with cost > $999 had wrong values
+
+**The fix:** `cleanNum()` in the script, `pn()` in the dashboard — both strip commas before `parseFloat`. Applied to ALL numeric fields in ALL 6 sheet functions. Do not ever use raw `parseFloat()` on AWQL data.
 
 ---
 
