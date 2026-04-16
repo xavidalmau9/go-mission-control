@@ -1509,7 +1509,8 @@ let customFrom = null, customTo = null;
 
 // CSV parser
 function parseCSV(text) {
-  const lines = text.trim().split('\n');
+  // Strip blank/separator rows (rows that contain only commas, spaces, or quotes)
+  const lines = text.trim().split('\n').filter(l => l.replace(/[,\s"]/g, '') !== '');
   if (lines.length < 2) return [];
   function parseLine(line) {
     const res = []; let cur = '', inQ = false;
