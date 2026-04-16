@@ -995,10 +995,11 @@ function renderKPIs(kpis) {
       if (total > 0) return { val: total, label: 'LIVE BUDGET' };
     }
     // Fallback: 7-day avg from daily data
+    // normDateStr required — raw Date field may be M/D/YYYY which breaks startsWith('YYYY-MM')
     const byDate = {};
-    RAW.daily.forEach(r => { const d = r.Date||''; if (d) { byDate[d] = (byDate[d]||0) + (parseFloat(r.Cost)||0); } });
-    // Use month-to-date average
-    const thisMonth = new Date().toISOString().substring(0,7);
+    RAW.daily.forEach(r => { const d = normDateStr(r.Date||''); if (d) { byDate[d] = (byDate[d]||0) + (parseFloat(r.Cost)||0); } });
+    // Use month-to-date average (local month, not UTC)
+    const _n = new Date(); const thisMonth = `${_n.getFullYear()}-${String(_n.getMonth()+1).padStart(2,'0')}`;
     const mtdDates = Object.keys(byDate).filter(d => d.startsWith(thisMonth)).sort();
     const useDates = mtdDates.length >= 3 ? mtdDates : Object.keys(byDate).sort().slice(-7);
     const label = mtdDates.length >= 3 ? 'MTD AVG/DAY' : '7D AVG/DAY';
@@ -1095,9 +1096,10 @@ function renderFeed(daily) {
     return;
   }
   // Build per-day totals AND per-campaign-per-day from RAW.daily
+  // normDateStr ensures M/D/YYYY and YYYY-MM-DD dates group into the same key
   const byDate = {};
   RAW.daily.forEach(r => {
-    const d = r.Date || '';
+    const d = normDateStr(r.Date || '');
     if (!d) return;
     if (!byDate[d]) byDate[d] = { spend: 0, apps: 0, camps: {} };
     const cost = parseFloat(r.Cost) || 0;
@@ -1516,8 +1518,9 @@ function renderBrief(dailyRaw, keywordsRaw, searchTermsRaw) {
   }
 
   // Spend vs 7-day rolling average (no hardcoded target)
+  // normDateStr required so M/D/YYYY and YYYY-MM-DD dates sort and group together
   const byDateSpend = {};
-  RAW.daily.forEach(r => { const d = r.Date||''; if (d) byDateSpend[d] = (byDateSpend[d]||0) + (parseFloat(r.Cost)||0); });
+  RAW.daily.forEach(r => { const d = normDateStr(r.Date||''); if (d) byDateSpend[d] = (byDateSpend[d]||0) + (parseFloat(r.Cost)||0); });
   const recentDates = Object.keys(byDateSpend).sort().slice(-8, -1); // last 7 days excluding today
   const avg7Spend = recentDates.length > 0 ? recentDates.reduce((s,d)=>s+byDateSpend[d],0)/recentDates.length : 0;
   if (avg7Spend > 0) {
@@ -2101,7 +2104,14 @@ function populateCampaignDropdown() {
 // Date range helper
 function getDateRange() {
   const today = new Date(); today.setHours(0,0,0,0);
-  const fmt = d => d.toISOString().split('T')[0];
+  // MUST use local date parts — toISOString() converts to UTC which gives the wrong
+  // date for US timezones (midnight local = previous day UTC → every range was off by 1)
+  const fmt = d => {
+    const y = d.getFullYear();
+    const m = String(d.getMonth()+1).padStart(2,'0');
+    const day = String(d.getDate()).padStart(2,'0');
+    return `${y}-${m}-${day}`;
+  };
   switch (activeDateRange) {
     case 'today':     return { from: fmt(today), to: fmt(today) };
     case 'yesterday': { const y = new Date(today); y.setDate(y.getDate()-1); return { from: fmt(y), to: fmt(y) }; }
@@ -2146,10 +2156,15 @@ function buildKPIs(daily) {
   const impressions = daily.reduce((s,r) => s + (parseFloat(r.Impressions)||0), 0);
   const googleCPA   = conversions > 0 ? spend / conversions : 0;
 
-  // Pull confirmed activations from BGOA + BGOC — this is what we actually get paid on
+  // Pull confirmed activations from BGOA + BGOC — this is what we actually get paid on.
+  // BGOA tracks total Google Ads activations (not per-campaign). BGOC tracks Meta.
+  // When a SPECIFIC campaign is selected, BGOA/BGOC are not per-campaign, so we
+  // must fall back to Google conversion estimate to avoid inflating CPA.
   const { from, to } = getDateRange();
-  const bgoaRows = RAW.bgoa.map(parseBGOARow).filter(r => r && r.date >= from && r.date <= to);
-  const bgocRows = RAW.bgoc.map(parseBGOARow).filter(r => r && r.date >= from && r.date <= to);
+  const isSingleCampaign = activeCampaign && activeCampaign !== 'all';
+
+  const bgoaRows = isSingleCampaign ? [] : RAW.bgoa.map(parseBGOARow).filter(r => r && r.date >= from && r.date <= to);
+  const bgocRows = isSingleCampaign ? [] : RAW.bgoc.map(parseBGOARow).filter(r => r && r.date >= from && r.date <= to);
   const hasBGOA  = bgoaRows.length > 0;
   const hasBGOC  = bgocRows.length > 0;
 
@@ -2165,12 +2180,12 @@ function buildKPIs(daily) {
     confirmedDays    = Math.max(bgoaRows.length, bgocRows.length);
     confirmedSources = [hasBGOA ? 'BGOA' : null, hasBGOC ? 'BGOC' : null].filter(Boolean).join('+');
   } else {
-    // No confirmed data — fall back to Google conv estimate
+    // No confirmed data (or single campaign selected) — fall back to Google conv estimate
     activations      = Math.round(conversions * ACT_RATE);
     revenue          = activations * PAYOUT;
     isConfirmed      = false;
     confirmedDays    = 0;
-    confirmedSources = '';
+    confirmedSources = isSingleCampaign ? 'CAMPAIGN ESTIMATE' : '';
   }
 
   const activationCPA = activations > 0 ? spend / activations : 0;
