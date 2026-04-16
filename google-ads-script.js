@@ -47,7 +47,7 @@ function pushDailyCampaign(ss, range) {
   var report = AdsApp.report(
     'SELECT Date, CampaignName, Impressions, Clicks, Cost, Conversions ' +
     'FROM CAMPAIGN_PERFORMANCE_REPORT ' +
-    'WHERE Impressions > 0 ' +
+    'WHERE Cost > 0 ' +
     'DURING ' + range
   );
 

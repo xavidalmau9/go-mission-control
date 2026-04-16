@@ -2151,23 +2151,23 @@ function filterData() {
   };
 }
 
-// Build KPIs — uses BGOA confirmed activations where available, estimates only as fallback
+// Build KPIs — uses BGOA confirmed data where available, Google Ads as fallback
 function buildKPIs(daily) {
-  const spend       = daily.reduce((s,r) => s + (parseFloat(r.Cost)||0), 0);
-  const conversions = daily.reduce((s,r) => s + (parseFloat(r.Conversions)||0), 0);
-  const clicks      = daily.reduce((s,r) => s + (parseFloat(r.Clicks)||0), 0);
-  const impressions = daily.reduce((s,r) => s + (parseFloat(r.Impressions)||0), 0);
-  const googleCPA   = conversions > 0 ? spend / conversions : 0;
+  const googleSpend  = daily.reduce((s,r) => s + (parseFloat(r.Cost)||0), 0);
+  const conversions  = daily.reduce((s,r) => s + (parseFloat(r.Conversions)||0), 0);
+  const clicks       = daily.reduce((s,r) => s + (parseFloat(r.Clicks)||0), 0);
+  const impressions  = daily.reduce((s,r) => s + (parseFloat(r.Impressions)||0), 0);
 
-  // Pull confirmed activations from BGOA + BGOC — this is what we actually get paid on.
-  // BGOA tracks total Google Ads activations (not per-campaign). BGOC tracks Meta.
-  // When a SPECIFIC campaign is selected, BGOA/BGOC are not per-campaign, so we
-  // must fall back to Google conversion estimate to avoid inflating CPA.
   const { from, to } = getDateRange();
   const isSingleCampaign = activeCampaign && activeCampaign !== 'all';
 
   const bgoaRows = isSingleCampaign ? [] : RAW.bgoa.map(parseBGOARow).filter(r => r && r.date >= from && r.date <= to);
   const bgocRows = isSingleCampaign ? [] : RAW.bgoc.map(parseBGOARow).filter(r => r && r.date >= from && r.date <= to);
+
+  // Ad Spend: always from Google Ads DailyCampaign (script uses WHERE Cost > 0 to capture
+  // ALL campaigns including Performance Max). Google is always accurate for spend by campaign.
+  const spend     = googleSpend;
+  const googleCPA = conversions > 0 ? googleSpend / conversions : 0;
   const hasBGOA  = bgoaRows.length > 0;
   const hasBGOC  = bgocRows.length > 0;
 
@@ -2197,7 +2197,7 @@ function buildKPIs(daily) {
     confirmedSources = isSingleCampaign ? 'CAMPAIGN ESTIMATE' : '';
   }
 
-  // Spend always from Google Ads DailyCampaign (all campaigns summed from the sheet)
+  // Spend = Google Ads total (all campaigns, WHERE Cost > 0 ensures none are missed)
   const appCPA        = applications > 0 ? spend / applications : 0;
   const activationCPA = activations  > 0 ? spend / activations  : 0;
   const profit        = revenue - spend;
