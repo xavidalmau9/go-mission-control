@@ -113,7 +113,6 @@ body::after{content:'';position:fixed;inset:0;background-image:linear-gradient(r
 .feed-item:last-child{border-bottom:none}
 .feed-date{font-family:var(--mono);font-size:9px;color:var(--accent);letter-spacing:1px;margin-bottom:5px}
 .feed-txt{font-size:12px;color:var(--muted);line-height:1.6}
-.fdelta{display:inline-flex;align-items:center;gap:2px;font-family:var(--mono);font-size:9px;padding:1px 5px;border-radius:3px;margin:0 2px}
 
 /* ── BOTTOM GRID ── */
 .btm-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
@@ -151,8 +150,50 @@ body::after{content:'';position:fixed;inset:0;background-image:linear-gradient(r
 .tooltip{display:none;position:absolute;background:#1e293b;border:1px solid var(--border);border-radius:5px;padding:6px 10px;font-family:var(--mono);font-size:9px;color:var(--text);letter-spacing:1px;white-space:nowrap;z-index:100;pointer-events:none;top:-36px;left:50%;transform:translateX(-50%)}
 .hcell:hover .tooltip{display:block}
 
+/* ── DATA TABLES (Keywords / Search Terms) ── */
+.data-table-wrap{overflow-x:auto;max-height:380px;overflow-y:auto}
+.data-table-wrap::-webkit-scrollbar{width:4px;height:4px}
+.data-table-wrap::-webkit-scrollbar-track{background:rgba(255,255,255,.03)}
+.data-table-wrap::-webkit-scrollbar-thumb{background:rgba(56,189,248,.2);border-radius:2px}
+.data-table{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:10px}
+.data-table th{font-size:8px;color:var(--muted);letter-spacing:1.5px;text-transform:uppercase;padding:6px 10px;border-bottom:1px solid var(--border);text-align:left;position:sticky;top:0;background:var(--surface);z-index:2;white-space:nowrap}
+.data-table td{padding:6px 10px;border-bottom:1px solid var(--border2);color:var(--text);white-space:nowrap}
+.data-table tr:last-child td{border-bottom:none}
+.data-table tr:hover td{background:rgba(56,189,248,.03)}
+.dt-num{text-align:right}
+.action-badge{font-size:8px;padding:2px 7px;border-radius:3px;letter-spacing:1px;font-family:var(--mono);white-space:nowrap}
+.badge-neg{background:rgba(248,113,113,.15);color:var(--red)}
+.badge-pause{background:rgba(251,191,36,.15);color:var(--amber)}
+.badge-keep{background:rgba(52,211,153,.12);color:var(--green)}
+.badge-scale{background:rgba(56,189,248,.15);color:var(--accent)}
+.badge-watch{background:rgba(129,140,248,.12);color:var(--accent2)}
+.badge-exact{background:rgba(52,211,153,.12);color:var(--green)}
+
+/* ── TODAY'S BRIEF ── */
+.brief-wrap{display:flex;flex-direction:column;gap:0}
+.brief-section{padding:14px 0;border-bottom:1px solid var(--border2)}
+.brief-section:last-child{border-bottom:none}
+.brief-section-title{font-family:var(--mono);font-size:8px;color:var(--accent);letter-spacing:2px;text-transform:uppercase;margin-bottom:8px}
+.brief-body{font-size:13px;color:var(--text);line-height:1.8}
+.brief-body b{color:var(--accent);font-weight:600}
+.brief-kpi-row{display:flex;gap:20px;flex-wrap:wrap;margin-top:6px}
+.bkpi{display:flex;flex-direction:column;gap:2px}
+.bkpi-val{font-family:var(--mono);font-size:16px;font-weight:700}
+.bkpi-lbl{font-family:var(--mono);font-size:8px;color:var(--muted);letter-spacing:1px}
+.bkpi-delta{font-family:var(--mono);font-size:9px;margin-top:2px}
+.action-item{display:flex;align-items:flex-start;gap:10px;padding:6px 10px;margin:4px 0;background:var(--surface2);border-radius:5px;border-left:2px solid var(--accent)}
+.action-item.ai-good{border-left-color:var(--green)}
+.action-item.ai-warn{border-left-color:var(--amber)}
+.action-item.ai-bad{border-left-color:var(--red)}
+.ai-icon{font-size:14px;flex-shrink:0;line-height:1.4}
+.ai-text{font-size:12px;color:var(--text);line-height:1.6}
+.ai-text b{color:var(--accent)}
+.no-data-state{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 20px;text-align:center;gap:10px}
+.no-data-state .nd-icon{font-size:28px;opacity:.4}
+.no-data-state .nd-title{font-family:var(--mono);font-size:10px;color:var(--muted);letter-spacing:2px}
+.no-data-state .nd-sub{font-size:11px;color:var(--muted);opacity:.6;max-width:300px;line-height:1.6}
+
 /* responsive */
-/* min-width:0 on grid/flex children prevents content from overflowing 1fr columns */
 .btm-grid > *, .main-grid > *, .kpi-row > * { min-width:0; }
 @media(max-width:1200px){.kpi-row{grid-template-columns:repeat(4,1fr)}.main-grid{grid-template-columns:1fr}.btm-grid{grid-template-columns:1fr 1fr}}
 @media(max-width:700px){
@@ -187,7 +228,7 @@ body::after{content:'';position:fixed;inset:0;background-image:linear-gradient(r
 <!-- Loading -->
 <div id="loadingOverlay">
   <div class="loader-text">INITIALIZING MISSION CONTROL...</div>
-  <div class="loader-sub">CONNECTING TO DATA FEED</div>
+  <div class="loader-sub">CONNECTING TO GOOGLE ADS LIVE FEED</div>
 </div>
 
 <div class="wrap">
@@ -204,18 +245,18 @@ body::after{content:'';position:fixed;inset:0;background-image:linear-gradient(r
     <div class="hdr-mid" id="clock">--</div>
     <div class="hdr-right">
       <div class="live-row"><div class="live-dot"></div><span id="liveStatus">CONNECTING...</span></div>
-      <div class="data-source" id="dataSource" style="max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">SOURCE: GOOGLE SHEETS · AUTO-REFRESH</div>
-      <div class="data-source" style="max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">AUTO-PUSH: APR 14, 2026</div>
+      <div class="data-source" id="dataSource">SOURCE: GOOGLE SHEETS · AUTO-REFRESH</div>
+      <div class="data-source">LAST PUSH: <span id="lastPush">—</span></div>
     </div>
   </div>
 
   <!-- Error -->
-  <div id="errorBanner">⚠ USING CACHED DATA — GOOGLE SHEETS CONNECTION UNAVAILABLE. UPDATE YOUR SHEET ID BELOW.</div>
+  <div id="errorBanner">⚠ LIVE DATA UNAVAILABLE — GOOGLE SHEETS CONNECTION FAILED. CHECK SCRIPT IS RUNNING IN GOOGLE ADS → TOOLS → SCRIPTS.</div>
 
   <!-- Period Banner -->
   <div class="period-banner" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:4px;margin-bottom:10px;padding:6px 12px;background:rgba(56,189,248,0.04);border:1px solid rgba(56,189,248,0.10);border-radius:6px;min-width:0">
     <div style="font-family:var(--mono);font-size:9px;color:var(--accent);letter-spacing:2px;min-width:0" id="periodBanner">REPORT WINDOW: LOADING...</div>
-    <div class="period-banner-right" style="font-family:var(--mono);font-size:9px;color:var(--muted);letter-spacing:1px;white-space:nowrap">KPI TILES = MTD APR &nbsp;·&nbsp; CHART &amp; DEVICES = FULL WINDOW &nbsp;·&nbsp; TRAJECTORY = MONTHLY</div>
+    <div class="period-banner-right" style="font-family:var(--mono);font-size:9px;color:var(--muted);letter-spacing:1px;white-space:nowrap">KPI TILES = FILTERED WINDOW &nbsp;·&nbsp; CHART = DAILY BREAKDOWN &nbsp;·&nbsp; TRAJECTORY = MONTHLY</div>
   </div>
 
   <!-- Filter Bar -->
@@ -241,13 +282,13 @@ body::after{content:'';position:fixed;inset:0;background-image:linear-gradient(r
 
   <!-- KPI Row -->
   <div class="kpi-row fade" style="animation-delay:.1s" id="kpiRow">
-    <div class="kpi c-accent"><div class="kpi-lbl">Total Activations · MTD</div><div class="kpi-val" style="color:var(--accent)" id="kv-activations">—</div><div class="kpi-sub" id="ks-activations">loading...</div></div>
-    <div class="kpi c-green"><div class="kpi-lbl">Total Revenue · MTD</div><div class="kpi-val" style="color:var(--green)" id="kv-revenue">—</div><div class="kpi-sub" id="ks-revenue">loading...</div></div>
-    <div class="kpi c-amber"><div class="kpi-lbl">Applications · MTD</div><div class="kpi-val" style="color:var(--amber)" id="kv-apps">—</div><div class="kpi-sub" id="ks-apps">loading...</div></div>
-    <div class="kpi c-purple"><div class="kpi-lbl">Approval Rate · MTD</div><div class="kpi-val" style="color:var(--accent2)" id="kv-approval">—</div><div class="kpi-sub" id="ks-approval">loading...</div></div>
-    <div class="kpi c-green"><div class="kpi-lbl">Ad Spend · MTD</div><div class="kpi-val" style="color:var(--green)" id="kv-spend">—</div><div class="kpi-sub" id="ks-spend">loading...</div></div>
-    <div class="kpi c-amber"><div class="kpi-lbl">App CPA · Applications</div><div class="kpi-val" style="color:var(--amber)" id="kv-gcpa">—</div><div class="kpi-sub" id="ks-gcpa">loading...</div></div>
-    <div class="kpi c-red"><div class="kpi-lbl">Activation CPA · MTD</div><div class="kpi-val" style="color:var(--red)" id="kv-acpa">—</div><div class="kpi-sub" id="ks-acpa">loading...</div></div>
+    <div class="kpi c-accent"><div class="kpi-lbl">Total Activations</div><div class="kpi-val" style="color:var(--accent)" id="kv-activations">—</div><div class="kpi-sub" id="ks-activations">loading...</div></div>
+    <div class="kpi c-green"><div class="kpi-lbl">Total Revenue</div><div class="kpi-val" style="color:var(--green)" id="kv-revenue">—</div><div class="kpi-sub" id="ks-revenue">loading...</div></div>
+    <div class="kpi c-amber"><div class="kpi-lbl">Applications</div><div class="kpi-val" style="color:var(--amber)" id="kv-apps">—</div><div class="kpi-sub" id="ks-apps">loading...</div></div>
+    <div class="kpi c-purple"><div class="kpi-lbl">Approval Rate</div><div class="kpi-val" style="color:var(--accent2)" id="kv-approval">—</div><div class="kpi-sub" id="ks-approval">loading...</div></div>
+    <div class="kpi c-green"><div class="kpi-lbl">Ad Spend</div><div class="kpi-val" style="color:var(--green)" id="kv-spend">—</div><div class="kpi-sub" id="ks-spend">loading...</div></div>
+    <div class="kpi c-amber"><div class="kpi-lbl">App CPA</div><div class="kpi-val" style="color:var(--amber)" id="kv-gcpa">—</div><div class="kpi-sub" id="ks-gcpa">loading...</div></div>
+    <div class="kpi c-red"><div class="kpi-lbl">Activation CPA</div><div class="kpi-val" style="color:var(--red)" id="kv-acpa">—</div><div class="kpi-sub" id="ks-acpa">loading...</div></div>
   </div>
 
   <!-- Main Grid -->
@@ -258,7 +299,7 @@ body::after{content:'';position:fixed;inset:0;background-image:linear-gradient(r
       <div class="panel">
         <div class="panel-hdr">
           <div class="ptitle">Daily Performance · Activations vs Ad Spend</div>
-          <div class="pmeta" id="chartRange">LAST 30 DAYS</div>
+          <div class="pmeta" id="chartRange">LOADING...</div>
         </div>
         <div class="chart-wrap"><canvas id="mainChart"></canvas></div>
       </div>
@@ -266,9 +307,11 @@ body::after{content:'';position:fixed;inset:0;background-image:linear-gradient(r
       <div class="panel" style="flex:1;display:flex;flex-direction:column">
         <div class="panel-hdr">
           <div class="ptitle">Device Performance · App &amp; Activation CPA</div>
-          <div class="pmeta" id="devicePeriod">MAR 15 – APR 13 · APP CPA TARGET $6.41</div>
+          <div class="pmeta" id="devicePeriod">LIVE DATA</div>
         </div>
-        <div id="devicePanel" style="flex:1;display:flex;flex-direction:column;justify-content:space-evenly;gap:8px"></div>
+        <div id="devicePanel" style="flex:1;display:flex;flex-direction:column;justify-content:space-evenly;gap:8px">
+          <div class="no-data-state"><div class="nd-icon">📡</div><div class="nd-title">AWAITING LIVE DATA</div></div>
+        </div>
       </div>
     </div>
 
@@ -280,7 +323,7 @@ body::after{content:'';position:fixed;inset:0;background-image:linear-gradient(r
           <div class="pmeta" id="campMeta">LOADING...</div>
         </div>
         <div id="campCards">
-          <div style="font-family:var(--mono);font-size:10px;color:var(--muted);padding:20px;text-align:center;letter-spacing:2px">LOADING CAMPAIGN DATA...</div>
+          <div class="no-data-state"><div class="nd-icon">📊</div><div class="nd-title">AWAITING LIVE DATA</div></div>
         </div>
       </div>
 
@@ -290,7 +333,7 @@ body::after{content:'';position:fixed;inset:0;background-image:linear-gradient(r
           <div class="pmeta">RECENT CHANGES</div>
         </div>
         <div id="intelFeed" style="flex:1;display:flex;flex-direction:column;justify-content:space-evenly">
-          <div style="font-family:var(--mono);font-size:10px;color:var(--muted);padding:20px;text-align:center;letter-spacing:2px">LOADING FEED...</div>
+          <div class="no-data-state"><div class="nd-icon">📰</div><div class="nd-title">AWAITING LIVE DATA</div></div>
         </div>
       </div>
     </div>
@@ -303,13 +346,17 @@ body::after{content:'';position:fixed;inset:0;background-image:linear-gradient(r
       <!-- Report Summary -->
       <div style="padding:0 20px 0 0;border-right:1px solid var(--border2)">
         <div class="ptitle" style="margin-bottom:12px">Report Period Summary</div>
-        <div id="summaryText" style="font-family:var(--mono);font-size:13px;color:var(--muted);line-height:2.2;letter-spacing:.2px"></div>
+        <div id="summaryText" style="font-family:var(--mono);font-size:13px;color:var(--muted);line-height:2.2;letter-spacing:.2px">
+          <span style="color:var(--muted)">Loading live data...</span>
+        </div>
       </div>
 
       <!-- April Projection -->
       <div style="padding:0 20px;border-right:1px solid var(--border2)">
         <div class="ptitle" style="margin-bottom:12px">April Projection · Rest of Month</div>
-        <div id="projectionText" style="font-family:var(--mono);font-size:13px;color:var(--muted);line-height:2.2;letter-spacing:.2px"></div>
+        <div id="projectionText" style="font-family:var(--mono);font-size:13px;color:var(--muted);line-height:2.2;letter-spacing:.2px">
+          <span style="color:var(--muted)">Loading live data...</span>
+        </div>
       </div>
 
       <!-- Closed Month Actuals -->
@@ -357,25 +404,29 @@ body::after{content:'';position:fixed;inset:0;background-image:linear-gradient(r
     </div>
   </div>
 
-  <!-- Bottom -->
-  <div class="btm-grid fade" style="animation-delay:.3s">
+  <!-- Bottom Grid -->
+  <div class="btm-grid fade" style="animation-delay:.3s;margin-bottom:14px">
 
     <!-- States -->
     <div class="panel" style="display:flex;flex-direction:column">
       <div class="panel-hdr">
         <div class="ptitle">Top States · Applications & App CPA</div>
-        <div class="pmeta" id="statePeriod">MAR 15 – APR 13 · 20 OF 48 STATES</div>
+        <div class="pmeta" id="statePeriod">LIVE DATA</div>
       </div>
-      <div id="stateList" style="flex:1;display:flex;flex-direction:column;justify-content:space-evenly"></div>
+      <div id="stateList" style="flex:1;display:flex;flex-direction:column;justify-content:space-evenly">
+        <div class="no-data-state"><div class="nd-icon">🗺</div><div class="nd-title">AWAITING LIVE DATA</div></div>
+      </div>
     </div>
 
     <!-- Heatmap -->
     <div class="panel">
       <div class="panel-hdr">
         <div class="ptitle">Hour of Day · Cost/Conv</div>
-        <div class="pmeta">GOOGLE ADS · LATEST</div>
+        <div class="pmeta">GOOGLE ADS · LIVE</div>
       </div>
-      <div class="heatmap" id="heatmap"></div>
+      <div class="heatmap" id="heatmap">
+        <div class="no-data-state" style="grid-column:1/-1"><div class="nd-icon">🕐</div><div class="nd-title">AWAITING LIVE DATA</div></div>
+      </div>
       <div class="hm-leg">
         <div class="hm-li"><div class="hm-dot" style="background:var(--green)"></div>BEST &lt;$7</div>
         <div class="hm-li"><div class="hm-dot" style="background:var(--amber)"></div>OK $7-10</div>
@@ -390,7 +441,9 @@ body::after{content:'';position:fixed;inset:0;background-image:linear-gradient(r
         <div class="ptitle">Business Trajectory</div>
         <div class="pmeta">ACTUAL VS TARGET</div>
       </div>
-      <div id="trajectory" style="display:flex;flex-direction:column;justify-content:space-evenly;min-height:280px"></div>
+      <div id="trajectory" style="display:flex;flex-direction:column;justify-content:space-evenly;min-height:280px">
+        <div class="no-data-state"><div class="nd-icon">📈</div><div class="nd-title">AWAITING LIVE DATA</div></div>
+      </div>
       <div style="margin-top:12px;padding-top:10px;border-top:1px solid var(--border2)">
         <div class="spark" id="weekSpark"></div>
         <div style="font-family:var(--mono);font-size:8px;color:var(--muted);letter-spacing:1px;margin-top:4px;text-align:center">DAILY ACTIVATIONS · LAST 14 DAYS</div>
@@ -398,102 +451,62 @@ body::after{content:'';position:fixed;inset:0;background-image:linear-gradient(r
     </div>
   </div>
 
-</div>
+  <!-- Keywords + Search Terms Row -->
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px" class="fade" style="animation-delay:.35s">
+
+    <!-- Keywords Panel -->
+    <div class="panel">
+      <div class="panel-hdr">
+        <div class="ptitle">Keywords · Performance &amp; Waste Analysis</div>
+        <div class="pmeta" id="kwMeta">LIVE DATA · TOP 30 BY SPEND</div>
+      </div>
+      <div id="keywordsPanel">
+        <div class="no-data-state"><div class="nd-icon">🔑</div><div class="nd-title">AWAITING LIVE DATA</div><div class="nd-sub">Keywords will appear once the Google Ads Script pushes data</div></div>
+      </div>
+    </div>
+
+    <!-- Search Terms Panel -->
+    <div class="panel">
+      <div class="panel-hdr">
+        <div class="ptitle">Search Terms · Actual Queries &amp; Negatives</div>
+        <div class="pmeta" id="stMeta">LIVE DATA · TOP 30 BY SPEND</div>
+      </div>
+      <div id="searchTermsPanel">
+        <div class="no-data-state"><div class="nd-icon">🔍</div><div class="nd-title">AWAITING LIVE DATA</div><div class="nd-sub">Search terms will appear once the Google Ads Script pushes data</div></div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Today's Brief -->
+  <div class="panel fade" style="animation-delay:.4s;margin-bottom:14px">
+    <div class="panel-hdr">
+      <div class="ptitle">⚡ Today's Brief · <span id="briefDate">—</span></div>
+      <div class="pmeta">YESTERDAY VS DAY BEFORE · CPA TARGETS: ACT &lt;$10 · APP &lt;$6.41</div>
+    </div>
+    <div id="briefPanel">
+      <div class="no-data-state"><div class="nd-icon">📋</div><div class="nd-title">AWAITING LIVE DATA</div><div class="nd-sub">Your daily performance brief will appear here once data loads — comparing yesterday against the day before with action items for today</div></div>
+    </div>
+  </div>
+
+</div><!-- /wrap -->
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script>
 // ============================================================
-// CONFIGURATION — UPDATE THESE TWO VALUES
+// SHEET URLS — All 6 sheets from Google Ads Script
 // ============================================================
-const SHEET_ID = '1ZLzpR9oGk5y2amRr0jS4QPVIIzC44m1VfBRIxDK64Vg';
-// Get this from your sheet URL:
-// https://docs.google.com/spreadsheets/d/SHEET_ID/edit
-// The sheet must be published: File → Share → Publish to web
-
-const SHEET_NAME = 'Daily Metrics';
-// This must match the exact tab name in your Google Sheet
-// ============================================================
-
-// Fallback data (your real historical data — updates when sheet connects)
-const FALLBACK = {
-  totals: {
-    activations: 785, revenue: 19625, applications: 1984,
-    approvals: 1458, spend: 16730.52, googleCPA: 9.71,
-    activationCPA: 14.25, estProfit: 2894
-  },
-  daily: [
-    {date:'Mar 15',activations:31,spend:603.31,apps:54},
-    {date:'Mar 16',activations:52,spend:666.22,apps:90},
-    {date:'Mar 17',activations:36,spend:634.47,apps:68},
-    {date:'Mar 18',activations:60,spend:806.24,apps:101},
-    {date:'Mar 19',activations:49,spend:794.12,apps:85},
-    {date:'Mar 20',activations:58,spend:844.38,apps:96},
-    {date:'Mar 21',activations:49,spend:721.46,apps:75},
-    {date:'Mar 22',activations:23,spend:611.12,apps:48},
-    {date:'Mar 23',activations:47,spend:1090.36,apps:103},
-    {date:'Mar 24',activations:52,spend:831.24,apps:96},
-    {date:'Mar 25',activations:52,spend:630.48,apps:95},
-    {date:'Mar 26',activations:62,spend:767.90,apps:97},
-    {date:'Mar 27',activations:63,spend:631.35,apps:97},
-    {date:'Mar 28',activations:38,spend:595.50,apps:80},
-    {date:'Mar 29',activations:4,spend:0,apps:8},
-    {date:'Mar 30',activations:63,spend:1311.22,apps:129},
-    {date:'Mar 31',activations:114,spend:1404.75,apps:195},
-    {date:'Apr 01',activations:73,spend:1402.51,apps:136},
-    {date:'Apr 02',activations:86,spend:1400.58,apps:175},
-    {date:'Apr 03',activations:106,spend:1409.66,apps:173},
-    {date:'Apr 04',activations:45,spend:1060.34,apps:182},
-    {date:'Apr 05',activations:2,spend:0,apps:7},
-    {date:'Apr 06',activations:72,spend:1551.21,apps:165},
-    {date:'Apr 07',activations:108,spend:1883.18,apps:208},
-    {date:'Apr 08',activations:86,spend:1865.46,apps:204},
-    {date:'Apr 09',activations:64,spend:1568.67,apps:191},
-    {date:'Apr 10',activations:63,spend:1519.71,apps:162},
-    {date:'Apr 11',activations:49,spend:1140.27,apps:117},
-    {date:'Apr 12',activations:3,spend:0,apps:6},
-    {date:'Apr 13',activations:28,spend:1928.93,apps:192},
-    {date:'Apr 14',activations:0,spend:0,apps:66},
-  ],
-  devices: {
-    desktop: 6.59, tablets: 8.57, mobile: 11.93,
-    desktopApps: 1243, desktopActs: 685,
-    tabletsApps: 46,   tabletsActs: 25,
-    mobileApps:  1769, mobileActs:  975,
-  },
-  campaigns: [
-    {name:'AW LIFELINE', spend:14168.99, conv:1432, cpa:9.89, ctr:'25.8%', grade:'B'},
-    {name:'AW SEARCH · SS', spend:13675.89, conv:1498, cpa:9.13, ctr:'23.4%', grade:'B'},
-    {name:'PRIME TIME · SS', spend:1831.01, conv:127, cpa:14.42, ctr:'31.6%', grade:'C'},
-  ],
-  states: [
-    {code:'CA',count:728,cpa:9.07},{code:'NY',count:268,cpa:7.76},{code:'TX',count:267,cpa:9.62},
-    {code:'NC',count:164,cpa:8.13},{code:'FL',count:145,cpa:9.56},{code:'TN',count:142,cpa:9.64},
-    {code:'KY',count:142,cpa:9.55},{code:'IL',count:139,cpa:6.80},{code:'NJ',count:87,cpa:6.07},
-    {code:'SC',count:83,cpa:11.51},{code:'OH',count:76,cpa:11.15},{code:'MA',count:72,cpa:6.70},
-    {code:'MO',count:48,cpa:8.49},{code:'PA',count:46,cpa:14.76},{code:'MI',count:45,cpa:13.52},
-    {code:'IN',count:42,cpa:14.32},{code:'CT',count:39,cpa:6.99},{code:'VA',count:37,cpa:17.13},
-    {code:'WA',count:36,cpa:12.57},{code:'NM',count:36,cpa:7.17},
-  ],
-  hours: [
-    {h:0,cpa:9.55,spend:957},{h:1,cpa:10.88,spend:522},{h:2,cpa:11.22,spend:495},
-    {h:3,cpa:11.97,spend:427},{h:4,cpa:9.08,spend:363},{h:5,cpa:10.72,spend:399},
-    {h:6,cpa:11.81,spend:436},{h:7,cpa:11.80,spend:516},{h:8,cpa:6.91,spend:848},
-    {h:9,cpa:8.99,spend:1316},{h:10,cpa:9.97,spend:1654},{h:11,cpa:8.08,spend:2405},
-    {h:12,cpa:8.99,spend:2447},{h:13,cpa:8.40,spend:2295},{h:14,cpa:10.02,spend:2429},
-    {h:15,cpa:12.09,spend:2290},{h:16,cpa:9.68,spend:1986},{h:17,cpa:9.67,spend:1849},
-    {h:18,cpa:11.78,spend:1580},{h:19,cpa:9.54,spend:1296},{h:20,cpa:10.48,spend:986},
-    {h:21,cpa:10.63,spend:834},{h:22,cpa:12.26,spend:721},{h:23,cpa:9.84,spend:625}
-  ],
-  monthly: [
-    {label:'DEC 2025',              val:46,    target:3000,   color:'var(--muted)',  proj:0},
-    {label:'JAN 2026',              val:415,   target:3000,   color:'var(--muted)',  proj:300},
-    {label:'FEB 2026',              val:552,   target:3000,   color:'var(--amber)',  proj:500},
-    {label:'MAR 2026 PENDING',      val:1483,  target:3000,   color:'var(--amber)',  proj:1000},
-    {label:'APR 2026 PROJ ~2,535',  val:2535,  target:3000,   color:'var(--accent)', proj:2000, isProjOnly:true},
-    {label:'REVENUE SETTLED',       val:25325, target:100000, color:'var(--green)',  isDollar:true},
-    {label:'INCL. MAR PENDING',     val:62393, target:100000, color:'var(--amber)',  isDollar:true},
-  ]
+const SHEET_URLS = {
+  daily:       'https://docs.google.com/spreadsheets/d/e/2PACX-1vQSGFATGsiH9UxFDJPkIrDpdHoDTivZRDEm2zYxydUSZhyTRK91KnNFmYX7qRvjkMwRcP6eYypCF9z2/pub?gid=1318122650&single=true&output=csv',
+  devices:     'https://docs.google.com/spreadsheets/d/e/2PACX-1vQSGFATGsiH9UxFDJPkIrDpdHoDTivZRDEm2zYxydUSZhyTRK91KnNFmYX7qRvjkMwRcP6eYypCF9z2/pub?gid=728314626&single=true&output=csv',
+  geo:         'https://docs.google.com/spreadsheets/d/e/2PACX-1vQSGFATGsiH9UxFDJPkIrDpdHoDTivZRDEm2zYxydUSZhyTRK91KnNFmYX7qRvjkMwRcP6eYypCF9z2/pub?gid=1821022449&single=true&output=csv',
+  hourly:      'https://docs.google.com/spreadsheets/d/e/2PACX-1vQSGFATGsiH9UxFDJPkIrDpdHoDTivZRDEm2zYxydUSZhyTRK91KnNFmYX7qRvjkMwRcP6eYypCF9z2/pub?gid=1038380061&single=true&output=csv',
+  keywords:    'https://docs.google.com/spreadsheets/d/e/2PACX-1vQSGFATGsiH9UxFDJPkIrDpdHoDTivZRDEm2zYxydUSZhyTRK91KnNFmYX7qRvjkMwRcP6eYypCF9z2/pub?gid=373579478&single=true&output=csv',
+  searchTerms: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQSGFATGsiH9UxFDJPkIrDpdHoDTivZRDEm2zYxydUSZhyTRK91KnNFmYX7qRvjkMwRcP6eYypCF9z2/pub?gid=1994073909&single=true&output=csv',
 };
+const ACT_RATE = 0.5512;
+const PAYOUT   = 25;
+const MULT     = 1.814; // activation CPA multiplier from app CPA
 
 // Clock
 function updateClock() {
@@ -504,25 +517,20 @@ function updateClock() {
 updateClock();
 setInterval(updateClock, 1000);
 
-// Format helpers
+// Helpers
 const $ = id => document.getElementById(id);
 function fmtMoney(n) { return '$' + Math.abs(n).toLocaleString('en-US',{minimumFractionDigits:0,maximumFractionDigits:0}); }
-
-// Derives the reporting window label from whatever daily array is loaded
-function getPeriodMeta(daily) {
-  if (!daily || daily.length === 0) return {label:'LAST 30 DAYS', short:'30-DAY PERIOD', banner:'REPORT WINDOW: LAST 30 DAYS'};
-  const start = daily[0].date.toUpperCase();
-  const end   = daily[daily.length - 1].date.toUpperCase();
-  const days  = daily.length;
-  return {
-    label:  `${start} – ${end}`,
-    short:  `${days}-DAY WINDOW`,
-    banner: `REPORT WINDOW: ${start} – ${end} · ${days} DAYS`,
-    days,   start, end,
-  };
-}
 function fmtCPA(n) { return '$' + parseFloat(n).toFixed(2); }
 function fmtPct(n) { return parseFloat(n).toFixed(1) + '%'; }
+function delta(a, b, lower_is_better) {
+  if (!b) return '';
+  const d = a - b, pct = Math.abs((d/b)*100).toFixed(1);
+  const up = d >= 0;
+  const good = lower_is_better ? !up : up;
+  const arrow = up ? '↑' : '↓';
+  const col = good ? 'var(--green)' : 'var(--red)';
+  return `<span style="color:${col};font-family:var(--mono);font-size:10px">${arrow}${pct}% vs prev</span>`;
+}
 function cpaColor(cpa) {
   cpa = parseFloat(cpa);
   if (cpa <= 5.51) return 'var(--green)';
@@ -537,13 +545,6 @@ function cpaLabel(cpa) {
   if (cpa <= 8.27) return 'GOOD';
   return 'POOR';
 }
-function actCpaLabel(actCpa) {
-  actCpa = parseFloat(actCpa);
-  if (actCpa <= 10) return 'FANTASTIC';
-  if (actCpa <= 12.5) return 'EXCELLENT';
-  if (actCpa <= 15) return 'GOOD';
-  return 'POOR';
-}
 function gradeColor(g) {
   if (g === 'A') return '#34d399';
   if (g === 'B') return '#38bdf8';
@@ -551,15 +552,28 @@ function gradeColor(g) {
   if (g === 'D') return '#fb923c';
   return '#f87171';
 }
+function getPeriodMeta(daily) {
+  if (!daily || daily.length === 0) return {label:'NO DATA', short:'—', banner:'REPORT WINDOW: NO DATA'};
+  const dates = daily.map(r => r.Date || r.date || '').filter(Boolean).sort();
+  const start = dates[0].substring(5).toUpperCase();
+  const end   = dates[dates.length-1].substring(5).toUpperCase();
+  const uniqueDates = [...new Set(dates)];
+  return {
+    label:  `${start} – ${end}`,
+    short:  `${uniqueDates.length}-DAY WINDOW`,
+    banner: `REPORT WINDOW: ${start} – ${end} · ${uniqueDates.length} DAYS`,
+    days: uniqueDates.length, start, end,
+  };
+}
 
 // ── RENDER FUNCTIONS ── //
-
 let mainChartInstance = null;
 
 function renderChart(daily) {
+  if (!daily || !daily.length) return;
   const labels  = daily.map(d => d.date);
   const acts    = daily.map(d => d.activations);
-  const appRem  = daily.map(d => Math.max(0, (d.apps || 0) - d.activations)); // apps above activations
+  const appRem  = daily.map(d => Math.max(0, (d.apps || 0) - d.activations));
   const spends  = daily.map(d => +(d.spend / 1000).toFixed(2));
   const rawApps = daily.map(d => d.apps || 0);
   const ctx = $('mainChart').getContext('2d');
@@ -569,156 +583,79 @@ function renderChart(daily) {
     data: {
       labels,
       datasets: [
-        {
-          label: 'Activations',
-          data: acts,
-          backgroundColor: 'rgba(56,189,248,0.55)',
-          borderColor: 'rgba(56,189,248,0.8)',
-          borderWidth: 1,
-          borderRadius: {topLeft:0,topRight:0,bottomLeft:2,bottomRight:2},
-          borderSkipped: 'bottom',
-          stack: 'apps',
-          yAxisID: 'y'
-        },
-        {
-          label: 'Applications (remaining)',
-          data: appRem,
-          backgroundColor: 'rgba(129,140,248,0.30)',
-          borderColor: 'rgba(129,140,248,0.5)',
-          borderWidth: 1,
-          borderRadius: {topLeft:2,topRight:2,bottomLeft:0,bottomRight:0},
-          borderSkipped: 'bottom',
-          stack: 'apps',
-          yAxisID: 'y'
-        },
-        {
-          label: 'Ad Spend ($k)',
-          data: spends,
-          type: 'line',
-          borderColor: 'rgba(251,191,36,0.75)',
-          backgroundColor: 'transparent',
-          borderWidth: 2,
-          pointRadius: 0,
-          tension: 0.35,
-          yAxisID: 'y2'
-        }
+        { label:'Activations', data:acts, backgroundColor:'rgba(56,189,248,0.55)', borderColor:'rgba(56,189,248,0.8)', borderWidth:1, borderRadius:{topLeft:0,topRight:0,bottomLeft:2,bottomRight:2}, borderSkipped:'bottom', stack:'apps', yAxisID:'y' },
+        { label:'Applications (remaining)', data:appRem, backgroundColor:'rgba(129,140,248,0.30)', borderColor:'rgba(129,140,248,0.5)', borderWidth:1, borderRadius:{topLeft:2,topRight:2,bottomLeft:0,bottomRight:0}, borderSkipped:'bottom', stack:'apps', yAxisID:'y' },
+        { label:'Ad Spend ($k)', data:spends, type:'line', borderColor:'rgba(251,191,36,0.75)', backgroundColor:'transparent', borderWidth:2, pointRadius:0, tension:0.35, yAxisID:'y2' }
       ]
     },
     options: {
-      responsive: true,
-      maintainAspectRatio: false,
+      responsive:true, maintainAspectRatio:false,
       plugins: {
-        legend: {
-          display: true,
-          position: 'top',
-          align: 'end',
-          labels: {
-            color: '#64748b',
-            font: {family:'Space Mono', size:8},
-            boxWidth: 10,
-            boxHeight: 6,
-            padding: 12,
-            usePointStyle: false
-          }
-        },
+        legend: { display:true, position:'top', align:'end', labels:{ color:'#64748b', font:{family:'Space Mono',size:8}, boxWidth:10, boxHeight:6, padding:12 } },
         tooltip: {
-          backgroundColor: '#111827',
-          borderColor: 'rgba(56,189,248,0.2)',
-          borderWidth: 1,
-          titleColor: '#38bdf8',
-          bodyColor: '#94a3b8',
-          titleFont: {family:'Space Mono', size:9},
-          bodyFont: {family:'Space Mono', size:9},
+          backgroundColor:'#111827', borderColor:'rgba(56,189,248,0.2)', borderWidth:1,
+          titleColor:'#38bdf8', bodyColor:'#94a3b8',
+          titleFont:{family:'Space Mono',size:9}, bodyFont:{family:'Space Mono',size:9},
           callbacks: {
             title: items => items[0].label,
             beforeBody: items => {
-              const i = items[0].dataIndex;
-              const a = acts[i], ap = rawApps[i], sp = spends[i];
+              const i = items[0].dataIndex, a = acts[i], ap = rawApps[i], sp = spends[i];
               const rate = ap > 0 ? ((a/ap)*100).toFixed(1) : '—';
-              return [
-                `Activations:  ${a}`,
-                `Applications: ${ap}`,
-                `Act. Rate:    ${rate}%`,
-                `Ad Spend:     $${(sp*1000).toLocaleString()}`
-              ];
+              return [`Activations:  ${a}`, `Applications: ${ap}`, `Act. Rate:    ${rate}%`, `Ad Spend:     $${(sp*1000).toLocaleString()}`];
             },
             label: () => null
           }
         }
       },
       scales: {
-        x: {
-          stacked: true,
-          grid: {color:'rgba(255,255,255,0.025)',drawBorder:false},
-          ticks: {color:'#475569',font:{family:'Space Mono',size:8},maxRotation:45,maxTicksLimit:12}
-        },
-        y: {
-          stacked: true,
-          position: 'left',
-          grid: {color:'rgba(255,255,255,0.035)',drawBorder:false},
-          ticks: {color:'#475569',font:{family:'Space Mono',size:8}},
-          title: {display:true,text:'Apps / Acts',color:'#94a3b8',font:{family:'Space Mono',size:8}}
-        },
-        y2: {
-          position: 'right',
-          grid: {display:false},
-          ticks: {color:'#64748b',font:{family:'Space Mono',size:8},callback:v=>'$'+v+'k'},
-          title: {display:true,text:'Spend $k',color:'#fbbf24',font:{family:'Space Mono',size:8}}
-        }
+        x: { stacked:true, grid:{color:'rgba(255,255,255,0.025)'}, ticks:{color:'#475569',font:{family:'Space Mono',size:8},maxRotation:45,maxTicksLimit:12} },
+        y: { stacked:true, position:'left', grid:{color:'rgba(255,255,255,0.035)'}, ticks:{color:'#475569',font:{family:'Space Mono',size:8}}, title:{display:true,text:'Apps / Acts',color:'#94a3b8',font:{family:'Space Mono',size:8}} },
+        y2: { position:'right', grid:{display:false}, ticks:{color:'#64748b',font:{family:'Space Mono',size:8},callback:v=>'$'+v+'k'}, title:{display:true,text:'Spend $k',color:'#fbbf24',font:{family:'Space Mono',size:8}} }
       }
     }
   });
 }
 
-function renderKPIs(t) {
-  const approvalRate = t.approvals && t.applications ? ((t.approvals / t.applications) * 100).toFixed(1) : 0;
-  $('kv-activations').textContent = t.activations.toLocaleString();
-  const MAR_1_14 = 210; // Mar 1-14 activations (campaign just starting, days 1-9 = 0)
-  const deltaVsMar = t.activations - MAR_1_14;
-  $('ks-activations').innerHTML = `<span class="${deltaVsMar >= 0 ? 'up' : 'down'}">${deltaVsMar >= 0 ? '↑' : '↓'} ${Math.abs(deltaVsMar)} vs Mar MTD</span>`;
-  $('kv-revenue').textContent = fmtMoney(t.revenue);
-  $('ks-revenue').innerHTML = `<span style="color:var(--muted)">@ $25 per activation</span>`;
-  $('kv-apps').textContent = t.applications.toLocaleString();
-  const MAR_APPS_TOTAL = 1856;
-  const deltaApps = t.applications - MAR_APPS_TOTAL;
-  $('ks-apps').innerHTML = `<span class="${deltaApps >= 0 ? 'up' : 'down'}">${deltaApps >= 0 ? '↑' : '↓'} ${Math.abs(deltaApps)} vs Mar total</span>`;
-  $('kv-approval').textContent = approvalRate + '%';
-  $('ks-approval').textContent = t.approvals.toLocaleString() + ' approvals';
-  $('kv-spend').textContent = fmtMoney(t.spend);
-  const PROJ_APR_SPEND = 39545;
-  $('ks-spend').innerHTML = `<span class="warn">Proj. Apr total: ~${fmtMoney(PROJ_APR_SPEND)}</span>`;
-  $('kv-gcpa').textContent = fmtCPA(t.googleCPA);
-  $('ks-gcpa').innerHTML = `<span class="warn">TARGET: $6.41</span>`;
-  $('kv-acpa').textContent = fmtCPA(t.activationCPA);
-  $('ks-acpa').innerHTML = `<span style="color:var(--green)">≤$10 FANTASTIC</span> · <span style="color:var(--accent)">≤$12.50 EXCELLENT</span> · <span style="color:var(--amber)">≤$15 GOOD</span> · <span style="color:var(--red)">$15+ POOR</span>`;
+function renderKPIs(kpis) {
+  const { spend, conversions, activations, googleCPA, activationCPA, estRevenue } = kpis;
+  const approvalRate = conversions > 0 ? fmtPct(conversions * 100 / conversions) : '—';
+  $('kv-activations').textContent = activations.toLocaleString();
+  $('ks-activations').innerHTML = `<span style="color:var(--muted)">est. from conv × 55.12%</span>`;
+  $('kv-revenue').textContent = fmtMoney(estRevenue);
+  $('ks-revenue').innerHTML = `<span style="color:var(--muted)">@ $25/activation</span>`;
+  $('kv-apps').textContent = Math.round(conversions).toLocaleString();
+  $('ks-apps').innerHTML = `<span style="color:var(--muted)">Google conversions</span>`;
+  $('kv-approval').textContent = conversions > 0 ? fmtPct(activations / conversions * 100) : '—';
+  $('ks-approval').textContent = 'act / app rate';
+  $('kv-spend').textContent = fmtMoney(spend);
+  $('ks-spend').innerHTML = `<span class="warn">TARGET: $1,800/day</span>`;
+  $('kv-gcpa').textContent = fmtCPA(googleCPA);
+  const gcpaCol = googleCPA <= 6.41 ? 'var(--green)' : googleCPA <= 9 ? 'var(--amber)' : 'var(--red)';
+  $('ks-gcpa').innerHTML = `<span style="color:${gcpaCol}">TARGET: $6.41</span>`;
+  const acpaCol = activationCPA <= 10 ? 'var(--green)' : activationCPA <= 12.5 ? 'var(--accent)' : activationCPA <= 15 ? 'var(--amber)' : 'var(--red)';
+  $('kv-acpa').textContent = fmtCPA(activationCPA);
+  $('kv-acpa').style.color = acpaCol;
+  $('ks-acpa').innerHTML = `<span style="color:${acpaCol}">${activationCPA <= 10 ? 'FANTASTIC ✓' : activationCPA <= 12.5 ? 'EXCELLENT' : activationCPA <= 15 ? 'GOOD' : 'NEEDS WORK'}</span> · TARGET &lt;$10`;
 }
 
-function renderDevices(devs) {
-  const MULT = 1.814; // activation CPA multiplier
-  const devices = [
-    {key:'desktop', label:'DESKTOP'},
-    {key:'tablets', label:'TABLETS'},
-    {key:'mobile',  label:'MOBILE'},
-  ];
-  const maxCpa = Math.max(devs.desktop, devs.tablets, devs.mobile);
-
-  function colBg(col) {
-    return col.replace('var(--green)','rgba(52,211,153,0.12)')
-              .replace('var(--amber)','rgba(251,191,36,0.12)')
-              .replace('var(--red)','rgba(248,113,113,0.12)')
-              .replace('var(--muted)','rgba(100,116,139,0.12)');
+function renderDevices(devData) {
+  if (!devData || (!devData.desktop && !devData.mobile && !devData.tablets)) {
+    $('devicePanel').innerHTML = '<div class="no-data-state"><div class="nd-icon">📱</div><div class="nd-title">NO DEVICE DATA</div></div>';
+    return;
   }
-
-  $('devicePanel').innerHTML = devices.map(({key, label}) => {
-    const appCpa  = devs[key];
-    const actCpa  = appCpa * MULT;
-    const col     = cpaColor(appCpa);
-    const grade   = cpaLabel(appCpa);
-    const pct     = Math.round((appCpa / maxCpa) * 100);
-    const apps    = devs[key+'Apps'] || 0;
-    const acts    = devs[key+'Acts'] || 0;
-    return `
-    <div class="dev-card">
+  const devices = [{key:'desktop',label:'DESKTOP'},{key:'tablets',label:'TABLETS'},{key:'mobile',label:'MOBILE'}];
+  const maxCpa = Math.max(...Object.values(devData).filter(v => typeof v === 'number'));
+  function colBg(col) {
+    return col.replace('var(--green)','rgba(52,211,153,0.12)').replace('var(--amber)','rgba(251,191,36,0.12)').replace('var(--red)','rgba(248,113,113,0.12)').replace('var(--muted)','rgba(100,116,139,0.12)');
+  }
+  $('devicePanel').innerHTML = devices.map(({key,label}) => {
+    const appCpa = devData[key] || 0;
+    if (!appCpa) return '';
+    const actCpa = appCpa * MULT;
+    const col = cpaColor(appCpa), grade = cpaLabel(appCpa);
+    const pct = Math.round((appCpa / maxCpa) * 100);
+    const apps = devData[key+'Apps'] || 0, acts = devData[key+'Acts'] || 0;
+    return `<div class="dev-card">
       <div class="dev-top">
         <div class="dev-name">${label}</div>
         <div class="dev-track"><div class="dev-fill" style="width:${pct}%;background:${col}"></div></div>
@@ -727,21 +664,21 @@ function renderDevices(devs) {
       <div class="dev-stats">
         <div class="dstat"><div class="dstat-v" style="color:${col}">${fmtCPA(appCpa)}</div><div class="dstat-l">APP CPA</div></div>
         <div class="dstat"><div class="dstat-v" style="color:${col}">${fmtCPA(actCpa)}</div><div class="dstat-l">ACT CPA</div></div>
-        <div class="dstat"><div class="dstat-v" style="color:var(--text)">${apps > 0 ? apps.toLocaleString() : '—'}</div><div class="dstat-l">APPS</div></div>
+        <div class="dstat"><div class="dstat-v">${apps > 0 ? apps.toLocaleString() : '—'}</div><div class="dstat-l">APPS</div></div>
         <div class="dstat"><div class="dstat-v" style="color:var(--accent)">${acts > 0 ? acts.toLocaleString() : '—'}</div><div class="dstat-l">ACTS</div></div>
       </div>
     </div>`;
-  }).join('') + `
-  <div style="padding:9px 12px;background:rgba(56,189,248,0.05);border-radius:4px;border-left:2px solid var(--accent);font-family:var(--mono);font-size:9px;color:var(--accent);letter-spacing:1px">
-    ⚡ BID ADJUSTMENTS LIVE APR 13-14 · DESKTOP +20-25% · MOBILE -20-25% · TABLETS -100%
-  </div>`;
+  }).join('');
 }
 
 function renderCampaigns(camps, period) {
-  $('campMeta').textContent = period || 'LATEST PERIOD';
+  if (!camps || !camps.length) {
+    $('campCards').innerHTML = '<div class="no-data-state"><div class="nd-icon">📊</div><div class="nd-title">NO CAMPAIGN DATA</div></div>';
+    return;
+  }
+  $('campMeta').textContent = period || 'LIVE PERIOD';
   $('campCards').innerHTML = camps.map(c => {
-    const gc = gradeColor(c.grade);
-    const cc = cpaColor(c.cpa);
+    const gc = gradeColor(c.grade), cc = cpaColor(c.cpa);
     return `<div class="camp-card">
       <div class="camp-top">
         <div class="camp-name">${c.name}</div>
@@ -758,45 +695,55 @@ function renderCampaigns(camps, period) {
 }
 
 function renderFeed(daily) {
-  const items = [
-    {date:'APR 13-14 · STRATEGY UPDATE', txt:'Bid adjustments live: Desktop +20-25%, Mobile -20-25%, Tablets -100% on Lifeline & Prime Time. Desktop CPA $6.59 vs Mobile $11.93. Major strategic win — expect CPA improvement through April.', color:'var(--green)'},
-    {date:'APR 13 · DATA NORMALIZED', txt:'BGOA report delays resolved after last week system issues. Activation counts for Apr 4-12 are backfilling — expect numbers to rise over next 7-10 days.', color:'var(--accent)'},
-    {date:'APR 04 · LOW SPEND DAY', txt:'$1,060 spend due to Google inventory constraints. Only 45 activations vs 86-108 on normal days. Not a trend — isolated inventory issue.', color:'var(--amber)'},
-    {date:'MAR 27 · BUDGET SCALED', txt:'Daily budget increased to $1,200/day. New bidding strategy implemented. March ended with 1,188 BGOA activations — Google projects 1,483 · $37,068 pending payment.', color:'var(--muted)'},
-    {date:'MAR 18 · STRATEGY CHANGE', txt:'Budget scaled to $800/day. Campaign restructure begins. February settled at 552 activations · $13,800 paid.', color:'var(--muted)'},
-  ];
-  document.getElementById('intelFeed').innerHTML = items.map(item =>
-    `<div class="feed-item">
-      <div class="feed-date" style="color:${item.color}">${item.date}</div>
-      <div class="feed-txt">${item.txt}</div>
-    </div>`
-  ).join('');
+  if (!daily || !daily.length) {
+    $('intelFeed').innerHTML = '<div class="no-data-state"><div class="nd-icon">📰</div><div class="nd-title">NO FEED DATA</div></div>';
+    return;
+  }
+  // Generate feed from most recent days with significant changes
+  const sorted = [...daily].sort((a,b) => b.date.localeCompare(a.date)).slice(0, 7);
+  $('intelFeed').innerHTML = sorted.map(d => {
+    const cpa = d.spend > 0 && d.apps > 0 ? d.spend / d.apps : 0;
+    const col = cpa <= 6.41 ? 'var(--green)' : cpa <= 9 ? 'var(--amber)' : 'var(--red)';
+    return `<div class="feed-item">
+      <div class="feed-date" style="color:${col}">${d.date}</div>
+      <div class="feed-txt">${d.activations} activations · ${d.apps} apps · ${fmtMoney(d.spend)} spend · App CPA ${cpa > 0 ? fmtCPA(cpa) : 'N/A'}</div>
+    </div>`;
+  }).join('');
 }
 
 function renderStates(states) {
-  const max = states[0].count;
-  // CPA-based status using real app CPA tiers (breakeven = $12.85)
-  const getStatusFromCpa = (cpa) => {
-    if (!cpa) return {label:'—', col:'var(--muted)'};
-    if (cpa <= 6.89)  return {label:'EXCELLENT', col:'var(--green)'};
+  if (!states || !states.length) {
+    $('stateList').innerHTML = '<div class="no-data-state"><div class="nd-icon">🗺</div><div class="nd-title">NO GEO DATA</div></div>';
+    return;
+  }
+  const max = Math.max(...states.map(s => s.conv || s.count || 0));
+  const getStatus = (cpa) => {
+    if (!cpa) return {label:'—',col:'var(--muted)'};
+    if (cpa <= 6.89)  return {label:'EXCELLENT',col:'var(--green)'};
     if (cpa <= 8.27)  return {label:'GOOD',      col:'var(--accent)'};
     if (cpa <= 12.85) return {label:'OK',         col:'var(--amber)'};
-    return {label:'POOR', col:'var(--red)'};
+    return {label:'POOR',col:'var(--red)'};
   };
   $('stateList').innerHTML = states.map(s => {
-    const {label, col} = getStatusFromCpa(s.cpa);
-    const cpaStr = s.cpa ? '$'+parseFloat(s.cpa).toFixed(2) : '—';
+    const code = s.code || s.state || '??';
+    const count = s.count || s.conv || 0;
+    const cpa = s.cpa || 0;
+    const {label,col} = getStatus(cpa);
     return `<div class="state-row">
-      <div class="s-code">${s.code}</div>
-      <div class="s-track"><div class="s-fill" style="width:${Math.round(s.count/max*100)}%;background:${col}"></div></div>
-      <div class="s-count">${s.count}</div>
-      <div style="font-family:var(--mono);font-size:10px;color:${col};width:44px;text-align:right;flex-shrink:0">${cpaStr}</div>
+      <div class="s-code">${code}</div>
+      <div class="s-track"><div class="s-fill" style="width:${Math.round(count/max*100)}%;background:${col}"></div></div>
+      <div class="s-count">${count}</div>
+      <div style="font-family:var(--mono);font-size:10px;color:${col};width:44px;text-align:right;flex-shrink:0">${cpa ? '$'+parseFloat(cpa).toFixed(2) : '—'}</div>
       <div class="s-status" style="background:${col}18;color:${col};min-width:64px">${label}</div>
     </div>`;
   }).join('');
 }
 
 function renderHeatmap(hours) {
+  if (!hours || !hours.some(h => h.spend > 0)) {
+    $('heatmap').innerHTML = '<div class="no-data-state" style="grid-column:1/-1"><div class="nd-icon">🕐</div><div class="nd-title">NO HOURLY DATA</div></div>';
+    return;
+  }
   $('heatmap').innerHTML = hours.map(h => {
     let bg, col;
     if (h.spend < 10) { bg = 'rgba(255,255,255,0.03)'; col = '#374151'; }
@@ -804,17 +751,19 @@ function renderHeatmap(hours) {
     else if (h.cpa < 10) { bg = 'rgba(251,191,36,0.15)'; col = '#fbbf24'; }
     else { bg = 'rgba(248,113,113,0.18)'; col = '#f87171'; }
     return `<div class="hcell" style="background:${bg};color:${col}">
-      ${String(h.h).padStart(2,'0')}
-      <div class="tooltip">H${h.h} · $${h.cpa} CPA<br>$${Math.round(h.spend)} spend</div>
+      ${String(h.hour !== undefined ? h.hour : h.h).padStart(2,'0')}
+      <div class="tooltip">H${h.hour !== undefined ? h.hour : h.h} · ${fmtCPA(h.cpa)} CPA<br>$${Math.round(h.spend)} spend</div>
     </div>`;
   }).join('');
 }
 
 function renderTrajectory(monthly, daily) {
+  if (!monthly || !monthly.length) {
+    $('trajectory').innerHTML = '<div class="no-data-state"><div class="nd-icon">📈</div><div class="nd-title">NO TRAJECTORY DATA</div></div>';
+    return;
+  }
   $('trajectory').innerHTML = monthly.map(m => {
     const pct = m.isTarget ? 100 : Math.min(100, Math.round((m.val / m.target) * 100));
-
-    // Format value — isDollar flag controls $, not val size
     let valStr;
     if (m.isTarget) {
       valStr = `<span style="color:var(--muted);opacity:.5">${m.val > 0 ? m.val.toLocaleString() : 'TARGET'}</span>`;
@@ -823,20 +772,13 @@ function renderTrajectory(monthly, daily) {
     } else {
       valStr = `<span style="color:${m.color}">${m.val.toLocaleString()}</span>`;
     }
-
-    // Beat badge — show when actual (or projection) surpassed the monthly target
     let beat = '';
     if (!m.isTarget && m.proj !== undefined && m.val > m.proj) {
       const diff = (m.val - m.proj).toLocaleString();
-      if (m.isProjOnly) {
-        // Current month — projected beat, not confirmed yet
-        beat = `<span style="font-family:var(--mono);font-size:8px;padding:2px 7px;border-radius:3px;background:rgba(56,189,248,0.12);color:var(--accent);letter-spacing:1px;white-space:nowrap">▲ PROJ +${diff}</span>`;
-      } else {
-        // Closed month — confirmed beat
-        beat = `<span style="font-family:var(--mono);font-size:8px;padding:2px 7px;border-radius:3px;background:rgba(52,211,153,0.15);color:var(--green);letter-spacing:1px;white-space:nowrap">▲ BEAT +${diff}</span>`;
-      }
+      beat = m.isProjOnly
+        ? `<span style="font-family:var(--mono);font-size:8px;padding:2px 7px;border-radius:3px;background:rgba(56,189,248,0.12);color:var(--accent);letter-spacing:1px;white-space:nowrap">▲ PROJ +${diff}</span>`
+        : `<span style="font-family:var(--mono);font-size:8px;padding:2px 7px;border-radius:3px;background:rgba(52,211,153,0.15);color:var(--green);letter-spacing:1px;white-space:nowrap">▲ BEAT +${diff}</span>`;
     }
-
     return `<div class="proj-row">
       <div class="proj-lbl">${m.label}</div>
       <div style="display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:6px;min-width:0;text-align:center">${valStr}${beat}</div>
@@ -844,21 +786,354 @@ function renderTrajectory(monthly, daily) {
     </div>`;
   }).join('');
 
-  // Sparkline
-  const last14 = daily.slice(-14);
-  const maxA = Math.max(...last14.map(d => d.activations), 1);
-  $('weekSpark').innerHTML = last14.map(d => {
-    const h = Math.max(4, Math.round((d.activations / maxA) * 32));
-    const col = d.activations > 60 ? 'var(--green)' : d.activations > 30 ? 'var(--accent)' : d.activations > 0 ? 'var(--amber)' : 'var(--surface2)';
-    return `<div class="spark-bar" title="${d.date}: ${d.activations} activations" style="height:${h}px;background:${col}"></div>`;
-  }).join('');
+  if (daily && daily.length) {
+    const last14 = [...daily].sort((a,b) => a.date.localeCompare(b.date)).slice(-14);
+    const maxA = Math.max(...last14.map(d => d.activations), 1);
+    $('weekSpark').innerHTML = last14.map(d => {
+      const h = Math.max(4, Math.round((d.activations / maxA) * 32));
+      const col = d.activations > 60 ? 'var(--green)' : d.activations > 30 ? 'var(--accent)' : d.activations > 0 ? 'var(--amber)' : 'var(--surface2)';
+      return `<div class="spark-bar" title="${d.date}: ${d.activations} activations" style="height:${h}px;background:${col}"></div>`;
+    }).join('');
+  }
+}
+
+function renderSummary(chartDaily, kpis) {
+  if (!chartDaily || !chartDaily.length) return;
+  const days = chartDaily.length;
+  const avgSpend = kpis.spend / days;
+  const avgApps  = kpis.conversions / days;
+  const avgActs  = kpis.activations / days;
+  const estMonthlyRev = kpis.estRevenue;
+  $('summaryText').innerHTML =
+    `<span style="color:var(--accent)">Period days:</span> ${days} days<br>` +
+    `<span style="color:var(--accent)">Total spend:</span> ${fmtMoney(kpis.spend)}<br>` +
+    `<span style="color:var(--accent)">Daily avg spend:</span> ${fmtMoney(avgSpend)} · target $1,800<br>` +
+    `<span style="color:var(--accent)">Budget utilization:</span> <span style="color:var(--amber)">${Math.round(avgSpend/1800*100)}% of target</span><br>` +
+    `<span style="color:var(--accent)">Total apps:</span> ${Math.round(kpis.conversions).toLocaleString()} · avg ${avgApps.toFixed(1)}/day<br>` +
+    `<span style="color:var(--accent)">Est. activations:</span> ${kpis.activations.toLocaleString()} · avg ${avgActs.toFixed(1)}/day<br>` +
+    `<span style="color:var(--accent)">App CPA:</span> <span style="color:${cpaColor(kpis.googleCPA)}">${fmtCPA(kpis.googleCPA)} ${cpaLabel(kpis.googleCPA)}</span>`;
+
+  // April projection (remaining days estimation)
+  const today = new Date();
+  const endOfMonth = new Date(today.getFullYear(), today.getMonth()+1, 0);
+  const remainDays = Math.max(0, endOfMonth.getDate() - today.getDate());
+  const projRemainSpend = remainDays * avgSpend;
+  const projTotalSpend  = kpis.spend + projRemainSpend;
+  const projTotalConv   = kpis.conversions + (remainDays * avgApps);
+  const projTotalActs   = Math.round(projTotalConv * ACT_RATE);
+  const projRevenue     = projTotalActs * PAYOUT;
+  const projProfit      = projRevenue - projTotalSpend;
+  const projActCPA      = projTotalActs > 0 ? projTotalSpend / projTotalActs : 0;
+  $('projectionText').innerHTML =
+    `<span style="color:var(--accent)">Remaining days this month:</span> ~${remainDays}<br>` +
+    `<span style="color:var(--accent)">Proj. remaining spend:</span> ~${fmtMoney(projRemainSpend)}<br>` +
+    `<span style="color:var(--accent)">Proj. month total spend:</span> ~${fmtMoney(projTotalSpend)}<br>` +
+    `<span style="color:var(--accent)">Proj. total conversions:</span> ~${Math.round(projTotalConv).toLocaleString()}<br>` +
+    `<span style="color:var(--accent)">Proj. activations (55.12%):</span> <span style="color:var(--green)">~${projTotalActs.toLocaleString()}</span><br>` +
+    `<span style="color:var(--accent)">Proj. revenue:</span> <span style="color:var(--green)">~${fmtMoney(projRevenue)}</span><br>` +
+    `<span style="color:var(--accent)">Proj. profit:</span> <span style="color:${projProfit>0?'var(--green)':'var(--red)'}">${projProfit>0?'+':''}${fmtMoney(projProfit)}</span><br>` +
+    `<span style="color:var(--accent)">Proj. activation CPA:</span> ~${fmtCPA(projActCPA)} <span style="color:${projActCPA<=10?'var(--green)':'var(--amber)'}">(${projActCPA<=10?'ON TARGET':'NEEDS WORK'})</span>`;
+}
+
+// ── KEYWORDS RENDER ── //
+function renderKeywords(keywords, campaign) {
+  if (!keywords || !keywords.length) {
+    $('keywordsPanel').innerHTML = '<div class="no-data-state"><div class="nd-icon">🔑</div><div class="nd-title">NO KEYWORD DATA</div><div class="nd-sub">Verify Keywords sheet is published in Google Sheets</div></div>';
+    return;
+  }
+  // Aggregate by keyword + match type
+  const agg = {};
+  keywords.forEach(r => {
+    if (campaign !== 'all' && r.CampaignName !== campaign) return;
+    const key = (r.Keyword || r.keyword || '') + '|' + (r.MatchType || r.matchType || '');
+    if (!agg[key]) agg[key] = { keyword: r.Keyword || r.keyword || '', matchType: r.MatchType || r.matchType || '', campaign: r.CampaignName || '', adGroup: r.AdGroupName || '', impressions: 0, clicks: 0, cost: 0, conv: 0 };
+    agg[key].impressions += parseFloat(r.Impressions)||0;
+    agg[key].clicks      += parseFloat(r.Clicks)||0;
+    agg[key].cost        += parseFloat(r.Cost)||0;
+    agg[key].conv        += parseFloat(r.Conversions)||0;
+  });
+  const rows = Object.values(agg)
+    .map(r => ({ ...r, ctr: r.impressions > 0 ? r.clicks/r.impressions*100 : 0, cpa: r.conv > 0 ? r.cost/r.conv : 0 }))
+    .sort((a,b) => b.cost - a.cost)
+    .slice(0, 30);
+
+  function getAction(r) {
+    if (r.cost > 50 && r.conv === 0) return ['badge-neg', '⛔ NEGATIVE'];
+    if (r.cpa > 15) return ['badge-neg', '⛔ PAUSE'];
+    if (r.cpa > 10 && r.cpa <= 15) return ['badge-pause', '⚠ LOWER BID'];
+    if (r.cpa > 0 && r.cpa <= 6.41) return ['badge-scale', '✓ SCALE UP'];
+    if (r.cpa > 0 && r.cpa <= 9) return ['badge-keep', '✓ KEEP'];
+    if (r.impressions > 500 && r.clicks < 10) return ['badge-watch', '👁 LOW CTR'];
+    return ['badge-watch', '— MONITOR'];
+  }
+
+  const matchBadge = (mt) => {
+    const colors = { EXACT:'rgba(52,211,153,0.15)', PHRASE:'rgba(251,191,36,0.15)', BROAD:'rgba(248,113,113,0.12)' };
+    const col = colors[(mt||'').toUpperCase()] || 'rgba(100,116,139,0.15)';
+    return `<span style="font-size:8px;padding:1px 5px;border-radius:2px;background:${col};font-family:var(--mono)">${(mt||'—').toUpperCase()}</span>`;
+  };
+
+  $('kwMeta').textContent = `LIVE · ${rows.length} KEYWORDS BY SPEND`;
+  $('keywordsPanel').innerHTML = `<div class="data-table-wrap"><table class="data-table">
+    <thead><tr>
+      <th>Keyword</th><th>Match</th><th class="dt-num">Impr</th><th class="dt-num">Clicks</th><th class="dt-num">CTR</th><th class="dt-num">Cost</th><th class="dt-num">Conv</th><th class="dt-num">CPA</th><th>Action</th>
+    </tr></thead>
+    <tbody>${rows.map(r => {
+      const [cls, label] = getAction(r);
+      const cpaStr = r.cpa > 0 ? `<span style="color:${cpaColor(r.cpa)}">${fmtCPA(r.cpa)}</span>` : '<span style="color:var(--muted)">—</span>';
+      return `<tr>
+        <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis" title="${r.keyword}">${r.keyword}</td>
+        <td>${matchBadge(r.matchType)}</td>
+        <td class="dt-num" style="color:var(--muted)">${Math.round(r.impressions).toLocaleString()}</td>
+        <td class="dt-num">${Math.round(r.clicks).toLocaleString()}</td>
+        <td class="dt-num" style="color:var(--muted)">${r.ctr.toFixed(1)}%</td>
+        <td class="dt-num" style="color:var(--amber)">${fmtMoney(r.cost)}</td>
+        <td class="dt-num" style="color:var(--accent)">${r.conv.toFixed(1)}</td>
+        <td class="dt-num">${cpaStr}</td>
+        <td><span class="action-badge ${cls}">${label}</span></td>
+      </tr>`;
+    }).join('')}</tbody>
+  </table></div>`;
+}
+
+// ── SEARCH TERMS RENDER ── //
+function renderSearchTerms(searchTerms, campaign) {
+  if (!searchTerms || !searchTerms.length) {
+    $('searchTermsPanel').innerHTML = '<div class="no-data-state"><div class="nd-icon">🔍</div><div class="nd-title">NO SEARCH TERM DATA</div><div class="nd-sub">Verify Search Terms sheet is published in Google Sheets</div></div>';
+    return;
+  }
+  const agg = {};
+  searchTerms.forEach(r => {
+    if (campaign !== 'all' && r.CampaignName !== campaign) return;
+    const key = r.SearchTerm || r.searchTerm || r.Query || '';
+    if (!key) return;
+    if (!agg[key]) agg[key] = { term: key, campaign: r.CampaignName || '', impressions: 0, clicks: 0, cost: 0, conv: 0 };
+    agg[key].impressions += parseFloat(r.Impressions)||0;
+    agg[key].clicks      += parseFloat(r.Clicks)||0;
+    agg[key].cost        += parseFloat(r.Cost)||0;
+    agg[key].conv        += parseFloat(r.Conversions)||0;
+  });
+  const rows = Object.values(agg)
+    .map(r => ({ ...r, ctr: r.impressions > 0 ? r.clicks/r.impressions*100 : 0, cpa: r.conv > 0 ? r.cost/r.conv : 0 }))
+    .sort((a,b) => b.cost - a.cost)
+    .slice(0, 30);
+
+  function getAction(r) {
+    if (r.cost > 30 && r.conv === 0) return ['badge-neg', '⛔ ADD NEGATIVE'];
+    if (r.cpa > 15) return ['badge-neg', '⛔ ADD NEGATIVE'];
+    if (r.cpa > 10 && r.cpa <= 15) return ['badge-pause', '⚠ MONITOR'];
+    if (r.cpa > 0 && r.cpa <= 6.41 && r.conv >= 2) return ['badge-exact', '✓ ADD AS EXACT'];
+    if (r.cpa > 0 && r.cpa <= 9) return ['badge-keep', '✓ KEEP'];
+    if (r.impressions > 200 && r.conv === 0 && r.cost > 10) return ['badge-neg', '⛔ ADD NEGATIVE'];
+    return ['badge-watch', '— MONITOR'];
+  }
+
+  $('stMeta').textContent = `LIVE · ${rows.length} SEARCH TERMS BY SPEND`;
+  $('searchTermsPanel').innerHTML = `<div class="data-table-wrap"><table class="data-table">
+    <thead><tr>
+      <th>Search Term</th><th class="dt-num">Impr</th><th class="dt-num">Clicks</th><th class="dt-num">CTR</th><th class="dt-num">Cost</th><th class="dt-num">Conv</th><th class="dt-num">CPA</th><th>Action</th>
+    </tr></thead>
+    <tbody>${rows.map(r => {
+      const [cls, label] = getAction(r);
+      const cpaStr = r.cpa > 0 ? `<span style="color:${cpaColor(r.cpa)}">${fmtCPA(r.cpa)}</span>` : '<span style="color:var(--muted)">—</span>';
+      return `<tr>
+        <td style="max-width:220px;overflow:hidden;text-overflow:ellipsis" title="${r.term}">${r.term}</td>
+        <td class="dt-num" style="color:var(--muted)">${Math.round(r.impressions).toLocaleString()}</td>
+        <td class="dt-num">${Math.round(r.clicks).toLocaleString()}</td>
+        <td class="dt-num" style="color:var(--muted)">${r.ctr.toFixed(1)}%</td>
+        <td class="dt-num" style="color:var(--amber)">${fmtMoney(r.cost)}</td>
+        <td class="dt-num" style="color:var(--accent)">${r.conv.toFixed(1)}</td>
+        <td class="dt-num">${cpaStr}</td>
+        <td><span class="action-badge ${cls}">${label}</span></td>
+      </tr>`;
+    }).join('')}</tbody>
+  </table></div>`;
+}
+
+// ── TODAY'S BRIEF ── //
+function renderBrief(dailyRaw, keywordsRaw, searchTermsRaw) {
+  const today   = new Date(); today.setHours(0,0,0,0);
+  const yDay    = new Date(today); yDay.setDate(yDay.getDate()-1);
+  const dBefore = new Date(today); dBefore.setDate(dBefore.getDate()-2);
+  const fmtDate = d => d.toISOString().split('T')[0];
+  const yStr    = fmtDate(yDay), dbStr = fmtDate(dBefore);
+
+  $('briefDate').textContent = today.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'}).toUpperCase();
+
+  if (!dailyRaw || !dailyRaw.length) {
+    $('briefPanel').innerHTML = '<div class="no-data-state"><div class="nd-icon">📋</div><div class="nd-title">NO DATA FOR BRIEF</div><div class="nd-sub">Connect live data first</div></div>';
+    return;
+  }
+
+  // Aggregate by date
+  const byDate = {};
+  dailyRaw.forEach(r => {
+    const d = (r.Date || '').substring(0,10);
+    if (!d) return;
+    if (!byDate[d]) byDate[d] = { spend:0, conv:0, clicks:0, impressions:0 };
+    byDate[d].spend       += parseFloat(r.Cost)||0;
+    byDate[d].conv        += parseFloat(r.Conversions)||0;
+    byDate[d].clicks      += parseFloat(r.Clicks)||0;
+    byDate[d].impressions += parseFloat(r.Impressions)||0;
+  });
+
+  const yData  = byDate[yStr]  || null;
+  const dbData = byDate[dbStr] || null;
+
+  if (!yData) {
+    $('briefPanel').innerHTML = `<div class="no-data-state"><div class="nd-icon">📋</div><div class="nd-title">NO DATA FOR ${yStr}</div><div class="nd-sub">Yesterday's data has not been pushed yet. Check back after the hourly script runs.</div></div>`;
+    return;
+  }
+
+  const yApps = yData.conv, ySpend = yData.spend;
+  const yAppCPA   = yApps > 0 ? ySpend / yApps : 0;
+  const yActs     = Math.round(yApps * ACT_RATE);
+  const yActCPA   = yActs > 0 ? ySpend / yActs : 0;
+  const yRevenue  = yActs * PAYOUT;
+  const yProfit   = yRevenue - ySpend;
+  const yCTR      = yData.impressions > 0 ? yData.clicks / yData.impressions * 100 : 0;
+
+  const dbApps   = dbData ? dbData.conv    : null;
+  const dbSpend  = dbData ? dbData.spend   : null;
+  const dbAppCPA = dbData && dbApps > 0 ? dbSpend / dbApps : null;
+
+  // Trend analysis
+  const spendTrend  = dbSpend  ? ((ySpend  - dbSpend)  / dbSpend  * 100) : null;
+  const appsTrend   = dbApps   ? ((yApps   - dbApps)   / dbApps   * 100) : null;
+  const cpaTrend    = dbAppCPA ? ((yAppCPA - dbAppCPA) / dbAppCPA * 100) : null;
+
+  // Campaign breakdown
+  const campData = {};
+  dailyRaw.filter(r => (r.Date||'').startsWith(yStr)).forEach(r => {
+    const c = r.CampaignName || 'Unknown';
+    if (!campData[c]) campData[c] = { spend:0, conv:0 };
+    campData[c].spend += parseFloat(r.Cost)||0;
+    campData[c].conv  += parseFloat(r.Conversions)||0;
+  });
+
+  // Top wasted search terms
+  const wastedTerms = (searchTermsRaw||[])
+    .filter(r => (parseFloat(r.Cost)||0) > 20 && (parseFloat(r.Conversions)||0) === 0)
+    .sort((a,b) => (parseFloat(b.Cost)||0) - (parseFloat(a.Cost)||0))
+    .slice(0, 3);
+
+  // Best keywords
+  const bestKW = (keywordsRaw||[])
+    .filter(r => { const c = parseFloat(r.Conversions)||0, s = parseFloat(r.Cost)||0; return c > 0 && (s/c) < 6.41; })
+    .sort((a,b) => (parseFloat(b.Conversions)||0) - (parseFloat(a.Conversions)||0))
+    .slice(0, 3);
+
+  // Generate action items
+  const actions = [];
+
+  // CPA direction
+  if (cpaTrend !== null) {
+    if (cpaTrend > 15) actions.push({ type:'bad',  icon:'📈', text:`App CPA rose <b>${Math.abs(cpaTrend).toFixed(1)}%</b> yesterday (${fmtCPA(dbAppCPA)} → ${fmtCPA(yAppCPA)}). Review bids and budget pacing — check if mobile share increased.` });
+    else if (cpaTrend < -10) actions.push({ type:'good', icon:'📉', text:`App CPA dropped <b>${Math.abs(cpaTrend).toFixed(1)}%</b> yesterday (${fmtCPA(dbAppCPA)} → ${fmtCPA(yAppCPA)}). Good trend — consider increasing budget if CPA holds.` });
+    else actions.push({ type:'warn', icon:'📊', text:`App CPA stable: ${fmtCPA(yAppCPA)} yesterday vs ${fmtCPA(dbAppCPA)} day prior (${cpaTrend > 0 ? '+' : ''}${cpaTrend.toFixed(1)}%).` });
+  }
+
+  // Spend vs target
+  const dailyTarget = 1800;
+  if (ySpend < dailyTarget * 0.7) {
+    actions.push({ type:'warn', icon:'💸', text:`Spend only ${fmtMoney(ySpend)} vs $${dailyTarget.toLocaleString()} target — ${Math.round(ySpend/dailyTarget*100)}% utilization. Check campaign budgets and bid caps; potential volume left on the table.` });
+  } else if (ySpend > dailyTarget * 1.2) {
+    actions.push({ type:'warn', icon:'💰', text:`Spend ${fmtMoney(ySpend)} exceeded daily target by ${Math.round((ySpend/dailyTarget-1)*100)}%. Monitor closely — ensure CPA stayed in range.` });
+  } else {
+    actions.push({ type:'good', icon:'✅', text:`Spend ${fmtMoney(ySpend)} well-paced against $${dailyTarget.toLocaleString()} target (${Math.round(ySpend/dailyTarget*100)}%).` });
+  }
+
+  // Activation CPA vs $10 target
+  if (yActCPA > 0) {
+    if (yActCPA > 15) actions.push({ type:'bad',  icon:'🎯', text:`Activation CPA at ${fmtCPA(yActCPA)} — above $15 threshold. Priority: pause high-CPA keywords, review hour-of-day bidding, check mobile/desktop split.` });
+    else if (yActCPA > 10) actions.push({ type:'warn', icon:'🎯', text:`Activation CPA at ${fmtCPA(yActCPA)} — target is &lt;$10. ${fmtCPA(yActCPA - 10)} gap. Focus on device bid adjustments and negative keywords.` });
+    else actions.push({ type:'good', icon:'🎯', text:`Activation CPA ${fmtCPA(yActCPA)} — below $10 target! Est. profit: ${fmtMoney(yProfit)}. Scale budget to capture more volume.` });
+  }
+
+  // Wasted search terms
+  if (wastedTerms.length > 0) {
+    const termList = wastedTerms.map(r => `<b>${r.SearchTerm || r.searchTerm || r.Query}</b> (${fmtMoney(r.Cost)} wasted)`).join(', ');
+    actions.push({ type:'bad', icon:'🚫', text:`Add these search terms as negatives — spend with zero conversions: ${termList}` });
+  }
+
+  // Best keywords
+  if (bestKW.length > 0) {
+    const kwList = bestKW.map(r => `<b>${r.Keyword || r.keyword}</b> (${fmtCPA(parseFloat(r.Cost)/parseFloat(r.Conversions))} CPA)`).join(', ');
+    actions.push({ type:'good', icon:'⭐', text:`Top-performing keywords — consider raising bids: ${kwList}` });
+  }
+
+  // Campaign analysis
+  const campEntries = Object.entries(campData).sort((a,b) => b[1].spend - a[1].spend);
+  if (campEntries.length > 1) {
+    const campBreakdown = campEntries.map(([name, d]) => {
+      const cpa = d.conv > 0 ? d.spend/d.conv : 0;
+      const col = cpa <= 6.41 ? 'var(--green)' : cpa <= 9 ? 'var(--amber)' : 'var(--red)';
+      return `<b style="color:${col}">${name}</b>: ${fmtMoney(d.spend)} spend · ${d.conv.toFixed(1)} conv · ${cpa > 0 ? fmtCPA(cpa) + ' CPA' : 'no conv'}`;
+    }).join(' &nbsp;|&nbsp; ');
+    actions.push({ type:'', icon:'📣', text:`Yesterday by campaign: ${campBreakdown}` });
+  }
+
+  // CTR observation
+  if (yCTR > 0) {
+    const ctrCol = yCTR >= 20 ? 'var(--green)' : yCTR >= 10 ? 'var(--amber)' : 'var(--red)';
+    actions.push({ type: yCTR >= 20 ? 'good' : yCTR >= 10 ? 'warn' : 'bad', icon:'👆',
+      text:`Overall CTR: <span style="color:${ctrCol}"><b>${yCTR.toFixed(2)}%</b></span> — ${yCTR >= 20 ? 'Strong ad relevance, good quality scores.' : yCTR >= 10 ? 'Acceptable. Review ad copy for top keywords.' : 'Low CTR — review ad copy, extensions, and keyword match types.'}` });
+  }
+
+  // Build HTML
+  const today4 = today.toLocaleDateString('en-US',{weekday:'long',month:'short',day:'numeric'}).toUpperCase();
+  const yFmt   = yDay.toLocaleDateString('en-US',{weekday:'long',month:'short',day:'numeric'}).toUpperCase();
+
+  $('briefPanel').innerHTML = `
+    <div class="brief-wrap">
+      <div class="brief-section">
+        <div class="brief-section-title">Yesterday at a Glance — ${yFmt}</div>
+        <div class="brief-kpi-row">
+          <div class="bkpi">
+            <div class="bkpi-val" style="color:var(--amber)">${fmtCPA(yAppCPA)}</div>
+            <div class="bkpi-lbl">APP CPA</div>
+            ${cpaTrend !== null ? `<div class="bkpi-delta" style="color:${cpaTrend < 0 ? 'var(--green)' : 'var(--red)'}">${cpaTrend < 0 ? '↓' : '↑'}${Math.abs(cpaTrend).toFixed(1)}% vs prior</div>` : ''}
+          </div>
+          <div class="bkpi">
+            <div class="bkpi-val" style="color:${yActCPA <= 10 ? 'var(--green)' : yActCPA <= 15 ? 'var(--amber)' : 'var(--red)'}">${fmtCPA(yActCPA)}</div>
+            <div class="bkpi-lbl">ACT CPA</div>
+            <div class="bkpi-delta" style="color:var(--muted)">TARGET &lt;$10</div>
+          </div>
+          <div class="bkpi">
+            <div class="bkpi-val" style="color:var(--green)">${fmtMoney(ySpend)}</div>
+            <div class="bkpi-lbl">SPEND</div>
+            ${spendTrend !== null ? `<div class="bkpi-delta" style="color:var(--muted)">${spendTrend >= 0 ? '+' : ''}${spendTrend.toFixed(1)}% vs prior</div>` : ''}
+          </div>
+          <div class="bkpi">
+            <div class="bkpi-val" style="color:var(--accent)">${Math.round(yApps).toLocaleString()}</div>
+            <div class="bkpi-lbl">APPLICATIONS</div>
+            ${appsTrend !== null ? `<div class="bkpi-delta" style="color:${appsTrend >= 0 ? 'var(--green)' : 'var(--red)'}">${appsTrend >= 0 ? '↑' : '↓'}${Math.abs(appsTrend).toFixed(1)}% vs prior</div>` : ''}
+          </div>
+          <div class="bkpi">
+            <div class="bkpi-val" style="color:var(--accent2)">${yActs.toLocaleString()}</div>
+            <div class="bkpi-lbl">EST ACTIVATIONS</div>
+            <div class="bkpi-delta" style="color:var(--muted)">@55.12% RATE</div>
+          </div>
+          <div class="bkpi">
+            <div class="bkpi-val" style="color:${yProfit >= 0 ? 'var(--green)' : 'var(--red)'}">${yProfit >= 0 ? '+' : ''}${fmtMoney(yProfit)}</div>
+            <div class="bkpi-lbl">EST PROFIT</div>
+            <div class="bkpi-delta" style="color:var(--muted)">REV ${fmtMoney(yRevenue)}</div>
+          </div>
+        </div>
+      </div>
+      <div class="brief-section">
+        <div class="brief-section-title">Action Items for ${today4}</div>
+        ${actions.map(a => `<div class="action-item ${a.type ? 'ai-'+a.type : ''}">
+          <div class="ai-icon">${a.icon}</div>
+          <div class="ai-text">${a.text}</div>
+        </div>`).join('')}
+      </div>
+    </div>`;
 }
 
 // ── LIVE DATA LAYER ── //
-
-// Global state
-let RAW = { daily: [], devices: [], geo: [], hourly: [] };
-let activeCampaign = 'all';
+let RAW = { daily: [], devices: [], geo: [], hourly: [], keywords: [], searchTerms: [] };
+let activeCampaign  = 'all';
 let activeDateRange = 'today';
 let customFrom = null, customTo = null;
 
@@ -879,26 +1154,37 @@ function parseCSV(text) {
   return lines.slice(1).map(line => {
     const vals = parseLine(line);
     const obj = {};
-    headers.forEach((h, i) => obj[h] = vals[i] || '');
+    headers.forEach((h,i) => obj[h] = vals[i] || '');
     return obj;
   }).filter(r => Object.values(r).some(v => v));
 }
 
-// Fetch all four sheets
-async function fetchAllSheets() {
-  const proxy = url => 'https://api.allorigins.win/raw?url=' + encodeURIComponent(url);
-  const urls = {
-    daily:   'https://docs.google.com/spreadsheets/d/e/2PACX-1vQSGFATGsiH9UxFDJPkIrDpdHoDTivZRDEm2zYxydUSZhyTRK91KnNFmYX7qRvjkMwRcP6eYypCF9z2/pub?gid=1318122650&single=true&output=csv',
-    devices: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQSGFATGsiH9UxFDJPkIrDpdHoDTivZRDEm2zYxydUSZhyTRK91KnNFmYX7qRvjkMwRcP6eYypCF9z2/pub?gid=728314626&single=true&output=csv',
-    geo:     'https://docs.google.com/spreadsheets/d/e/2PACX-1vQSGFATGsiH9UxFDJPkIrDpdHoDTivZRDEm2zYxydUSZhyTRK91KnNFmYX7qRvjkMwRcP6eYypCF9z2/pub?gid=1821022449&single=true&output=csv',
-    hourly:  'https://docs.google.com/spreadsheets/d/e/2PACX-1vQSGFATGsiH9UxFDJPkIrDpdHoDTivZRDEm2zYxydUSZhyTRK91KnNFmYX7qRvjkMwRcP6eYypCF9z2/pub?gid=1038380061&single=true&output=csv',
-  };
-  const results = await Promise.allSettled(
-    Object.entries(urls).map(async ([key, url]) => {
-      const res = await fetch(proxy(url), { cache: 'no-store' });
-      if (!res.ok) throw new Error(key + ' HTTP ' + res.status);
+// Fetch with proxy fallback
+async function fetchCSV(url) {
+  const attempts = [
+    url,
+    'https://corsproxy.io/?' + encodeURIComponent(url),
+    'https://api.allorigins.win/raw?url=' + encodeURIComponent(url),
+  ];
+  for (const attempt of attempts) {
+    try {
+      const res = await fetch(attempt, { cache: 'no-store' });
+      if (!res.ok) continue;
       const text = await res.text();
-      return [key, parseCSV(text)];
+      if (text.length > 50 && text.includes(',')) return text;
+    } catch(e) { /* try next */ }
+  }
+  throw new Error('All fetch attempts failed for: ' + url);
+}
+
+// Fetch all sheets
+async function fetchAllSheets() {
+  const results = await Promise.allSettled(
+    Object.entries(SHEET_URLS).map(async ([key, url]) => {
+      const text = await fetchCSV(url);
+      const data = parseCSV(text);
+      console.log(`[MC] ${key}: ${data.length} rows`);
+      return [key, data];
     })
   );
   results.forEach(r => {
@@ -906,19 +1192,23 @@ async function fetchAllSheets() {
       const [key, data] = r.value;
       RAW[key] = data;
     } else {
-      console.warn('Sheet fetch failed:', r.reason);
+      console.warn('[MC] Sheet failed:', r.reason?.message || r.reason);
     }
   });
+  // Read LastUpdated if available (from the sheet meta)
+  if (RAW.daily.length) {
+    const dates = RAW.daily.map(r => r.Date||'').filter(Boolean).sort();
+    $('lastPush').textContent = dates[dates.length-1] || '—';
+  }
   populateCampaignDropdown();
 }
 
-// Populate campaign dropdown from daily data
 function populateCampaignDropdown() {
-  const sel = document.getElementById('campaign-select');
+  const sel = $('campaign-select');
   if (!sel || !RAW.daily.length) return;
-  const campaigns = [...new Set(RAW.daily.map(r => r.CampaignName).filter(Boolean))].sort();
+  const camps = [...new Set(RAW.daily.map(r => r.CampaignName).filter(Boolean))].sort();
   sel.innerHTML = '<option value="all">All Campaigns</option>';
-  campaigns.forEach(c => {
+  camps.forEach(c => {
     const opt = document.createElement('option');
     opt.value = c; opt.textContent = c;
     sel.appendChild(opt);
@@ -940,12 +1230,12 @@ function getDateRange() {
       const last  = new Date(today.getFullYear(), today.getMonth(), 0);
       return { from: fmt(first), to: fmt(last) };
     }
-    case 'custom':    return { from: customFrom || fmt(today), to: customTo || fmt(today) };
-    default:          { const d = new Date(today); d.setDate(d.getDate()-29); return { from: fmt(d), to: fmt(today) }; }
+    case 'custom': return { from: customFrom || fmt(today), to: customTo || fmt(today) };
+    default: { const d = new Date(today); d.setDate(d.getDate()-29); return { from: fmt(d), to: fmt(today) }; }
   }
 }
 
-// Filter RAW data by date range and campaign
+// Filter RAW by date + campaign
 function filterData() {
   const { from, to } = getDateRange();
   const camp = activeCampaign;
@@ -956,126 +1246,199 @@ function filterData() {
     return true;
   };
   return {
-    daily:   RAW.daily.filter(filterRow),
-    devices: RAW.devices.filter(filterRow),
-    geo:     RAW.geo.filter(filterRow),
-    hourly:  RAW.hourly.filter(r => camp === 'all' || r.CampaignName === camp),
+    daily:       RAW.daily.filter(filterRow),
+    devices:     RAW.devices.filter(filterRow),
+    geo:         RAW.geo.filter(filterRow),
+    hourly:      RAW.hourly.filter(r => camp === 'all' || r.CampaignName === camp),
+    keywords:    RAW.keywords.filter(r => camp === 'all' || r.CampaignName === camp),
+    searchTerms: RAW.searchTerms.filter(r => camp === 'all' || r.CampaignName === camp),
   };
 }
 
-// Build KPI totals from filtered daily rows
+// Build KPIs from filtered daily
 function buildKPIs(daily) {
-  const ACT_RATE = 0.5512, PAYOUT = 25;
   const spend       = daily.reduce((s,r) => s + (parseFloat(r.Cost)||0), 0);
+  const conversions = daily.reduce((s,r) => s + (parseFloat(r.Conversions)||0), 0);
   const clicks      = daily.reduce((s,r) => s + (parseFloat(r.Clicks)||0), 0);
   const impressions = daily.reduce((s,r) => s + (parseFloat(r.Impressions)||0), 0);
-  const conversions = daily.reduce((s,r) => s + (parseFloat(r.Conversions)||0), 0);
   const activations = Math.round(conversions * ACT_RATE);
-  const applications = conversions;
   const googleCPA     = conversions > 0 ? spend / conversions : 0;
   const activationCPA = activations > 0 ? spend / activations : 0;
   const estRevenue    = activations * PAYOUT;
   const estProfit     = estRevenue - spend;
-  return { spend, clicks, impressions, conversions, activations, applications, googleCPA, activationCPA, estRevenue, estProfit };
+  return { spend, clicks, impressions, conversions, activations, googleCPA, activationCPA, estRevenue, estProfit };
 }
 
-// Build chart-friendly daily array
+// Build chart daily from raw rows
 function buildChartDaily(daily) {
   const byDate = {};
   daily.forEach(r => {
     const d = (r.Date||'').substring(5);
+    if (!d) return;
     if (!byDate[d]) byDate[d] = { date: d, activations: 0, spend: 0, apps: 0 };
     byDate[d].spend       += parseFloat(r.Cost)||0;
     byDate[d].apps        += parseFloat(r.Conversions)||0;
-    byDate[d].activations += Math.round((parseFloat(r.Conversions)||0) * 0.5512);
+    byDate[d].activations += Math.round((parseFloat(r.Conversions)||0) * ACT_RATE);
   });
   return Object.values(byDate).sort((a,b) => a.date.localeCompare(b.date));
 }
 
-// Build device CPAs from filtered devices data
+// Build device CPAs
 function buildDevices(devices) {
   const byDevice = {};
   devices.forEach(r => {
     const dev = (r.Device||'').toLowerCase();
+    if (!dev) return;
     if (!byDevice[dev]) byDevice[dev] = { cost: 0, conv: 0 };
     byDevice[dev].cost += parseFloat(r.Cost)||0;
     byDevice[dev].conv += parseFloat(r.Conversions)||0;
   });
-  const cpa = (dev) => byDevice[dev] && byDevice[dev].conv > 0 ? byDevice[dev].cost / byDevice[dev].conv : 0;
-  return {
-    desktop: cpa('computers') || cpa('desktop') || FALLBACK.devices.desktop,
-    mobile:  cpa('mobile')    || FALLBACK.devices.mobile,
-    tablets: cpa('tablet')    || cpa('tablets') || FALLBACK.devices.tablets,
+  const cpa = (dev) => {
+    const d = byDevice[dev] || byDevice[dev+'s'];
+    return d && d.conv > 0 ? d.cost / d.conv : 0;
   };
+  const result = {
+    desktop: cpa('computers') || cpa('desktop') || 0,
+    mobile:  cpa('mobile') || 0,
+    tablets: cpa('tablet') || cpa('tablets') || 0,
+  };
+  Object.entries(byDevice).forEach(([key, d]) => {
+    const suffix = 'Apps', actSuffix = 'Acts';
+    if (key.includes('computer') || key.includes('desktop')) {
+      result.desktopApps = (result.desktopApps||0) + d.conv;
+      result.desktopActs = (result.desktopActs||0) + Math.round(d.conv * ACT_RATE);
+    } else if (key.includes('mobile')) {
+      result.mobileApps = (result.mobileApps||0) + d.conv;
+      result.mobileActs = (result.mobileActs||0) + Math.round(d.conv * ACT_RATE);
+    } else if (key.includes('tablet')) {
+      result.tabletsApps = (result.tabletsApps||0) + d.conv;
+      result.tabletsActs = (result.tabletsActs||0) + Math.round(d.conv * ACT_RATE);
+    }
+  });
+  return result;
 }
 
-// Build states from geo data
+// Build states
 function buildStates(geo) {
-  if (!geo.length) return FALLBACK.states;
+  if (!geo.length) return [];
   const byRegion = {};
   geo.forEach(r => {
-    const region = r.Region || r.RegionCriteriaId || '';
+    const region = r.Region || r.RegionName || '';
     if (!region) return;
-    if (!byRegion[region]) byRegion[region] = { cost: 0, conv: 0 };
+    if (!byRegion[region]) byRegion[region] = { cost:0, conv:0 };
     byRegion[region].cost += parseFloat(r.Cost)||0;
     byRegion[region].conv += parseFloat(r.Conversions)||0;
   });
   return Object.entries(byRegion)
-    .map(([state, d]) => ({ state, cpa: d.conv > 0 ? d.cost/d.conv : 0, spend: d.cost, conv: d.conv }))
+    .map(([code, d]) => ({ code, cpa: d.conv > 0 ? d.cost/d.conv : 0, count: Math.round(d.conv), spend: d.cost }))
     .sort((a,b) => b.spend - a.spend)
     .slice(0, 20);
 }
 
-// Build hourly array from hourly data
+// Build hourly
 function buildHourly(hourly) {
-  if (!hourly.length) return FALLBACK.hours;
+  if (!hourly.length) return [];
   const byHour = {};
   hourly.forEach(r => {
     const h = parseInt(r.HourOfDay)||0;
-    if (!byHour[h]) byHour[h] = { cost: 0, conv: 0, clicks: 0 };
+    if (!byHour[h]) byHour[h] = { cost:0, conv:0, clicks:0 };
     byHour[h].cost   += parseFloat(r.Cost)||0;
     byHour[h].conv   += parseFloat(r.Conversions)||0;
     byHour[h].clicks += parseFloat(r.Clicks)||0;
   });
   return Array.from({length:24}, (_,h) => ({
-    hour: h,
+    hour:   h,
     cpa:    byHour[h] && byHour[h].conv > 0 ? byHour[h].cost / byHour[h].conv : 0,
     spend:  byHour[h]?.cost || 0,
     clicks: byHour[h]?.clicks || 0,
   }));
 }
 
+// Build trajectory for current data
+function buildTrajectory(kpis, chartDaily) {
+  const today = new Date();
+  const monthName = today.toLocaleDateString('en-US',{month:'short',year:'numeric'}).toUpperCase();
+  const daysInMonth = new Date(today.getFullYear(), today.getMonth()+1, 0).getDate();
+  const dayOfMonth  = today.getDate();
+  const projectedActs = dayOfMonth > 0 ? Math.round(kpis.activations / dayOfMonth * daysInMonth) : 0;
+  return [
+    {label:`${monthName} ACTIVATIONS (PROJ)`, val:projectedActs, target:3000, color:'var(--accent)', proj:2000, isProjOnly:true},
+    {label:`${monthName} SPEND (PROJ)`,        val:Math.round(kpis.spend / dayOfMonth * daysInMonth), target:40000, color:'var(--amber)', isDollar:true},
+    {label:`${monthName} REVENUE (PROJ)`,      val:Math.round(projectedActs * PAYOUT), target:75000, color:'var(--green)', isDollar:true},
+    {label:'FEB 2026 CLOSED',                  val:552,   target:3000, color:'var(--muted)', proj:500},
+    {label:'MAR 2026 PENDING',                 val:1483,  target:3000, color:'var(--amber)', proj:1000},
+    {label:'REVENUE SETTLED',                  val:25325, target:100000, color:'var(--green)', isDollar:true},
+  ];
+}
+
 // Apply filters and re-render all panels
 function applyFilters() {
-  activeCampaign = document.getElementById('campaign-select')?.value || 'all';
+  activeCampaign = $('campaign-select')?.value || 'all';
   if (activeDateRange === 'custom') {
-    customFrom = document.getElementById('custom-from')?.value || null;
-    customTo   = document.getElementById('custom-to')?.value || null;
+    customFrom = $('custom-from')?.value || null;
+    customTo   = $('custom-to')?.value || null;
   }
-  const f = filterData();
-  // If no live data at all, render FALLBACK so buttons still respond visually
+
+  // If no live data at all, show error state
   if (!RAW.daily.length) {
-    try { renderKPIs(FALLBACK.totals); } catch(e) {}
-    try { renderChart(FALLBACK.daily); } catch(e) {}
-    try { renderDevices(FALLBACK.devices); } catch(e) {}
-    try { renderStates(FALLBACK.states); } catch(e) {}
-    try { renderHeatmap(FALLBACK.hours); } catch(e) {}
-    try { renderFeed(FALLBACK.daily); } catch(e) {}
+    $('errorBanner').style.display = 'block';
+    $('liveStatus').textContent = 'NO DATA';
+    $('liveStatus').style.color = 'var(--red)';
     return;
   }
-  // Live data available — use filtered results
+  $('errorBanner').style.display = 'none';
+
+  const f = filterData();
   const daily   = f.daily.length   ? f.daily   : RAW.daily;
   const devices = f.devices.length ? f.devices : RAW.devices;
   const geo     = f.geo.length     ? f.geo     : RAW.geo;
   const hourly  = f.hourly.length  ? f.hourly  : RAW.hourly;
-  const kpis    = buildKPIs(daily);
-  const chart   = buildChartDaily(daily);
-  try { renderKPIs(kpis); } catch(e) {}
-  try { renderChart(chart); } catch(e) {}
-  try { renderDevices(buildDevices(devices)); } catch(e) {}
-  try { renderStates(buildStates(geo)); } catch(e) {}
-  try { renderHeatmap(buildHourly(hourly)); } catch(e) {}
-  try { renderFeed(chart); } catch(e) {}
+
+  const kpis      = buildKPIs(daily);
+  const chartData = buildChartDaily(daily);
+  const period    = getPeriodMeta(daily);
+
+  $('periodBanner').textContent = period.banner;
+  $('chartRange').textContent   = period.label;
+
+  try { renderKPIs(kpis); }              catch(e) { console.error('KPI',e); }
+  try { renderChart(chartData); }        catch(e) { console.error('Chart',e); }
+  try { renderDevices(buildDevices(devices)); } catch(e) { console.error('Devices',e); }
+  try { renderStates(buildStates(geo)); }      catch(e) { console.error('States',e); }
+  try { renderHeatmap(buildHourly(hourly)); }  catch(e) { console.error('Heatmap',e); }
+  try { renderFeed(chartData); }               catch(e) { console.error('Feed',e); }
+  try { renderSummary(chartData, kpis); }      catch(e) { console.error('Summary',e); }
+  try { renderTrajectory(buildTrajectory(kpis, chartData), chartData); } catch(e) { console.error('Traj',e); }
+
+  // Build campaigns from daily aggregation
+  try {
+    const campAgg = {};
+    daily.forEach(r => {
+      const c = r.CampaignName || 'Unknown';
+      if (!campAgg[c]) campAgg[c] = { name:c, spend:0, conv:0, clicks:0, impressions:0 };
+      campAgg[c].spend       += parseFloat(r.Cost)||0;
+      campAgg[c].conv        += parseFloat(r.Conversions)||0;
+      campAgg[c].clicks      += parseFloat(r.Clicks)||0;
+      campAgg[c].impressions += parseFloat(r.Impressions)||0;
+    });
+    const camps = Object.values(campAgg).map(c => ({
+      name:  c.name,
+      spend: c.spend,
+      conv:  c.conv,
+      cpa:   c.conv > 0 ? c.spend/c.conv : 0,
+      ctr:   c.impressions > 0 ? (c.clicks/c.impressions*100).toFixed(1)+'%' : '—',
+      grade: (() => { const cpa = c.conv > 0 ? c.spend/c.conv : 99; return cpa<=5.51?'A':cpa<=6.89?'B':cpa<=8.27?'C':cpa<=10?'D':'F'; })()
+    })).sort((a,b) => b.spend - a.spend);
+    renderCampaigns(camps, period.label);
+  } catch(e) { console.error('Camps',e); }
+
+  // Keywords & search terms (not date-filtered — show full picture)
+  try { renderKeywords(f.keywords.length ? f.keywords : RAW.keywords, activeCampaign); } catch(e) { console.error('KW',e); }
+  try { renderSearchTerms(f.searchTerms.length ? f.searchTerms : RAW.searchTerms, activeCampaign); } catch(e) { console.error('ST',e); }
+
+  // Brief always uses full RAW data (not filtered by date/campaign)
+  try { renderBrief(RAW.daily, RAW.keywords, RAW.searchTerms); } catch(e) { console.error('Brief',e); }
+
   const { from, to } = getDateRange();
   $('chartRange').textContent = from + ' → ' + to;
 }
@@ -1085,102 +1448,47 @@ function setDateRange(range, btn) {
   activeDateRange = range;
   document.querySelectorAll('.dr-btn').forEach(b => b.classList.remove('active'));
   if (btn) btn.classList.add('active');
-  const cr = document.getElementById('custom-range');
+  const cr = $('custom-range');
   if (cr) cr.style.display = range === 'custom' ? 'flex' : 'none';
   if (range !== 'custom') applyFilters();
 }
 
-// fetchSheetData — wrapper for backward compat with auto-refresh
-async function fetchSheetData() {
-  await fetchAllSheets();
-  applyFilters();
-  return null; // rendering already done in applyFilters
-}
-
-
-function renderSummary(daily, totals) {
-  const APR_SPEND       = 16730.52;
-  const APR_ACTIVE_DAYS = 11;
-  const APR_APPS        = 1984;
-  const APR_APPS_FULL   = 1984 - 66; // exclude today's partial
-  const AVG_SPEND       = APR_SPEND / APR_ACTIVE_DAYS;       // $1,520.96
-  const AVG_APPS        = APR_APPS_FULL / APR_ACTIVE_DAYS;   // 174.4/day
-  const ACT_RATE        = 0.5512;
-  const PAYOUT          = 25;
-  const REMAINING_DAYS  = 15; // Apr 15-30 minus Sundays Apr 19 & 26
-
-  const projSpendRemaining = REMAINING_DAYS * AVG_SPEND;
-  const projTotalSpend     = APR_SPEND + projSpendRemaining;
-  const projTotalApps      = APR_APPS + (REMAINING_DAYS * AVG_APPS);
-  const projActs           = Math.round(projTotalApps * ACT_RATE);
-  const projRevenue        = projActs * PAYOUT;
-  const projProfit         = projRevenue - projTotalSpend;
-  const projActCPA         = projTotalSpend / projActs;
-
-  document.getElementById('summaryText').innerHTML =
-    '<span style="color:var(--accent)">Period:</span> Mar 15 – Apr 13, 2026<br>' +
-    '<span style="color:var(--accent)">Apr spend to date:</span> $16,730.52 (11 active days)<br>' +
-    '<span style="color:var(--accent)">Daily avg spend:</span> $' + Math.round(AVG_SPEND).toLocaleString() + ' · target $1,800<br>' +
-    '<span style="color:var(--accent)">Budget utilization:</span> <span style="color:var(--amber)">' + Math.round(AVG_SPEND/1800*100) + '% of target</span><br>' +
-    '<span style="color:var(--accent)">Apr apps / approvals:</span> 1,984 · 1,458 (73.49%)<br>' +
-    '<span style="color:var(--accent)">Apr activations (lagged):</span> 785 · filling in daily<br>' +
-    '<span style="color:var(--accent)">Device insight:</span> <span style="color:var(--green)">Desktop $6.59 ↑ bids</span> · <span style="color:var(--red)">Mobile $11.93 ↓ bids</span>';
-
-  document.getElementById('projectionText').innerHTML =
-    '<span style="color:var(--accent)">Remaining active days:</span> 15 (excl. Sun Apr 19 & 26)<br>' +
-    '<span style="color:var(--accent)">Proj. remaining spend:</span> $' + Math.round(projSpendRemaining).toLocaleString() + '<br>' +
-    '<span style="color:var(--accent)">Proj. April total spend:</span> ~$' + Math.round(projTotalSpend).toLocaleString() + '<br>' +
-    '<span style="color:var(--accent)">Proj. total apps:</span> ~' + Math.round(projTotalApps).toLocaleString() + '<br>' +
-    '<span style="color:var(--accent)">Activation rate (Mar Google):</span> 55.12%<br>' +
-    '<span style="color:var(--accent)">Proj. April activations:</span> <span style="color:var(--green)">~' + projActs.toLocaleString() + '</span><br>' +
-    '<span style="color:var(--accent)">Proj. April revenue:</span> <span style="color:var(--green)">~$' + Math.round(projRevenue).toLocaleString() + '</span><br>' +
-    '<span style="color:var(--accent)">Proj. April profit:</span> <span style="color:' + (projProfit>0?'var(--green)':'var(--red)') + '">' + (projProfit>0?'+':'') + '$' + Math.round(projProfit).toLocaleString() + '</span><br>' +
-    '<span style="color:var(--accent)">Proj. activation CPA:</span> ~$' + projActCPA.toFixed(2) + ' <span style="color:var(--amber)">(GOOD)</span>';
-}
-
 // ── MAIN INIT ── //
 async function init() {
-  // Derive reporting window from daily data — adapts automatically to any upload period
-  const period = getPeriodMeta(FALLBACK.daily);
-  $('chartRange').textContent   = period.label;
-  $('periodBanner').textContent = period.banner;
+  // Hide loader after slight delay
+  setTimeout(() => $('loadingOverlay').classList.add('hidden'), 1200);
 
-  // Render with fallback immediately — wrapped so any error doesn't block page
-  try { renderKPIs(FALLBACK.totals); } catch(e) { console.warn('KPI error',e); }
-  try { renderChart(FALLBACK.daily); } catch(e) { console.warn('Chart error',e); }
-  try { renderDevices(FALLBACK.devices); } catch(e) { console.warn('Device error',e); }
-  try { renderCampaigns(FALLBACK.campaigns, 'APR 2026'); } catch(e) { console.warn('Camp error',e); }
-  try { renderFeed(FALLBACK.daily); } catch(e) { console.warn('Feed error',e); }
-  try { renderStates(FALLBACK.states); } catch(e) { console.warn('State error',e); }
-  try { renderHeatmap(FALLBACK.hours); } catch(e) { console.warn('Heatmap error',e); }
-  try { renderTrajectory(FALLBACK.monthly, FALLBACK.daily); } catch(e) { console.warn('Traj error',e); }
-  try { renderSummary(FALLBACK.daily, FALLBACK.totals); } catch(e) { console.warn('Summary error',e); }
-
-  // Hide loader
-  setTimeout(() => {
-    $('loadingOverlay').classList.add('hidden');
-  }, 800);
-
-  // Try live sheet
-  const live = await fetchSheetData();
-  if (RAW.daily.length > 0) {
-    $('liveStatus').textContent = 'LIVE · GOOGLE SHEETS';
-    $('dataSource').textContent = 'SOURCE: GOOGLE SHEETS · LAST: ' + new Date().toLocaleTimeString();
-  } else {
-    if (!SHEET_ID || SHEET_ID.length < 10) {
+  // Fetch all live data
+  try {
+    await fetchAllSheets();
+    if (RAW.daily.length > 0) {
+      $('liveStatus').textContent = 'LIVE · GOOGLE ADS';
+      $('liveStatus').style.color = 'var(--green)';
+      $('dataSource').textContent = 'SOURCE: GOOGLE SHEETS · LAST: ' + new Date().toLocaleTimeString();
+      applyFilters();
+    } else {
       $('errorBanner').style.display = 'block';
-      $('errorBanner').textContent = '⚠ SHOWING CACHED DATA — REPLACE 1ZLzpR9oGk5y2amRr0jS4QPVIIzC44m1VfBRIxDK64Vg WITH YOUR ACTUAL SHEET ID TO ENABLE LIVE UPDATES';
+      $('liveStatus').textContent = 'NO DATA';
+      $('liveStatus').style.color = 'var(--red)';
     }
-    $('liveStatus').textContent = 'CACHED DATA';
-    $('liveStatus').style.color = 'var(--amber)';
+  } catch(e) {
+    console.error('[MC] Init fetch failed:', e);
+    $('errorBanner').style.display = 'block';
+    $('liveStatus').textContent = 'CONNECTION ERROR';
+    $('liveStatus').style.color = 'var(--red)';
   }
 
   // Auto-refresh every 5 minutes
   setInterval(async () => {
-    fetchAllSheets().then(() => {
-      applyFilters();
-      $('dataSource').textContent = 'SOURCE: GOOGLE SHEETS · LAST: ' + new Date().toLocaleTimeString();
-    });
+    try {
+      await fetchAllSheets();
+      if (RAW.daily.length > 0) {
+        applyFilters();
+        $('liveStatus').textContent = 'LIVE · GOOGLE ADS';
+        $('liveStatus').style.color = 'var(--green)';
+        $('dataSource').textContent = 'SOURCE: GOOGLE SHEETS · LAST: ' + new Date().toLocaleTimeString();
+      }
+    } catch(e) { console.warn('[MC] Refresh failed:', e); }
   }, 5 * 60 * 1000);
 }
 
