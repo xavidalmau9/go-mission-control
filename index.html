@@ -273,7 +273,10 @@ body::after{content:'';position:fixed;inset:0;background-image:linear-gradient(r
   </div>
 
   <!-- Error -->
-  <div id="errorBanner">⚠ LIVE DATA UNAVAILABLE — GOOGLE SHEETS CONNECTION FAILED. CHECK SCRIPT IS RUNNING IN GOOGLE ADS → TOOLS → SCRIPTS.</div>
+  <div id="errorBanner" style="display:flex;align-items:center;justify-content:space-between;gap:12px">
+    <span id="errorMsg">⚠ LIVE DATA UNAVAILABLE — GOOGLE SHEETS CONNECTION FAILED. CHECK SCRIPT IS RUNNING IN GOOGLE ADS → TOOLS → SCRIPTS.</span>
+    <button onclick="retryFetch()" style="flex-shrink:0;background:rgba(248,113,113,.2);color:var(--red);border:1px solid rgba(248,113,113,.4);border-radius:5px;padding:4px 12px;font-family:var(--mono);font-size:10px;cursor:pointer;letter-spacing:1px;white-space:nowrap">↻ RETRY</button>
+  </div>
 
   <!-- Period Banner -->
   <div class="period-banner" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:4px;margin-bottom:10px;padding:6px 12px;background:rgba(56,189,248,0.04);border:1px solid rgba(56,189,248,0.10);border-radius:6px;min-width:0">
@@ -1525,26 +1528,40 @@ function parseCSV(text) {
   }).filter(r => Object.values(r).some(v => v));
 }
 
-// Fetch with proxy fallback
+// Fetch with proxy fallback + timeout on each attempt
 async function fetchCSV(url) {
+  const enc = encodeURIComponent(url);
   const attempts = [
-    url,
-    'https://corsproxy.io/?' + encodeURIComponent(url),
-    'https://api.allorigins.win/raw?url=' + encodeURIComponent(url),
+    { u: url,                                                          label: 'direct'  },
+    { u: 'https://corsproxy.io/?' + enc,                               label: 'proxy1'  },
+    { u: 'https://api.codetabs.com/v1/proxy?quest=' + enc,            label: 'proxy2'  },
+    { u: 'https://api.allorigins.win/raw?url=' + enc,                  label: 'proxy3'  },
+    { u: 'https://thingproxy.freeboard.io/fetch/' + url,              label: 'proxy4'  },
   ];
-  for (const attempt of attempts) {
+  for (const { u, label } of attempts) {
     try {
-      const res = await fetch(attempt, { cache: 'no-store' });
-      if (!res.ok) continue;
+      const ctrl = new AbortController();
+      const timer = setTimeout(() => ctrl.abort(), 9000); // 9s timeout per attempt
+      const res = await fetch(u, { cache: 'no-store', signal: ctrl.signal, credentials: 'omit' });
+      clearTimeout(timer);
+      if (!res.ok) { console.warn(`[MC] ${label} HTTP ${res.status}`); continue; }
       const text = await res.text();
-      if (text.length > 50 && text.includes(',')) return text;
-    } catch(e) { /* try next */ }
+      // Validate it's actually CSV (not an HTML error page)
+      if (text.length > 50 && text.includes(',') && !text.trim().startsWith('<!')) {
+        console.log(`[MC] ✓ ${label}: ${text.length} chars`);
+        return text;
+      }
+      console.warn(`[MC] ${label}: response looks invalid (${text.length} chars)`);
+    } catch(e) {
+      console.warn(`[MC] ${label} failed:`, e.message || e);
+    }
   }
   throw new Error('All fetch attempts failed for: ' + url);
 }
 
-// Fetch all sheets
+// Fetch all sheets — returns { loaded: [], failed: [] }
 async function fetchAllSheets() {
+  const loaded = [], failed = [];
   const results = await Promise.allSettled(
     Object.entries(SHEET_URLS).map(async ([key, url]) => {
       const text = await fetchCSV(url);
@@ -1553,12 +1570,15 @@ async function fetchAllSheets() {
       return [key, data];
     })
   );
-  results.forEach(r => {
+  results.forEach((r, i) => {
+    const key = Object.keys(SHEET_URLS)[i];
     if (r.status === 'fulfilled') {
-      const [key, data] = r.value;
-      RAW[key] = data;
+      const [k, data] = r.value;
+      RAW[k] = data;
+      loaded.push(k);
     } else {
-      console.warn('[MC] Sheet failed:', r.reason?.message || r.reason);
+      failed.push(key);
+      console.warn(`[MC] ${key} failed:`, r.reason?.message || r.reason);
     }
   });
   if (RAW.daily.length) {
@@ -1566,8 +1586,38 @@ async function fetchAllSheets() {
     $('lastPush').textContent = dates[dates.length-1] || '—';
   }
   populateCampaignDropdown();
-  // Render Assurance Intelligence section whenever data loads
+  // Always try to render Assurance section (it has its own no-data states)
   try { renderAssuranceIntelligence(); } catch(e) { console.error('AssuranceIntel', e); }
+  return { loaded, failed };
+}
+
+// Retry button handler
+async function retryFetch() {
+  const btn = document.querySelector('#errorBanner button');
+  if (btn) { btn.textContent = '⟳ LOADING...'; btn.disabled = true; }
+  $('liveStatus').textContent = 'RECONNECTING...';
+  $('liveStatus').style.color = 'var(--amber)';
+  try {
+    const { loaded, failed } = await fetchAllSheets();
+    if (RAW.daily.length > 0) {
+      $('errorBanner').style.display = 'none';
+      $('liveStatus').textContent = 'LIVE · GOOGLE ADS';
+      $('liveStatus').style.color = 'var(--green)';
+      $('dataSource').textContent = 'SOURCE: GOOGLE SHEETS · LAST: ' + new Date().toLocaleTimeString();
+      applyFilters();
+    } else {
+      const failedStr = failed.filter(k => ['daily','devices','geo','hourly'].includes(k)).join(', ');
+      $('errorMsg').textContent = `⚠ GOOGLE ADS DATA UNAVAILABLE — SHEETS FAILED: ${failedStr || 'all'}. OPEN BROWSER CONSOLE (F12) FOR DETAILS.`;
+      if (btn) { btn.textContent = '↻ RETRY'; btn.disabled = false; }
+      $('liveStatus').textContent = 'NO DATA';
+      $('liveStatus').style.color = 'var(--red)';
+    }
+  } catch(e) {
+    console.error('[MC] Retry failed:', e);
+    if (btn) { btn.textContent = '↻ RETRY'; btn.disabled = false; }
+    $('liveStatus').textContent = 'ERROR';
+    $('liveStatus').style.color = 'var(--red)';
+  }
 }
 
 function populateCampaignDropdown() {
@@ -1822,35 +1872,50 @@ function setDateRange(range, btn) {
 
 // ── MAIN INIT ── //
 async function init() {
-  // Hide loader after slight delay
-  setTimeout(() => $('loadingOverlay').classList.add('hidden'), 1200);
+  // Give the DOM a moment, then hide loader
+  setTimeout(() => $('loadingOverlay').classList.add('hidden'), 1400);
 
-  // Fetch all live data
+  // Fetch all live data — up to 45s total (5 sources × 9s timeout each run in parallel)
   try {
-    await fetchAllSheets();
+    const { loaded, failed } = await fetchAllSheets();
+    console.log('[MC] Loaded:', loaded, '| Failed:', failed);
+
     if (RAW.daily.length > 0) {
+      // Google Ads data came through
+      $('errorBanner').style.display = 'none';
       $('liveStatus').textContent = 'LIVE · GOOGLE ADS';
       $('liveStatus').style.color = 'var(--green)';
       $('dataSource').textContent = 'SOURCE: GOOGLE SHEETS · LAST: ' + new Date().toLocaleTimeString();
       applyFilters();
-    } else {
+    } else if (RAW.bgoa.length > 0) {
+      // At least Assurance direct data loaded
       $('errorBanner').style.display = 'block';
+      $('errorMsg').textContent = '⚠ GOOGLE ADS SCRIPT DATA UNAVAILABLE — Showing Assurance direct data only. Check Google Ads → Tools → Scripts is still running hourly.';
+      $('liveStatus').textContent = 'PARTIAL · BGOA ONLY';
+      $('liveStatus').style.color = 'var(--amber)';
+    } else {
+      // Nothing loaded
+      const failedMain = failed.filter(k => ['daily','devices','geo','hourly'].includes(k));
+      $('errorBanner').style.display = 'block';
+      $('errorMsg').textContent = `⚠ DATA UNAVAILABLE — ${failedMain.length ? failedMain.join(', ').toUpperCase() + ' sheets failed' : 'all sheets failed'}. Open browser console (F12) to see errors. Click RETRY to try again.`;
       $('liveStatus').textContent = 'NO DATA';
       $('liveStatus').style.color = 'var(--red)';
     }
   } catch(e) {
     console.error('[MC] Init fetch failed:', e);
     $('errorBanner').style.display = 'block';
-    $('liveStatus').textContent = 'CONNECTION ERROR';
+    $('errorMsg').textContent = '⚠ CONNECTION ERROR — ' + (e.message || 'unknown error') + '. Click RETRY.';
+    $('liveStatus').textContent = 'ERROR';
     $('liveStatus').style.color = 'var(--red)';
   }
 
   // Auto-refresh every 5 minutes
   setInterval(async () => {
     try {
-      await fetchAllSheets();
+      const { loaded } = await fetchAllSheets();
       if (RAW.daily.length > 0) {
         applyFilters();
+        $('errorBanner').style.display = 'none';
         $('liveStatus').textContent = 'LIVE · GOOGLE ADS';
         $('liveStatus').style.color = 'var(--green)';
         $('dataSource').textContent = 'SOURCE: GOOGLE SHEETS · LAST: ' + new Date().toLocaleTimeString();
