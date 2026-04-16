@@ -130,10 +130,10 @@ function pushGeo(ss, range) {
     var key = r['Date'] + '|' + r['CampaignName'] + '|' + stateName;
     if (!agg[key]) agg[key] = { date: r['Date'], campaign: r['CampaignName'],
                                  region: stateName, impr: 0, clicks: 0, cost: 0, conv: 0 };
-    agg[key].impr   += parseInt(r['Impressions'])   || 0;
-    agg[key].clicks += parseInt(r['Clicks'])        || 0;
-    agg[key].cost   += parseFloat(r['Cost'])        || 0;
-    agg[key].conv   += parseFloat(r['Conversions']) || 0;
+    agg[key].impr   += cleanNum(r['Impressions']);
+    agg[key].clicks += cleanNum(r['Clicks']);
+    agg[key].cost   += cleanNum(r['Cost']);
+    agg[key].conv   += cleanNum(r['Conversions']);
   }
 
   var data = Object.values(agg).map(function(a) {
@@ -188,7 +188,8 @@ function pushKeywords(ss, range) {
   while (rows.hasNext()) {
     var r = rows.next();
     data.push([r['Date'], r['CampaignName'], r['AdGroupName'], r['Criteria'],
-               r['KeywordMatchType'], r['Impressions'], r['Clicks'], r['Cost'], r['Conversions']]);
+               r['KeywordMatchType'], cleanNum(r['Impressions']), cleanNum(r['Clicks']),
+               cleanNum(r['Cost']), cleanNum(r['Conversions'])]);
   }
   if (data.length) sheet.getRange(2, 1, data.length, 9).setValues(data);
   Logger.log('Keywords: ' + data.length + ' rows');
@@ -212,8 +213,8 @@ function pushSearchTerms(ss, range) {
   while (rows.hasNext()) {
     var r = rows.next();
     data.push([r['Date'], r['CampaignName'], r['AdGroupName'], r['Query'],
-               r['QueryMatchTypeWithVariant'], r['Impressions'], r['Clicks'],
-               r['Cost'], r['Conversions']]);
+               r['QueryMatchTypeWithVariant'], cleanNum(r['Impressions']), cleanNum(r['Clicks']),
+               cleanNum(r['Cost']), cleanNum(r['Conversions'])]);
   }
   if (data.length) sheet.getRange(2, 1, data.length, 9).setValues(data);
   Logger.log('SearchTerms: ' + data.length + ' rows');
