@@ -990,14 +990,18 @@ function renderKPIs(kpis) {
     : `<span style="color:var(--amber);font-size:9px">EST · Google conversions</span>`;
   // Activation rate: use actual period data from BGOA (excluding last 5 unsettled days)
   // Falls back to settled monthly rate, then baseline
+  // TODAY view: always projected — no confirmed activations same day (T+1 lag)
   const { from: arFrom, to: arTo } = getDateRange();
   const periodRate = getPeriodActRate(arFrom, arTo);
-  if (periodRate) {
+  if (isToday) {
+    $('kv-approval').textContent = fmtPct(ACT_RATE * 100);
+    $('ks-approval').innerHTML = `<span style="color:var(--amber);font-size:9px">PROJECTED · ${getSettledRateLabel()}</span>`;
+  } else if (periodRate) {
     $('kv-approval').textContent = fmtPct(periodRate.rate * 100);
     $('ks-approval').innerHTML = `<span style="color:var(--green);font-size:9px">✓ REAL · ${periodRate.days}d · ${periodRate.acts}/${periodRate.apps} apps</span>`;
   } else {
     $('kv-approval').textContent = fmtPct(ACT_RATE * 100);
-    $('ks-approval').innerHTML = `<span style="color:var(--muted);font-size:9px">${getSettledRateLabel()} · fallback</span>`;
+    $('ks-approval').innerHTML = `<span style="color:var(--muted);font-size:9px">PROJECTED · ${getSettledRateLabel()}</span>`;
   }
   $('kv-spend').textContent = fmtMoney(spend);
 
@@ -1114,8 +1118,8 @@ function renderFeed(daily) {
     const d = normDateStr(r.Date || '');
     if (!d) return;
     if (!byDate[d]) byDate[d] = { spend: 0, apps: 0, camps: {} };
-    const cost = parseFloat(r.Cost) || 0;
-    const conv = parseFloat(r.Conversions) || 0;
+    const cost = pn(r.Cost);
+    const conv = pn(r.Conversions);
     byDate[d].spend += cost;
     byDate[d].apps  += conv;
     const cn = (r.CampaignName || '').replace('Assurance Wireless','AW').replace('Search - ','').replace(' | SS','').replace('| SS','').trim();
@@ -1561,7 +1565,7 @@ function renderBrief(dailyRaw, keywordsRaw, searchTermsRaw) {
 
   // Best keywords
   if (bestKW.length > 0) {
-    const kwList = bestKW.map(r => `<b>${r.Keyword || r.keyword}</b> (${fmtCPA(parseFloat(r.Cost)/parseFloat(r.Conversions))} CPA)`).join(', ');
+    const kwList = bestKW.map(r => `<b>${r.Keyword || r.keyword}</b> (${fmtCPA(pn(r.Cost)/pn(r.Conversions))} CPA)`).join(', ');
     actions.push({ type:'good', icon:'⭐', text:`Top-performing keywords — consider raising bids: ${kwList}` });
   }
 
@@ -2277,8 +2281,8 @@ function buildDevices(devices) {
     // Google Ads CSV may use "Device", "DeviceType", "Device Type", "Device type", etc.
     const dev = (r.Device || r.DeviceType || r['Device Type'] || r['Device type'] || r.device || '').toLowerCase();
     if (!dev) return;
-    const cost = parseFloat(r.Cost || r.cost || 0) || 0;
-    const conv = parseFloat(r.Conversions || r.conversions || 0) || 0;
+    const cost = pn(r.Cost || r.cost);
+    const conv = pn(r.Conversions || r.conversions);
     if (!byDevice[dev]) byDevice[dev] = { cost: 0, conv: 0 };
     byDevice[dev].cost += cost;
     byDevice[dev].conv += conv;
