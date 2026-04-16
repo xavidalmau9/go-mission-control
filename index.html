@@ -1419,6 +1419,8 @@ function renderBrief(dailyRaw, keywordsRaw, searchTermsRaw) {
   const bgoaDB   = RAW.bgoa.map(parseBGOARow).filter(Boolean).find(r => r.date === dbStr);
   const yActs    = bgoaYest ? bgoaYest.activations : Math.round(yApps * ACT_RATE);
   const yActsConfirmed = !!bgoaYest;
+  // Pending = BGOA row exists for yesterday but activations = 0 (Assurance hasn't reported yet)
+  const yActsPending = yActsConfirmed && yActs === 0;
   const yActCPA  = yActs > 0 ? ySpend / yActs : 0;
   const yRevenue = yActs * PAYOUT;
   const yProfit  = yRevenue - ySpend;
@@ -1532,9 +1534,9 @@ function renderBrief(dailyRaw, keywordsRaw, searchTermsRaw) {
             ${cpaTrend !== null ? `<div class="bkpi-delta" style="color:${cpaTrend < 0 ? 'var(--green)' : 'var(--red)'}">${cpaTrend < 0 ? '↓' : '↑'}${Math.abs(cpaTrend).toFixed(1)}% vs prior</div>` : ''}
           </div>
           <div class="bkpi">
-            <div class="bkpi-val" style="color:${yActCPA <= 10 ? 'var(--green)' : yActCPA <= 15 ? 'var(--amber)' : 'var(--red)'}">${fmtCPA(yActCPA)}</div>
+            <div class="bkpi-val" style="color:${yActsPending ? 'var(--muted)' : yActCPA <= 10 ? 'var(--green)' : yActCPA <= 15 ? 'var(--amber)' : 'var(--red)'}">${yActsPending ? 'N/A' : fmtCPA(yActCPA)}</div>
             <div class="bkpi-lbl">ACT CPA</div>
-            <div class="bkpi-delta" style="color:var(--muted)">TARGET &lt;$10</div>
+            <div class="bkpi-delta" style="color:var(--muted)">${yActsPending ? 'PENDING ASSURANCE' : 'TARGET &lt;$10'}</div>
           </div>
           <div class="bkpi">
             <div class="bkpi-val" style="color:var(--green)">${fmtMoney(ySpend)}</div>
@@ -1547,14 +1549,14 @@ function renderBrief(dailyRaw, keywordsRaw, searchTermsRaw) {
             ${appsTrend !== null ? `<div class="bkpi-delta" style="color:${appsTrend >= 0 ? 'var(--green)' : 'var(--red)'}">${appsTrend >= 0 ? '↑' : '↓'}${Math.abs(appsTrend).toFixed(1)}% vs prior</div>` : ''}
           </div>
           <div class="bkpi">
-            <div class="bkpi-val" style="color:var(--accent2)">${yActs.toLocaleString()}</div>
-            <div class="bkpi-lbl">EST ACTIVATIONS</div>
-            <div class="bkpi-delta" style="color:var(--muted)">@55.12% RATE</div>
+            <div class="bkpi-val" style="color:${yActsPending ? 'var(--muted)' : 'var(--accent2)'}">${yActsPending ? 'N/A' : yActs.toLocaleString()}</div>
+            <div class="bkpi-lbl">${yActsConfirmed && !yActsPending ? 'ACTIVATIONS' : 'EST ACTIVATIONS'}</div>
+            <div class="bkpi-delta" style="color:var(--muted)">${yActsPending ? 'PENDING ASSURANCE' : yActsConfirmed ? '✓ CONFIRMED' : `@${(ACT_RATE*100).toFixed(1)}% rate`}</div>
           </div>
           <div class="bkpi">
-            <div class="bkpi-val" style="color:${yProfit >= 0 ? 'var(--green)' : 'var(--red)'}">${yProfit >= 0 ? '+' : ''}${fmtMoney(yProfit)}</div>
-            <div class="bkpi-lbl">EST PROFIT</div>
-            <div class="bkpi-delta" style="color:var(--muted)">REV ${fmtMoney(yRevenue)}</div>
+            <div class="bkpi-val" style="color:${yActsPending ? 'var(--muted)' : yProfit >= 0 ? 'var(--green)' : 'var(--red)'}">${yActsPending ? 'N/A' : (yProfit >= 0 ? '+' : '') + fmtMoney(yProfit)}</div>
+            <div class="bkpi-lbl">${yActsConfirmed && !yActsPending ? 'PROFIT' : 'EST PROFIT'}</div>
+            <div class="bkpi-delta" style="color:var(--muted)">${yActsPending ? 'PENDING ASSURANCE' : 'REV ' + fmtMoney(yRevenue)}</div>
           </div>
         </div>
       </div>
@@ -2077,13 +2079,22 @@ function filterData() {
     if (camp !== 'all' && r.CampaignName !== camp) return false;
     return true;
   };
+  // Keywords/SearchTerms: if a row has no Date field (some scripts write aggregated rows),
+  // treat it as "always in range" — filter only by campaign.
+  // This is not a fallback; it's correct handling for undated aggregate rows.
+  const filterKW = r => {
+    const date = (r.Date || r.date || '').substring(0,10);
+    if (date && (date < from || date > to)) return false; // only date-filter if date exists
+    if (camp !== 'all' && r.CampaignName !== camp) return false;
+    return true;
+  };
   return {
     daily:       RAW.daily.filter(filterRow),
     devices:     RAW.devices.filter(filterRow),
     geo:         RAW.geo.filter(filterRow),
     hourly:      RAW.hourly.filter(r => camp === 'all' || r.CampaignName === camp),
-    keywords:    RAW.keywords.filter(filterRow),
-    searchTerms: RAW.searchTerms.filter(filterRow),
+    keywords:    RAW.keywords.filter(filterKW),
+    searchTerms: RAW.searchTerms.filter(filterKW),
   };
 }
 
@@ -2218,7 +2229,8 @@ function buildStates(geo) {
     if (isNumericGeo) {
       const zipPart = raw.padStart(5,'0').substring(0,5);
       const stateName = zipToStateName(zipPart);
-      label = stateName || ('Area ' + zipPart);
+      // Show "Maryland · 21137" — state for context, zip for identity
+      label = stateName ? `${stateName} · ${raw}` : `Area · ${raw}`;
     }
     if (!byKey[raw]) byKey[raw] = { label, cost:0, conv:0 };
     byKey[raw].cost += parseFloat(r.Cost)||0;
