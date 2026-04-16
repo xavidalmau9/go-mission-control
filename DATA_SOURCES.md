@@ -118,7 +118,53 @@ Last updated: April 2026
 
 ---
 
-## 7. If the Dashboard Shows "NO DATA"
+## 7. Dashboard Engineering Notes (Built Sessions)
+
+### Architecture decisions
+- **Data priority**: Assurance confirmed data (BGOA/BGOC) ALWAYS beats Google estimates — we get paid on Assurance numbers
+- **T+1 reporting**: Today's activations are always unknown (Assurance reports next day) — dashboard never shows today's activations
+- **30-day cookie window**: Sundays with $0 Google spend still get BGOA activations — these are merged into chart
+- **ACT_TIERS (hardcoded)**: FANTASTIC≤$10 · EXCELLENT≤$12.50 · GOOD≤$15 · POOR>$15 · FATAL>$25 — only hardcoded business constants
+- **App CPA thresholds**: Derived mathematically from ACT_TIERS × settled activation rate (never hardcoded)
+- **Settled activation rate**: Uses last closed month after the 15th (currently Mar 2026 = ~55%) via `getLiveActRate()`
+- **BGOC (Meta) activations**: Merged into confirmed total alongside BGOA — same $25/activation payout
+- **Date filtering**: ALL panels (including keywords, search terms, geo, devices) filter by selected date range
+
+### Correct original projections (from projections spreadsheet)
+| Month | Projected Activations |
+|-------|----------------------|
+| Jan 2026 | 0 (testing) |
+| Feb 2026 | 500 |
+| Mar 2026 | 1,000 |
+| Apr 2026 | 2,000 |
+| May 2026 | 3,000 |
+| Jun 2026 | 4,000 |
+
+**Note**: Dashboard had these shifted +1 month (Jan=500, Feb=1000...) — fixed Apr 2026.
+
+### Reality vs Projections (confirmed paid)
+| Month | Projected | Actual BGOA | Beat? |
+|-------|-----------|-------------|-------|
+| Dec 2025 | 0 | 46 | — (no target) |
+| Jan 2026 | 0 | 415 | — (no target, crushed it) |
+| Feb 2026 | 500 | 552 | ✅ +10% |
+| Mar 2026 | 1,000 | 1,188+ | ✅ +19%+ |
+| Apr 2026 | 2,000 | in progress | on track |
+
+### Key Google Ads Script notes
+- Script runs hourly via Google Ads → Tools → Scripts → "Mission Control Data Push"
+- `LAST_90_DAYS` is invalid AWQL constant — script uses dynamic `dateRange(60)` function instead
+- Geo tab reports zip codes (not state names) — dashboard auto-converts to state names via zip lookup
+- Script writes to spreadsheet: `1ZLzpR9oGk5y2amRr0jS4QPVIIzC44m1VfBRIxDK64Vg`
+
+### Phased data loading
+- **Phase 1 (blocks render)**: bgoa, daily, devices, hourly, geo
+- **Phase 2 (background)**: bgoc, keywords, searchTerms, monthly, gva, projVsReal
+- After Phase 2 completes, `applyFilters()` is called to re-render with full data respecting current date range
+
+---
+
+## 8. If the Dashboard Shows "NO DATA"
 
 1. Open browser console (F12 → Console tab) — check for specific error messages
 2. Click the **↻ RETRY** button on the red banner

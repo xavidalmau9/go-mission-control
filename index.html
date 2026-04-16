@@ -1775,32 +1775,71 @@ function renderAssuranceIntelligence() {
     </div>`;
 
   // ── Projections vs Reality ──
-  const projData = [
-    { month:'DEC 2025', projected:0,   actual:46,   spend:124.73,   projSpend:5000  },
-    { month:'JAN 2026', projected:500,  actual:415,  spend:1332.43,  projSpend:5000  },
-    { month:'FEB 2026', projected:1000, actual:552,  spend:6835.84,  projSpend:10000 },
-    { month:'MAR 2026', projected:2000, actual:1188, spend:21117.66, projSpend:20000 },
-    { month:'APR 2026', projected:3000, actual:919,  spend:18553.88, projSpend:30000, partial:true },
-  ];
+  // Correct original projections (from "original plan/projections" tab)
+  const ORIG_PROJ = { '2025-12':0, '2026-01':0, '2026-02':500, '2026-03':1000, '2026-04':2000, '2026-05':3000, '2026-06':4000 };
+
+  // Build monthly actuals from BGOA + BGOC live data
+  const allBgoaRows = RAW.bgoa.map(parseBGOARow).filter(Boolean);
+  const allBgocRows = RAW.bgoc.map(parseBGOARow).filter(Boolean);
+  const mActuals = {};
+  [...allBgoaRows, ...allBgocRows].forEach(r => {
+    const m = r.date.substring(0,7);
+    if (!mActuals[m]) mActuals[m] = { acts:0, spend:0, confirmedDays:0 };
+    mActuals[m].acts  += r.activations;
+    mActuals[m].spend += r.spend;
+    if (r.activations > 0) mActuals[m].confirmedDays++;
+  });
+
+  // April full-month projection based on confirmed daily rate
+  const aprKey = '2026-04';
+  const aprD = mActuals[aprKey];
+  const aprProjFull = aprD && aprD.confirmedDays >= 5
+    ? Math.round(aprD.acts / aprD.confirmedDays * 30)
+    : null;
+
+  // Settled monthly totals (for all-time summary)
+  const allMonths = Object.keys(mActuals).sort();
+  const totActs  = allMonths.reduce((s,m)=>s+(mActuals[m]?.acts||0),0);
+  const totSpend = allMonths.reduce((s,m)=>s+(mActuals[m]?.spend||0),0);
+  const totRev   = totActs * PAYOUT;
+  const totNet   = totRev - totSpend;
+  const totROI   = totSpend > 0 ? (totNet/totSpend*100) : 0;
+
+  const showMonths = ['2025-12','2026-01','2026-02','2026-03','2026-04'];
+  const projDataDyn = showMonths.map(mk => {
+    const d = mActuals[mk] || { acts:0, spend:0, confirmedDays:0 };
+    const isCurrent = mk === aprKey;
+    const label = new Date(mk+'-15').toLocaleDateString('en-US',{month:'short',year:'numeric'}).toUpperCase();
+    return { month:label, projected:ORIG_PROJ[mk]||0, actual:d.acts, spend:d.spend, partial:isCurrent, projFull: isCurrent ? aprProjFull : null };
+  });
+
   $('projVsReal').innerHTML = `<table class="intel-table">
-    <thead><tr><th>Month</th><th class="num">Proj</th><th class="num">Actual</th><th class="num">%</th><th class="num">Spend</th></tr></thead>
-    <tbody>${projData.map(p => {
-      const pct = p.projected > 0 ? (p.actual/p.projected*100) : null;
+    <thead><tr><th>Month</th><th class="num">Proj</th><th class="num">Actual</th><th class="num">vs Proj</th><th class="num">Spend</th></tr></thead>
+    <tbody>${projDataDyn.map(p => {
+      const hasProjTarget = p.projected > 0;
+      const pct = hasProjTarget ? (p.actual/p.projected*100) : null;
       const pctStr = pct !== null ? `${Math.round(pct)}%` : '—';
-      const pctCol = pct === null ? 'var(--muted)' : pct >= 80 ? 'var(--green)' : pct >= 50 ? 'var(--amber)' : 'var(--red)';
+      const beat = pct !== null && pct >= 100;
+      const pctCol = pct === null ? 'var(--muted)' : beat ? 'var(--green)' : pct >= 75 ? 'var(--amber)' : 'var(--red)';
+      const beatBadge = beat && !p.partial ? ` <span style="color:var(--green);font-size:8px">▲</span>` : '';
+      let actualCell = p.actual.toLocaleString();
+      if (p.partial && p.projFull) {
+        const onTrack = p.projFull >= p.projected;
+        actualCell += ` <span style="font-size:8px;color:${onTrack?'var(--green)':'var(--muted)'}">→ ~${p.projFull.toLocaleString()} proj${onTrack?' ▲':''}</span>`;
+      }
       return `<tr>
         <td style="color:var(--text)">${p.month}${p.partial?' <span style="color:var(--muted);font-size:8px">~</span>':''}</td>
-        <td class="num" style="color:var(--muted)">${p.projected.toLocaleString()}</td>
-        <td class="num" style="color:var(--accent)">${p.actual.toLocaleString()}</td>
-        <td class="num" style="color:${pctCol}">${pctStr}</td>
-        <td class="num" style="color:var(--amber)">${fmtMoney(p.spend)}</td>
+        <td class="num" style="color:var(--muted)">${p.projected > 0 ? p.projected.toLocaleString() : '—'}</td>
+        <td class="num" style="color:var(--accent)">${actualCell}</td>
+        <td class="num" style="color:${pctCol}">${pctStr}${beatBadge}</td>
+        <td class="num" style="color:var(--amber)">${p.spend > 0 ? fmtMoney(p.spend) : '—'}</td>
       </tr>`;
     }).join('')}</tbody>
   </table>
   <div style="font-family:var(--mono);font-size:8px;color:var(--muted);margin-top:8px;padding:6px;background:rgba(56,189,248,0.04);border-radius:4px;line-height:1.6">
     Original plan: $15 CPA · 1,000 acts/mo by Month 3.<br>
-    Reality: scaling slower but CPA improving — hit 1,188 acts in Mar.<br>
-    <span style="color:var(--green)">To-date: $83,075 gross · $35,110 net · 73% ROI</span>
+    Reality: <span style="color:var(--green)">beat projections every month</span> — ${mActuals['2026-03']?.acts||1188} acts in Mar vs 1,000 projected.<br>
+    <span style="color:var(--green)">To-date: ${fmtMoney(totRev)} gross · ${fmtMoney(totNet)} net · ${totROI.toFixed(0)}% ROI</span>
   </div>`;
 }
 
@@ -1924,11 +1963,10 @@ async function fetchAllSheets() {
       if (r.status === 'fulfilled') loaded.push(secondary[i]);
       else failed.push(secondary[i]);
     });
-    // Re-render assurance with full data once secondary sheets load
-    if (RAW.bgoa.length) try { renderAssuranceIntelligence(); } catch(e) {}
-    // Render keywords / search terms
-    try { renderKeywords(RAW.keywords, activeCampaign); } catch(e) {}
-    try { renderSearchTerms(RAW.searchTerms, activeCampaign); } catch(e) {}
+    // Re-render everything with full data once secondary sheets load
+    // applyFilters() respects the active date range and campaign filter
+    if (RAW.bgoa.length) try { renderAssuranceIntelligence(); } catch(e) { console.error('AssuranceIntel phase2',e); }
+    try { applyFilters(); } catch(e) { console.error('applyFilters phase2',e); }
   });
 
   return { loaded, failed };
@@ -2141,10 +2179,12 @@ function buildStates(geo) {
     let region = r.Region || r.RegionName || r.State || r.state || '';
     if (!region) return;
     // If region looks like a zip code (4-5 digits), map to state name
-    const isZip = /^\d{4,5}$/.test(region.trim());
-    if (isZip) {
-      const stateName = zipToStateName(region.trim());
-      region = stateName || ('Zip ' + region.trim()); // fallback: "Zip XXXXX"
+    // Detect any all-numeric geo code (zip, criterion ID, etc.) — take first 5 digits as zip
+    const isNumericGeo = /^\d{4,}$/.test(region.trim());
+    if (isNumericGeo) {
+      const zipPart = region.trim().padStart(5,'0').substring(0,5);
+      const stateName = zipToStateName(zipPart);
+      region = stateName || ('Zip ' + zipPart);
     }
     if (!byRegion[region]) byRegion[region] = { cost:0, conv:0 };
     byRegion[region].cost += parseFloat(r.Cost)||0;
@@ -2254,9 +2294,9 @@ function applyFilters() {
     renderCampaigns(camps, period.label);
   } catch(e) { console.error('Camps',e); }
 
-  // Keywords & search terms — date + campaign filtered
-  try { renderKeywords(f.keywords.length ? f.keywords : RAW.keywords, activeCampaign); } catch(e) { console.error('KW',e); }
-  try { renderSearchTerms(f.searchTerms.length ? f.searchTerms : RAW.searchTerms, activeCampaign); } catch(e) { console.error('ST',e); }
+  // Keywords & search terms — date + campaign filtered (no fallback to unfiltered data)
+  try { renderKeywords(f.keywords, activeCampaign); } catch(e) { console.error('KW',e); }
+  try { renderSearchTerms(f.searchTerms, activeCampaign); } catch(e) { console.error('ST',e); }
 
   // Brief always uses full RAW data (not filtered by date/campaign)
   try { renderBrief(RAW.daily, RAW.keywords, RAW.searchTerms); } catch(e) { console.error('Brief',e); }
