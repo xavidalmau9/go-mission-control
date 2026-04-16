@@ -120,7 +120,7 @@ body::after{content:'';position:fixed;inset:0;background-image:linear-gradient(r
 /* states */
 .state-row{display:flex;align-items:center;gap:7px;padding:5px 0;border-bottom:1px solid var(--border2)}
 .state-row:last-child{border-bottom:none}
-.s-code{font-family:var(--mono);font-size:12px;color:var(--accent);width:28px;flex-shrink:0}
+.s-code{font-family:var(--mono);font-size:11px;color:var(--accent);width:88px;flex-shrink:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .s-track{flex:1;height:7px;background:rgba(255,255,255,.04);border-radius:3px}
 .s-fill{height:100%;border-radius:3px;transition:width 1s ease}
 .s-count{font-family:var(--mono);font-size:11px;color:var(--text);width:34px;text-align:right;flex-shrink:0}
@@ -760,6 +760,37 @@ function zipToStateName(zip) {
   return null;
 }
 
+// State abbreviation lookup
+const STATE_ABBRS = {
+  'Massachusetts':'MA','Rhode Island':'RI','New Hampshire':'NH','Maine':'ME',
+  'Vermont':'VT','Connecticut':'CT','New Jersey':'NJ','New York':'NY',
+  'Pennsylvania':'PA','Delaware':'DE','Washington DC':'DC','Maryland':'MD',
+  'Virginia':'VA','West Virginia':'WV','North Carolina':'NC','South Carolina':'SC',
+  'Georgia':'GA','Florida':'FL','Alabama':'AL','Tennessee':'TN',
+  'Mississippi':'MS','Kentucky':'KY','Ohio':'OH','Indiana':'IN',
+  'Michigan':'MI','Iowa':'IA','Wisconsin':'WI','Minnesota':'MN',
+  'South Dakota':'SD','North Dakota':'ND','Montana':'MT','Illinois':'IL',
+  'Missouri':'MO','Kansas':'KS','Nebraska':'NE','Louisiana':'LA',
+  'Arkansas':'AR','Oklahoma':'OK','Texas':'TX','Colorado':'CO',
+  'Wyoming':'WY','Idaho':'ID','Utah':'UT','Arizona':'AZ',
+  'New Mexico':'NM','Nevada':'NV','California':'CA','Hawaii':'HI',
+  'Oregon':'OR','Washington':'WA','Alaska':'AK','Puerto Rico':'PR',
+};
+function zipToStateAbbr(zip) {
+  const name = zipToStateName(zip);
+  return name ? (STATE_ABBRS[name] || name.substring(0,2).toUpperCase()) : null;
+}
+
+// Normalize date strings to YYYY-MM-DD regardless of input format
+function normDateStr(s) {
+  if (!s) return '';
+  const t = String(s).trim();
+  if (/^\d{4}-\d{2}-\d{2}/.test(t)) return t.substring(0, 10);
+  const m = t.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+  if (m) return `${m[3]}-${m[1].padStart(2,'0')}-${m[2].padStart(2,'0')}`;
+  return '';
+}
+
 // App CPA thresholds derived from Act CPA tiers × activation rate
 // At 55.12%: FANTASTIC≤$5.51 · EXCELLENT≤$6.89 · GOOD≤$8.27 · FATAL>$13.78
 function getAppTiers(actRate) {
@@ -1262,7 +1293,11 @@ function renderSummary(chartDaily, kpis) {
 // ── KEYWORDS RENDER ── //
 function renderKeywords(keywords, campaign) {
   if (!keywords || !keywords.length) {
-    $('keywordsPanel').innerHTML = '<div class="no-data-state"><div class="nd-icon">🔑</div><div class="nd-title">NO KEYWORD DATA</div><div class="nd-sub">Verify Keywords sheet is published in Google Sheets</div></div>';
+    const rawCount = RAW.keywords ? RAW.keywords.length : 0;
+    const sub = rawCount > 0
+      ? `${rawCount} rows loaded — none match the selected date range. Try "Last 7 Days" or "Last 30 Days".`
+      : 'Keywords sheet not yet loaded — waiting for Phase 2 data fetch.';
+    $('keywordsPanel').innerHTML = `<div class="no-data-state"><div class="nd-icon">🔑</div><div class="nd-title">NO KEYWORD DATA</div><div class="nd-sub">${sub}</div></div>`;
     return;
   }
   // Aggregate by keyword + match type
@@ -1324,7 +1359,11 @@ function renderKeywords(keywords, campaign) {
 // ── SEARCH TERMS RENDER ── //
 function renderSearchTerms(searchTerms, campaign) {
   if (!searchTerms || !searchTerms.length) {
-    $('searchTermsPanel').innerHTML = '<div class="no-data-state"><div class="nd-icon">🔍</div><div class="nd-title">NO SEARCH TERM DATA</div><div class="nd-sub">Verify Search Terms sheet is published in Google Sheets</div></div>';
+    const rawCount = RAW.searchTerms ? RAW.searchTerms.length : 0;
+    const sub = rawCount > 0
+      ? `${rawCount} rows loaded — none match the selected date range. Try "Last 7 Days" or "Last 30 Days".`
+      : 'Search Terms sheet not yet loaded — waiting for Phase 2 data fetch.';
+    $('searchTermsPanel').innerHTML = `<div class="no-data-state"><div class="nd-icon">🔍</div><div class="nd-title">NO SEARCH TERM DATA</div><div class="nd-sub">${sub}</div></div>`;
     return;
   }
   const agg = {};
@@ -2079,12 +2118,12 @@ function filterData() {
     if (camp !== 'all' && r.CampaignName !== camp) return false;
     return true;
   };
-  // Keywords/SearchTerms: if a row has no Date field (some scripts write aggregated rows),
-  // treat it as "always in range" — filter only by campaign.
-  // This is not a fallback; it's correct handling for undated aggregate rows.
+  // Keywords/SearchTerms: normalize date to YYYY-MM-DD before comparing so that
+  // both "2026-04-15" and "4/15/2026" formats work correctly.
+  // Rows with no recognizable date are treated as "always in range" (aggregate rows).
   const filterKW = r => {
-    const date = (r.Date || r.date || '').substring(0,10);
-    if (date && (date < from || date > to)) return false; // only date-filter if date exists
+    const date = normDateStr(r.Date || r.date || '');
+    if (date && (date < from || date > to)) return false;
     if (camp !== 'all' && r.CampaignName !== camp) return false;
     return true;
   };
@@ -2228,9 +2267,9 @@ function buildStates(geo) {
     const isNumericGeo = /^\d{4,}$/.test(raw);
     if (isNumericGeo) {
       const zipPart = raw.padStart(5,'0').substring(0,5);
-      const stateName = zipToStateName(zipPart);
-      // Show "Maryland · 21137" — state for context, zip for identity
-      label = stateName ? `${stateName} · ${raw}` : `Area · ${raw}`;
+      const stateAbbr = zipToStateAbbr(zipPart);
+      // Show "MD · 21137" — abbreviation keeps label compact
+      label = stateAbbr ? `${stateAbbr} · ${raw}` : `?? · ${raw}`;
     }
     if (!byKey[raw]) byKey[raw] = { label, cost:0, conv:0 };
     byKey[raw].cost += parseFloat(r.Cost)||0;
