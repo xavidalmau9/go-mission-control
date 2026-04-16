@@ -250,7 +250,7 @@ body::after{content:'';position:fixed;inset:0;background-image:linear-gradient(r
 <!-- Loading -->
 <div id="loadingOverlay">
   <div class="loader-text">INITIALIZING MISSION CONTROL...</div>
-  <div class="loader-sub">CONNECTING TO GOOGLE ADS LIVE FEED</div>
+  <div class="loader-sub" id="loaderSub">CONNECTING TO DATA FEEDS...</div>
 </div>
 
 <div class="wrap">
@@ -1529,66 +1529,96 @@ function parseCSV(text) {
   }).filter(r => Object.values(r).some(v => v));
 }
 
-// Fetch with proxy fallback + timeout on each attempt
-async function fetchCSV(url) {
-  const enc = encodeURIComponent(url);
-  const attempts = [
-    { u: url,                                                          label: 'direct'  },
-    { u: 'https://corsproxy.io/?' + enc,                               label: 'proxy1'  },
-    { u: 'https://api.codetabs.com/v1/proxy?quest=' + enc,            label: 'proxy2'  },
-    { u: 'https://api.allorigins.win/raw?url=' + enc,                  label: 'proxy3'  },
-    { u: 'https://thingproxy.freeboard.io/fetch/' + url,              label: 'proxy4'  },
-  ];
-  for (const { u, label } of attempts) {
-    try {
-      const ctrl = new AbortController();
-      const timer = setTimeout(() => ctrl.abort(), 9000); // 9s timeout per attempt
-      const res = await fetch(u, { cache: 'no-store', signal: ctrl.signal, credentials: 'omit' });
-      clearTimeout(timer);
-      if (!res.ok) { console.warn(`[MC] ${label} HTTP ${res.status}`); continue; }
-      const text = await res.text();
-      // Validate it's actually CSV (not an HTML error page)
-      if (text.length > 50 && text.includes(',') && !text.trim().startsWith('<!')) {
-        console.log(`[MC] ✓ ${label}: ${text.length} chars`);
-        return text;
-      }
-      console.warn(`[MC] ${label}: response looks invalid (${text.length} chars)`);
-    } catch(e) {
-      console.warn(`[MC] ${label} failed:`, e.message || e);
-    }
-  }
-  throw new Error('All fetch attempts failed for: ' + url);
+// Fetch a URL with timeout helper
+function fetchWithTimeout(url, opts, ms) {
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), ms);
+  return fetch(url, { ...opts, signal: ctrl.signal })
+    .finally(() => clearTimeout(timer));
 }
 
-// Fetch all sheets — returns { loaded: [], failed: [] }
+// Validate response text is actually CSV (not an HTML error page)
+function isValidCSV(text) {
+  if (!text || text.length < 30) return false;
+  const t = text.trim();
+  if (t.startsWith('<!') || t.startsWith('<html') || t.startsWith('<HTML')) return false;
+  return t.includes(',');
+}
+
+// Fetch CSV with proxy fallback chain
+async function fetchCSV(url) {
+  const enc = encodeURIComponent(url);
+  const proxies = [
+    { u: url,                                             label: 'direct',  ms: 8000, opts: {} },
+    { u: url,                                             label: 'direct2', ms: 8000, opts: { cache: 'no-store' } },
+    { u: 'https://corsproxy.io/?' + enc,                  label: 'proxy1',  ms: 7000, opts: {} },
+    { u: 'https://api.codetabs.com/v1/proxy?quest=' + enc,label: 'proxy2',  ms: 7000, opts: {} },
+    { u: 'https://api.allorigins.win/raw?url=' + enc,     label: 'proxy3',  ms: 7000, opts: {} },
+  ];
+  for (const { u, label, ms, opts } of proxies) {
+    try {
+      const res = await fetchWithTimeout(u, opts, ms);
+      if (!res.ok) { console.warn(`[MC] ${label} HTTP ${res.status}`); continue; }
+      const text = await res.text();
+      if (isValidCSV(text)) {
+        console.log(`[MC] ✓ ${label} → ${url.split('gid=')[1]?.split('&')[0] || url.slice(-20)} (${text.length} chars)`);
+        return text;
+      }
+      console.warn(`[MC] ${label}: invalid response (${text.length} chars, starts: ${text.substring(0,40)})`);
+    } catch(e) {
+      console.warn(`[MC] ${label} failed: ${e.message || e}`);
+    }
+  }
+  throw new Error('All attempts failed: ' + url.substring(0, 80));
+}
+
+// Load one sheet and store result
+async function loadSheet(key, url) {
+  const text = await fetchCSV(url);
+  const data = parseCSV(text);
+  RAW[key] = data;
+  console.log(`[MC] ${key}: ${data.length} rows`);
+  return key;
+}
+
+// Fetch all sheets — priority data first, rest in background
 async function fetchAllSheets() {
   const loaded = [], failed = [];
-  const results = await Promise.allSettled(
-    Object.entries(SHEET_URLS).map(async ([key, url]) => {
-      const text = await fetchCSV(url);
-      const data = parseCSV(text);
-      console.log(`[MC] ${key}: ${data.length} rows`);
-      return [key, data];
-    })
+
+  // Phase 1: Priority sheets — render as soon as these land
+  const priority = ['bgoa', 'daily', 'devices', 'hourly', 'geo'];
+  const p1Results = await Promise.allSettled(
+    priority.map(key => loadSheet(key, SHEET_URLS[key]))
   );
-  results.forEach((r, i) => {
-    const key = Object.keys(SHEET_URLS)[i];
-    if (r.status === 'fulfilled') {
-      const [k, data] = r.value;
-      RAW[k] = data;
-      loaded.push(k);
-    } else {
-      failed.push(key);
-      console.warn(`[MC] ${key} failed:`, r.reason?.message || r.reason);
-    }
+  p1Results.forEach((r, i) => {
+    if (r.status === 'fulfilled') loaded.push(priority[i]);
+    else { failed.push(priority[i]); console.warn(`[MC] ${priority[i]} failed:`, r.reason?.message); }
   });
+
+  // Render what we have immediately after priority sheets
+  if (RAW.bgoa.length) try { renderAssuranceIntelligence(); } catch(e) { console.error('AssuranceIntel', e); }
   if (RAW.daily.length) {
     const dates = RAW.daily.map(r => r.Date||'').filter(Boolean).sort();
     $('lastPush').textContent = dates[dates.length-1] || '—';
+    populateCampaignDropdown();
   }
-  populateCampaignDropdown();
-  // Always try to render Assurance section (it has its own no-data states)
-  try { renderAssuranceIntelligence(); } catch(e) { console.error('AssuranceIntel', e); }
+
+  // Phase 2: Secondary sheets in background (don't block the return)
+  const secondary = Object.keys(SHEET_URLS).filter(k => !priority.includes(k));
+  Promise.allSettled(
+    secondary.map(key => loadSheet(key, SHEET_URLS[key]))
+  ).then(results => {
+    results.forEach((r, i) => {
+      if (r.status === 'fulfilled') loaded.push(secondary[i]);
+      else failed.push(secondary[i]);
+    });
+    // Re-render assurance with full data once secondary sheets load
+    if (RAW.bgoa.length) try { renderAssuranceIntelligence(); } catch(e) {}
+    // Render keywords / search terms
+    try { renderKeywords(RAW.keywords, activeCampaign); } catch(e) {}
+    try { renderSearchTerms(RAW.searchTerms, activeCampaign); } catch(e) {}
+  });
+
   return { loaded, failed };
 }
 
@@ -1873,36 +1903,43 @@ function setDateRange(range, btn) {
 
 // ── MAIN INIT ── //
 async function init() {
-  // Give the DOM a moment, then hide loader
-  setTimeout(() => $('loadingOverlay').classList.add('hidden'), 1400);
+  // Update loader message then hide after data loads (or 20s max)
+  const loaderMsgs = ['LOADING ASSURANCE DATA...', 'LOADING GOOGLE ADS DATA...', 'ALMOST THERE...'];
+  let mi = 0;
+  const loaderInterval = setInterval(() => {
+    if ($('loaderSub') && mi < loaderMsgs.length) $('loaderSub').textContent = loaderMsgs[mi++];
+  }, 2500);
+  const hideLoader = () => { clearInterval(loaderInterval); $('loadingOverlay').classList.add('hidden'); };
+  setTimeout(hideLoader, 20000); // hide after 20s regardless
 
-  // Fetch all live data — up to 45s total (5 sources × 9s timeout each run in parallel)
+  // Fetch all live data
   try {
     const { loaded, failed } = await fetchAllSheets();
     console.log('[MC] Loaded:', loaded, '| Failed:', failed);
+    hideLoader(); // hide as soon as phase 1 data is back
 
     if (RAW.daily.length > 0) {
-      // Google Ads data came through
       $('errorBanner').style.display = 'none';
       $('liveStatus').textContent = 'LIVE · GOOGLE ADS';
       $('liveStatus').style.color = 'var(--green)';
       $('dataSource').textContent = 'SOURCE: GOOGLE SHEETS · LAST: ' + new Date().toLocaleTimeString();
       applyFilters();
     } else if (RAW.bgoa.length > 0) {
-      // At least Assurance direct data loaded
+      hideLoader();
       $('errorBanner').style.display = 'block';
-      $('errorMsg').textContent = '⚠ GOOGLE ADS SCRIPT DATA UNAVAILABLE — Showing Assurance direct data only. Check Google Ads → Tools → Scripts is still running hourly.';
-      $('liveStatus').textContent = 'PARTIAL · BGOA ONLY';
+      $('errorMsg').textContent = '⚠ GOOGLE ADS SCRIPT NOT PUSHING — Assurance direct data loaded. Go to Google Ads → Tools → Scripts and verify the script is running hourly. Click RETRY once confirmed.';
+      $('liveStatus').textContent = 'PARTIAL · ASSURANCE ONLY';
       $('liveStatus').style.color = 'var(--amber)';
     } else {
-      // Nothing loaded
-      const failedMain = failed.filter(k => ['daily','devices','geo','hourly'].includes(k));
+      hideLoader();
+      const failList = failed.filter(k => ['daily','bgoa'].includes(k)).join(', ').toUpperCase() || 'all';
       $('errorBanner').style.display = 'block';
-      $('errorMsg').textContent = `⚠ DATA UNAVAILABLE — ${failedMain.length ? failedMain.join(', ').toUpperCase() + ' sheets failed' : 'all sheets failed'}. Open browser console (F12) to see errors. Click RETRY to try again.`;
+      $('errorMsg').textContent = `⚠ ALL DATA FEEDS FAILED (${failList}) — Press F12, go to Console tab, and share the red errors with your developer. Click RETRY to try again.`;
       $('liveStatus').textContent = 'NO DATA';
       $('liveStatus').style.color = 'var(--red)';
     }
   } catch(e) {
+    hideLoader();
     console.error('[MC] Init fetch failed:', e);
     $('errorBanner').style.display = 'block';
     $('errorMsg').textContent = '⚠ CONNECTION ERROR — ' + (e.message || 'unknown error') + '. Click RETRY.';
