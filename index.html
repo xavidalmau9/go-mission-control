@@ -941,8 +941,8 @@ function renderChart(daily) {
 }
 
 function renderKPIs(kpis) {
-  const { spend, conversions, activations, googleCPA, activationCPA, revenue,
-          isConfirmed, confirmedDays, confirmedSources } = kpis;
+  const { spend, conversions, applications, activations, googleCPA, appCPA, activationCPA,
+          revenue, isConfirmed, confirmedDays, confirmedSources } = kpis;
   const isToday = activeDateRange === 'today';
   const isSingleCampaign = activeCampaign && activeCampaign !== 'all';
 
@@ -974,8 +974,11 @@ function renderKPIs(kpis) {
     $('ks-revenue').innerHTML = `<span style="color:var(--amber);font-size:9px">EST · $${PAYOUT}/activation</span>`;
   }
 
-  $('kv-apps').textContent = Math.round(conversions).toLocaleString();
-  $('ks-apps').innerHTML = `<span style="color:var(--muted)">Google conversions</span>`;
+  // Applications: use BGOA confirmed count when available, else Google conversions as fallback
+  $('kv-apps').textContent = Math.round(applications).toLocaleString();
+  $('ks-apps').innerHTML = isConfirmed
+    ? `<span style="color:var(--green);font-size:9px">✓ CONFIRMED · ${confirmedSources} · Google: ${Math.round(conversions)}</span>`
+    : `<span style="color:var(--amber);font-size:9px">EST · Google conversions</span>`;
   // Activation rate: use actual period data from BGOA (excluding last 5 unsettled days)
   // Falls back to settled monthly rate, then baseline
   const { from: arFrom, to: arTo } = getDateRange();
@@ -2168,19 +2171,25 @@ function buildKPIs(daily) {
   const hasBGOA  = bgoaRows.length > 0;
   const hasBGOC  = bgocRows.length > 0;
 
-  let activations, revenue, isConfirmed, confirmedDays, confirmedSources;
+  // Applications, activations, activation rate — all come from BGOA/BGOC daily tracking.
+  // Assurance sometimes reports more than Google tracks. Google conversions are a fallback only.
+  let applications, activations, revenue, isConfirmed, confirmedDays, confirmedSources;
   if (hasBGOA || hasBGOC) {
+    const bgoaApps = bgoaRows.reduce((s,r) => s + r.applications, 0);
+    const bgocApps = bgocRows.reduce((s,r) => s + r.applications, 0);
     const bgoaActs = bgoaRows.reduce((s,r) => s + r.activations, 0);
     const bgocActs = bgocRows.reduce((s,r) => s + r.activations, 0);
     const bgoaRev  = bgoaRows.reduce((s,r) => s + r.revenue, 0);
     const bgocRev  = bgocRows.reduce((s,r) => s + r.revenue, 0);
-    activations      = bgoaActs + bgocActs;
+    applications     = bgoaApps + bgocApps;   // confirmed from Assurance tracking
+    activations      = bgoaActs + bgocActs;   // confirmed from Assurance tracking
     revenue          = bgoaRev  + bgocRev;
     isConfirmed      = true;
     confirmedDays    = Math.max(bgoaRows.length, bgocRows.length);
     confirmedSources = [hasBGOA ? 'BGOA' : null, hasBGOC ? 'BGOC' : null].filter(Boolean).join('+');
   } else {
     // No confirmed data (or single campaign selected) — fall back to Google conv estimate
+    applications     = Math.round(conversions);   // Google conversions as proxy
     activations      = Math.round(conversions * ACT_RATE);
     revenue          = activations * PAYOUT;
     isConfirmed      = false;
@@ -2188,20 +2197,23 @@ function buildKPIs(daily) {
     confirmedSources = isSingleCampaign ? 'CAMPAIGN ESTIMATE' : '';
   }
 
-  // Spend always comes from Google Ads DailyCampaign — all campaigns summed
-  const activationCPA = activations > 0 ? spend / activations : 0;
+  // Spend always from Google Ads DailyCampaign (all campaigns summed from the sheet)
+  const appCPA        = applications > 0 ? spend / applications : 0;
+  const activationCPA = activations  > 0 ? spend / activations  : 0;
   const profit        = revenue - spend;
 
-  // Log campaign breakdown to console so we can diagnose missing campaigns
+  // Log campaign breakdown to console to diagnose missing campaigns
   const campTotals = {};
   daily.forEach(r => {
     const c = r.CampaignName || '(no name)';
     campTotals[c] = (campTotals[c] || 0) + (parseFloat(r.Cost) || 0);
   });
-  console.log('[MC] Spend breakdown by campaign:', campTotals, '| Total:', spend.toFixed(2));
+  console.log('[MC] Spend by campaign:', campTotals, '| Total:', spend.toFixed(2),
+              '| Apps (BGOA):', applications, '| Acts (BGOA):', activations);
 
-  return { spend, clicks, impressions, conversions, activations, googleCPA, activationCPA,
-           revenue, profit, isConfirmed, confirmedDays, confirmedSources };
+  return { spend, clicks, impressions, conversions, applications, activations,
+           googleCPA, appCPA, activationCPA, revenue, profit,
+           isConfirmed, confirmedDays, confirmedSources };
 }
 
 // Build chart daily from raw rows
