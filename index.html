@@ -1052,7 +1052,7 @@ function renderDevices(devData, sourceLabel) {
       <div class="dev-top">
         <div class="dev-name">${label}</div>
         <div class="dev-track"><div class="dev-fill" style="width:${pct}%;background:${col}"></div></div>
-        <div class="dev-badge" style="background:${colBg(col)};color:${col}">${grade}</div>
+        <div class="dev-badge" style="background:var(--surface);border:1px solid ${col};color:${col}">${grade}</div>
       </div>
       <div class="dev-stats">
         <div class="dstat"><div class="dstat-v" style="color:${col}">${fmtCPA(appCpa)}</div><div class="dstat-l">APP CPA</div></div>
