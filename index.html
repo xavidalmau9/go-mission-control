@@ -177,6 +177,9 @@ body::after{content:'';position:fixed;inset:0;background-image:linear-gradient(r
 /* Fade-in animation */
 @keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
 .fade{animation:fadeUp .6s ease both}
+.dr-btn{background:rgba(255,255,255,0.05);color:#94a3b8;border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:6px 12px;font-size:11px;font-family:inherit;cursor:pointer;transition:all .2s;text-transform:uppercase;letter-spacing:.5px;}
+.dr-btn:hover{background:rgba(56,189,248,0.15);color:#38bdf8;border-color:rgba(56,189,248,0.3);}
+.dr-btn.active{background:rgba(56,189,248,0.2);color:#38bdf8;border-color:rgba(56,189,248,0.5);}
 </style>
 </head>
 <body>
@@ -213,6 +216,27 @@ body::after{content:'';position:fixed;inset:0;background-image:linear-gradient(r
   <div class="period-banner" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:4px;margin-bottom:10px;padding:6px 12px;background:rgba(56,189,248,0.04);border:1px solid rgba(56,189,248,0.10);border-radius:6px;min-width:0">
     <div style="font-family:var(--mono);font-size:9px;color:var(--accent);letter-spacing:2px;min-width:0" id="periodBanner">REPORT WINDOW: LOADING...</div>
     <div class="period-banner-right" style="font-family:var(--mono);font-size:9px;color:var(--muted);letter-spacing:1px;white-space:nowrap">KPI TILES = MTD APR &nbsp;·&nbsp; CHART &amp; DEVICES = FULL WINDOW &nbsp;·&nbsp; TRAJECTORY = MONTHLY</div>
+  </div>
+
+  <!-- Filter Bar -->
+  <div id="filter-bar" style="display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap;">
+    <select id="campaign-select" onchange="applyFilters()" style="background:#0c1120;color:#e2e8f0;border:1px solid rgba(56,189,248,0.3);border-radius:8px;padding:7px 12px;font-family:inherit;font-size:12px;cursor:pointer;min-width:200px;">
+      <option value="all">All Campaigns</option>
+    </select>
+    <div style="display:flex;gap:6px;flex-wrap:wrap;">
+      <button class="dr-btn active" data-range="last30" onclick="setDateRange('last30',this)">Last 30</button>
+      <button class="dr-btn" data-range="last14" onclick="setDateRange('last14',this)">Last 14</button>
+      <button class="dr-btn" data-range="last7" onclick="setDateRange('last7',this)">Last 7</button>
+      <button class="dr-btn" data-range="yesterday" onclick="setDateRange('yesterday',this)">Yesterday</button>
+      <button class="dr-btn" data-range="today" onclick="setDateRange('today',this)">Today</button>
+      <button class="dr-btn" data-range="lastmonth" onclick="setDateRange('lastmonth',this)">Last Month</button>
+      <button class="dr-btn" data-range="custom" onclick="setDateRange('custom',this)">Custom</button>
+    </div>
+    <div id="custom-range" style="display:none;gap:6px;align-items:center;">
+      <input type="date" id="custom-from" onchange="applyFilters()" style="background:#0c1120;color:#e2e8f0;border:1px solid rgba(56,189,248,0.3);border-radius:8px;padding:6px 10px;font-size:12px;" />
+      <span style="color:#64748b;">to</span>
+      <input type="date" id="custom-to" onchange="applyFilters()" style="background:#0c1120;color:#e2e8f0;border:1px solid rgba(56,189,248,0.3);border-radius:8px;padding:6px 10px;font-size:12px;" />
+    </div>
   </div>
 
   <!-- KPI Row -->
@@ -830,87 +854,236 @@ function renderTrajectory(monthly, daily) {
   }).join('');
 }
 
-// ── FETCH FROM GOOGLE SHEETS ── //
-async function fetchSheetData() {
-  if (!SHEET_ID || SHEET_ID.length < 10) {
-    return null;
-  }
-  try {
-    // Use allorigins CORS proxy to bypass Google Sheets cross-origin restrictions
-    const csvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQSGFATGsiH9UxFDJPklrDpdHoDTivZRDEm2zYxydUSZhyTRK91KnNFmYX7qRvjkMwRcP6eYypCF9z2/pub?gid=0&single=true&output=csv';
-    const proxyUrl = 'https://api.allorigins.win/raw?url=' + encodeURIComponent(csvUrl);
-    const res = await fetch(proxyUrl, { cache: 'no-store' });
-    if (!res.ok) throw new Error('HTTP ' + res.status);
-    const text = await res.text();
-    const lines = text.trim().split('\n');
-    if (lines.length < 2) return null;
+// ── LIVE DATA LAYER ── //
 
-    // Parse CSV rows (skip header row 0)
-    // Columns: date,ad_spend,applications,google_cpa,activation_cpa,
-    //   est_activations,est_revenue,est_profit,desktop_cpa,mobile_cpa,tablet_cpa,
-    //   camp1_spend,camp2_spend,camp3_spend,status,grade
-    function parseCSVLine(line) {
-      const result = [];
-      let current = '', inQ = false;
-      for (const ch of line) {
-        if (ch === '"') { inQ = !inQ; }
-        else if (ch === ',' && !inQ) { result.push(current.trim()); current = ''; }
-        else { current += ch; }
-      }
-      result.push(current.trim());
-      return result;
+// Global state
+let RAW = { daily: [], devices: [], geo: [], hourly: [] };
+let activeCampaign = 'all';
+let activeDateRange = 'last30';
+let customFrom = null, customTo = null;
+
+// CSV parser
+function parseCSV(text) {
+  const lines = text.trim().split('\n');
+  if (lines.length < 2) return [];
+  function parseLine(line) {
+    const res = []; let cur = '', inQ = false;
+    for (const ch of line) {
+      if (ch === '"') inQ = !inQ;
+      else if (ch === ',' && !inQ) { res.push(cur.trim()); cur = ''; }
+      else cur += ch;
     }
-
-    const parsed = lines.slice(1).map(line => {
-      const c = parseCSVLine(line);
-      return {
-        date: c[0] || '',
-        spend: parseFloat(c[1]) || 0,
-        apps: parseFloat(c[2]) || 0,
-        googleCPA: parseFloat(c[3]) || 0,
-        activationCPA: parseFloat(c[4]) || 0,
-        activations: parseFloat(c[5]) || 0,
-        revenue: parseFloat(c[6]) || 0,
-        profit: parseFloat(c[7]) || 0,
-        desktopCPA: parseFloat(c[8]) || 0,
-        mobileCPA: parseFloat(c[9]) || 0,
-        tabletCPA: parseFloat(c[10]) || 0,
-        camp1Spend: parseFloat(c[11]) || 0,
-        camp2Spend: parseFloat(c[12]) || 0,
-        camp3Spend: parseFloat(c[13]) || 0,
-        grade: c[15] || 'D',
-      };
-    }).filter(r => r.date && r.date.length > 0);
-
-    // Build totals from all rows
-    const totals = {
-      activations: parsed.reduce((s, r) => s + r.activations, 0),
-      revenue: parsed.reduce((s, r) => s + r.revenue, 0),
-      applications: parsed.reduce((s, r) => s + r.apps, 0),
-      approvals: 0,
-      spend: parsed.reduce((s, r) => s + r.spend, 0),
-      googleCPA: parsed[parsed.length-1]?.googleCPA || 0,
-      activationCPA: parsed[parsed.length-1]?.activationCPA || 0,
-      estProfit: parsed.reduce((s, r) => s + r.profit, 0),
-    };
-
-    const latest = parsed[parsed.length - 1];
-    const devices = {
-      desktop: latest?.desktopCPA || FALLBACK.devices.desktop,
-      tablets: latest?.tabletCPA || FALLBACK.devices.tablets,
-      mobile: latest?.mobileCPA || FALLBACK.devices.mobile,
-    };
-
-    const daily = parsed.map(r => ({
-      date: r.date.substring(5), activations: r.activations,
-      spend: r.spend, apps: r.apps
-    }));
-
-    return { totals, daily, devices };
-  } catch(e) {
-    console.warn('Sheet fetch failed:', e);
-    return null;
+    res.push(cur.trim()); return res;
   }
+  const headers = parseLine(lines[0]);
+  return lines.slice(1).map(line => {
+    const vals = parseLine(line);
+    const obj = {};
+    headers.forEach((h, i) => obj[h] = vals[i] || '');
+    return obj;
+  }).filter(r => Object.values(r).some(v => v));
+}
+
+// Fetch all four sheets
+async function fetchAllSheets() {
+  const proxy = url => 'https://api.allorigins.win/raw?url=' + encodeURIComponent(url);
+  const urls = {
+    daily:   'https://docs.google.com/spreadsheets/d/e/2PACX-1vQSGFATGsiH9UxFDJPkIrDpdHoDTivZRDEm2zYxydUSZhyTRK91KnNFmYX7qRvjkMwRcP6eYypCF9z2/pub?gid=1318122650&single=true&output=csv',
+    devices: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQSGFATGsiH9UxFDJPkIrDpdHoDTivZRDEm2zYxydUSZhyTRK91KnNFmYX7qRvjkMwRcP6eYypCF9z2/pub?gid=728314626&single=true&output=csv',
+    geo:     'https://docs.google.com/spreadsheets/d/e/2PACX-1vQSGFATGsiH9UxFDJPkIrDpdHoDTivZRDEm2zYxydUSZhyTRK91KnNFmYX7qRvjkMwRcP6eYypCF9z2/pub?gid=1821022449&single=true&output=csv',
+    hourly:  'https://docs.google.com/spreadsheets/d/e/2PACX-1vQSGFATGsiH9UxFDJPkIrDpdHoDTivZRDEm2zYxydUSZhyTRK91KnNFmYX7qRvjkMwRcP6eYypCF9z2/pub?gid=1038380061&single=true&output=csv',
+  };
+  const results = await Promise.allSettled(
+    Object.entries(urls).map(async ([key, url]) => {
+      const res = await fetch(proxy(url), { cache: 'no-store' });
+      if (!res.ok) throw new Error(key + ' HTTP ' + res.status);
+      const text = await res.text();
+      return [key, parseCSV(text)];
+    })
+  );
+  results.forEach(r => {
+    if (r.status === 'fulfilled') {
+      const [key, data] = r.value;
+      RAW[key] = data;
+    } else {
+      console.warn('Sheet fetch failed:', r.reason);
+    }
+  });
+  populateCampaignDropdown();
+}
+
+// Populate campaign dropdown from daily data
+function populateCampaignDropdown() {
+  const sel = document.getElementById('campaign-select');
+  if (!sel || !RAW.daily.length) return;
+  const campaigns = [...new Set(RAW.daily.map(r => r.CampaignName).filter(Boolean))].sort();
+  sel.innerHTML = '<option value="all">All Campaigns</option>';
+  campaigns.forEach(c => {
+    const opt = document.createElement('option');
+    opt.value = c; opt.textContent = c;
+    sel.appendChild(opt);
+  });
+}
+
+// Date range helper
+function getDateRange() {
+  const today = new Date(); today.setHours(0,0,0,0);
+  const fmt = d => d.toISOString().split('T')[0];
+  switch (activeDateRange) {
+    case 'today':     return { from: fmt(today), to: fmt(today) };
+    case 'yesterday': { const y = new Date(today); y.setDate(y.getDate()-1); return { from: fmt(y), to: fmt(y) }; }
+    case 'last7':     { const d = new Date(today); d.setDate(d.getDate()-6); return { from: fmt(d), to: fmt(today) }; }
+    case 'last14':    { const d = new Date(today); d.setDate(d.getDate()-13); return { from: fmt(d), to: fmt(today) }; }
+    case 'last30':    { const d = new Date(today); d.setDate(d.getDate()-29); return { from: fmt(d), to: fmt(today) }; }
+    case 'lastmonth': {
+      const first = new Date(today.getFullYear(), today.getMonth()-1, 1);
+      const last  = new Date(today.getFullYear(), today.getMonth(), 0);
+      return { from: fmt(first), to: fmt(last) };
+    }
+    case 'custom':    return { from: customFrom || fmt(today), to: customTo || fmt(today) };
+    default:          { const d = new Date(today); d.setDate(d.getDate()-29); return { from: fmt(d), to: fmt(today) }; }
+  }
+}
+
+// Filter RAW data by date range and campaign
+function filterData() {
+  const { from, to } = getDateRange();
+  const camp = activeCampaign;
+  const filterRow = r => {
+    const date = (r.Date || r.date || '').substring(0,10);
+    if (date < from || date > to) return false;
+    if (camp !== 'all' && r.CampaignName !== camp) return false;
+    return true;
+  };
+  return {
+    daily:   RAW.daily.filter(filterRow),
+    devices: RAW.devices.filter(filterRow),
+    geo:     RAW.geo.filter(filterRow),
+    hourly:  RAW.hourly.filter(r => camp === 'all' || r.CampaignName === camp),
+  };
+}
+
+// Build KPI totals from filtered daily rows
+function buildKPIs(daily) {
+  const ACT_RATE = 0.5512, PAYOUT = 25;
+  const spend       = daily.reduce((s,r) => s + (parseFloat(r.Cost)||0), 0);
+  const clicks      = daily.reduce((s,r) => s + (parseFloat(r.Clicks)||0), 0);
+  const impressions = daily.reduce((s,r) => s + (parseFloat(r.Impressions)||0), 0);
+  const conversions = daily.reduce((s,r) => s + (parseFloat(r.Conversions)||0), 0);
+  const activations = Math.round(conversions * ACT_RATE);
+  const applications = conversions;
+  const googleCPA     = conversions > 0 ? spend / conversions : 0;
+  const activationCPA = activations > 0 ? spend / activations : 0;
+  const estRevenue    = activations * PAYOUT;
+  const estProfit     = estRevenue - spend;
+  return { spend, clicks, impressions, conversions, activations, applications, googleCPA, activationCPA, estRevenue, estProfit };
+}
+
+// Build chart-friendly daily array
+function buildChartDaily(daily) {
+  const byDate = {};
+  daily.forEach(r => {
+    const d = (r.Date||'').substring(5);
+    if (!byDate[d]) byDate[d] = { date: d, activations: 0, spend: 0, apps: 0 };
+    byDate[d].spend       += parseFloat(r.Cost)||0;
+    byDate[d].apps        += parseFloat(r.Conversions)||0;
+    byDate[d].activations += Math.round((parseFloat(r.Conversions)||0) * 0.5512);
+  });
+  return Object.values(byDate).sort((a,b) => a.date.localeCompare(b.date));
+}
+
+// Build device CPAs from filtered devices data
+function buildDevices(devices) {
+  const byDevice = {};
+  devices.forEach(r => {
+    const dev = (r.Device||'').toLowerCase();
+    if (!byDevice[dev]) byDevice[dev] = { cost: 0, conv: 0 };
+    byDevice[dev].cost += parseFloat(r.Cost)||0;
+    byDevice[dev].conv += parseFloat(r.Conversions)||0;
+  });
+  const cpa = (dev) => byDevice[dev] && byDevice[dev].conv > 0 ? byDevice[dev].cost / byDevice[dev].conv : 0;
+  return {
+    desktop: cpa('computers') || cpa('desktop') || FALLBACK.devices.desktop,
+    mobile:  cpa('mobile')    || FALLBACK.devices.mobile,
+    tablets: cpa('tablet')    || cpa('tablets') || FALLBACK.devices.tablets,
+  };
+}
+
+// Build states from geo data
+function buildStates(geo) {
+  if (!geo.length) return FALLBACK.states;
+  const byRegion = {};
+  geo.forEach(r => {
+    const region = r.Region || r.RegionCriteriaId || '';
+    if (!region) return;
+    if (!byRegion[region]) byRegion[region] = { cost: 0, conv: 0 };
+    byRegion[region].cost += parseFloat(r.Cost)||0;
+    byRegion[region].conv += parseFloat(r.Conversions)||0;
+  });
+  return Object.entries(byRegion)
+    .map(([state, d]) => ({ state, cpa: d.conv > 0 ? d.cost/d.conv : 0, spend: d.cost, conv: d.conv }))
+    .sort((a,b) => b.spend - a.spend)
+    .slice(0, 20);
+}
+
+// Build hourly array from hourly data
+function buildHourly(hourly) {
+  if (!hourly.length) return FALLBACK.hours;
+  const byHour = {};
+  hourly.forEach(r => {
+    const h = parseInt(r.HourOfDay)||0;
+    if (!byHour[h]) byHour[h] = { cost: 0, conv: 0, clicks: 0 };
+    byHour[h].cost   += parseFloat(r.Cost)||0;
+    byHour[h].conv   += parseFloat(r.Conversions)||0;
+    byHour[h].clicks += parseFloat(r.Clicks)||0;
+  });
+  return Array.from({length:24}, (_,h) => ({
+    hour: h,
+    cpa:    byHour[h] && byHour[h].conv > 0 ? byHour[h].cost / byHour[h].conv : 0,
+    spend:  byHour[h]?.cost || 0,
+    clicks: byHour[h]?.clicks || 0,
+  }));
+}
+
+// Apply filters and re-render all panels
+function applyFilters() {
+  activeCampaign = document.getElementById('campaign-select')?.value || 'all';
+  if (activeDateRange === 'custom') {
+    customFrom = document.getElementById('custom-from')?.value || null;
+    customTo   = document.getElementById('custom-to')?.value || null;
+  }
+  const f = filterData();
+  if (!f.daily.length) return;
+  const kpis    = buildKPIs(f.daily);
+  const chart   = buildChartDaily(f.daily);
+  const devices = buildDevices(f.devices);
+  const states  = buildStates(f.geo);
+  const hourly  = buildHourly(f.hourly);
+  try { renderKPIs(kpis); } catch(e) {}
+  try { renderChart(chart); } catch(e) {}
+  try { renderDevices(devices); } catch(e) {}
+  try { renderStates(states); } catch(e) {}
+  try { renderHeatmap(hourly); } catch(e) {}
+  try { renderFeed(chart); } catch(e) {}
+  const { from, to } = getDateRange();
+  $('chartRange').textContent = from + ' → ' + to;
+}
+
+// Date range button handler
+function setDateRange(range, btn) {
+  activeDateRange = range;
+  document.querySelectorAll('.dr-btn').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  const cr = document.getElementById('custom-range');
+  if (cr) cr.style.display = range === 'custom' ? 'flex' : 'none';
+  if (range !== 'custom') applyFilters();
+}
+
+// fetchSheetData — wrapper for backward compat with auto-refresh
+async function fetchSheetData() {
+  await fetchAllSheets();
+  applyFilters();
+  return null; // rendering already done in applyFilters
 }
 
 
@@ -979,10 +1152,7 @@ async function init() {
 
   // Try live sheet
   const live = await fetchSheetData();
-  if (live) {
-    try { renderKPIs(live.totals); } catch(e) {}
-    try { renderDevices(live.devices); } catch(e) {}
-    try { renderSummary(live.daily, live.totals); } catch(e) {}
+  if (RAW.daily.length > 0) {
     $('liveStatus').textContent = 'LIVE · GOOGLE SHEETS';
     $('dataSource').textContent = 'SOURCE: GOOGLE SHEETS · LAST: ' + new Date().toLocaleTimeString();
   } else {
@@ -996,14 +1166,10 @@ async function init() {
 
   // Auto-refresh every 5 minutes
   setInterval(async () => {
-    const fresh = await fetchSheetData();
-    if (fresh) {
-      renderKPIs(fresh.totals);
-      renderChart(fresh.daily);
-      renderDevices(fresh.devices);
-      renderFeed(fresh.daily);
+    fetchAllSheets().then(() => {
+      applyFilters();
       $('dataSource').textContent = 'SOURCE: GOOGLE SHEETS · LAST: ' + new Date().toLocaleTimeString();
-    }
+    });
   }, 5 * 60 * 1000);
 }
 
