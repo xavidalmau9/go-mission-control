@@ -118,49 +118,55 @@ Last updated: April 2026
 
 ---
 
-## 7. Dashboard Engineering Notes (Built Sessions)
+## 7. Dashboard Engineering Notes
 
-### Architecture decisions
-- **Data priority**: Assurance confirmed data (BGOA/BGOC) ALWAYS beats Google estimates — we get paid on Assurance numbers
-- **T+1 reporting**: Today's activations are always unknown (Assurance reports next day) — dashboard never shows today's activations
-- **30-day cookie window**: Sundays with $0 Google spend still get BGOA activations — these are merged into chart
-- **ACT_TIERS (hardcoded)**: FANTASTIC≤$10 · EXCELLENT≤$12.50 · GOOD≤$15 · POOR>$15 · FATAL>$25 — only hardcoded business constants
-- **App CPA thresholds**: Derived mathematically from ACT_TIERS × settled activation rate (never hardcoded)
-- **Settled activation rate**: Uses last closed month after the 15th (currently Mar 2026 = ~55%) via `getLiveActRate()`
-- **BGOC (Meta) activations**: Merged into confirmed total alongside BGOA — same $25/activation payout
-- **Date filtering**: ALL panels (including keywords, search terms, geo, devices) filter by selected date range
+> Full engineering reference is in `CLAUDE.md` (read by Claude at session start).
+> This section summarizes key decisions and session history.
 
-### Correct original projections (from projections spreadsheet)
-| Month | Projected Activations |
-|-------|----------------------|
-| Jan 2026 | 0 (testing) |
-| Feb 2026 | 500 |
-| Mar 2026 | 1,000 |
-| Apr 2026 | 2,000 |
-| May 2026 | 3,000 |
-| Jun 2026 | 4,000 |
+### Core Architecture
+- **Data priority**: BGOA/BGOC confirmed data ALWAYS beats Google estimates
+- **T+1 reporting**: Today's activations are always unknown — dashboard shows "—" for today
+- **30-day cookie window**: Sundays ($0 spend) still have BGOA activations — merged into chart
+- **ACT_TIERS (hardcoded only)**: FANTASTIC≤$10 · EXCELLENT≤$12.50 · GOOD≤$15 · POOR>$15 · FATAL>$25
+- **App CPA thresholds**: Always derived: App CPA = Act CPA × activation_rate (never hardcoded)
+- **Date filtering**: ALL panels (KPIs, chart, geo, devices, keywords, search terms) respect date filter
+- **Phased loading**: Phase 1 blocks render (bgoa, daily, devices, hourly, geo). Phase 2 background (bgoc, keywords, searchTerms, monthly, gva, projVsReal) → calls `applyFilters()` when done
 
-**Note**: Dashboard had these shifted +1 month (Jan=500, Feb=1000...) — fixed Apr 2026.
+### Activation Rate Logic (updated Apr 2026)
+1. `getPeriodActRate(from, to)` — computes real rate from BGOA daily data for the selected range, excluding last 5 unsettled days. Shows "✓ REAL · Xd · Y/Z apps" when sufficient data
+2. `getLiveActRate()` — settled monthly rate (last closed month). Fallback when period data insufficient
+3. `ACT_RATE_BASELINE = 0.5512` — last resort fallback only
 
-### Reality vs Projections (confirmed paid)
-| Month | Projected | Actual BGOA | Beat? |
-|-------|-----------|-------------|-------|
-| Dec 2025 | 0 | 46 | — (no target) |
-| Jan 2026 | 0 | 415 | — (no target, crushed it) |
+### Correct Original Projections
+| Month | Projected | Actual | Beat? |
+|-------|-----------|--------|-------|
+| Jan 2026 | 0 (testing) | 415 | — (no target) |
 | Feb 2026 | 500 | 552 | ✅ +10% |
 | Mar 2026 | 1,000 | 1,188+ | ✅ +19%+ |
 | Apr 2026 | 2,000 | in progress | on track |
+| May 2026 | 3,000 | — | — |
 
-### Key Google Ads Script notes
-- Script runs hourly via Google Ads → Tools → Scripts → "Mission Control Data Push"
-- `LAST_90_DAYS` is invalid AWQL constant — script uses dynamic `dateRange(60)` function instead
-- Geo tab reports zip codes (not state names) — dashboard auto-converts to state names via zip lookup
-- Script writes to spreadsheet: `1ZLzpR9oGk5y2amRr0jS4QPVIIzC44m1VfBRIxDK64Vg`
+### Session History — What Was Fixed and When
 
-### Phased data loading
-- **Phase 1 (blocks render)**: bgoa, daily, devices, hourly, geo
-- **Phase 2 (background)**: bgoc, keywords, searchTerms, monthly, gva, projVsReal
-- After Phase 2 completes, `applyFilters()` is called to re-render with full data respecting current date range
+**Session 1 (Apr 2026 — prev context):**
+- Google Ads Script: fixed `LAST_90_DAYS` invalid AWQL → `dateRange(60)`
+- BGOA CSV blank separator rows crashing parseCSV
+- Device panel partial matching for "Mobile devices with full browsers"
+- Heatmap square sizing
+- T+1 enforcement: TODAY never shows activations
+- CPA tiers centralized in `ACT_TIERS` constant
+- Sunday activations merged into chart from BGOA (30-day cookie window)
+- Day counts fixed: calendar math not data rows
+- BGOC (Meta) activations merged into confirmed totals
+
+**Session 2 (Apr 15-16, 2026):**
+- Activation Rate tile: was showing `activations/google_conversions` (garbage) → now shows real period rate from BGOA via `getPeriodActRate()`
+- Geo panel: zip codes → state names via `zipToStateName()` + handles 7-digit Google criterion IDs
+- Projections vs Reality: numbers were shifted +1 month — fixed to correct values, actuals now pulled live from BGOA+BGOC
+- Keywords/Search Terms not date-filtering: Phase 2 background callback was calling `renderKeywords(RAW.keywords)` directly (bypasses date filter) → fixed to call `applyFilters()`
+- `maxCpa` in device panel was comparing CPA against spend values — fixed to only compare 3 CPA values
+- All build functions in `applyFilters()` wrapped in try/catch so errors don't kill downstream panels
+- `CLAUDE.md` created as permanent project memory file
 
 ---
 
