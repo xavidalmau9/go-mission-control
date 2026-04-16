@@ -85,44 +85,60 @@ function pushDevices(ss, range) {
 }
 
 // ── GEO — STATE LEVEL ─────────────────────────────────────────────────────────
-// Uses GEO_PERFORMANCE_REPORT with Region field = state name ("Maryland", "California", etc.)
-// NOT MostSpecificCriteriaId (which returns zip codes).
-// Matches what you see in the Google Ads UI Location report.
+// Uses RegionCriteriaId (valid AWQL field) and looks up state name from a
+// Google Ads geographic criterion ID table. This avoids the "Region" field
+// which is not valid in AWQL and avoids MostSpecificCriteriaId (zip codes).
+
+var US_STATE_CRITERIA = {
+  21132:'Alabama',    21133:'Alaska',        21134:'Arizona',      21135:'Arkansas',
+  21136:'California', 21137:'Colorado',      21138:'Connecticut',  21139:'Delaware',
+  21140:'Florida',    21141:'Georgia',       21142:'Hawaii',       21143:'Idaho',
+  21144:'Illinois',   21145:'Indiana',       21146:'Iowa',         21147:'Kansas',
+  21148:'Kentucky',   21149:'Louisiana',     21150:'Maine',        21151:'Maryland',
+  21152:'Massachusetts', 21153:'Michigan',   21154:'Minnesota',    21155:'Mississippi',
+  21156:'Missouri',   21157:'Montana',       21158:'Nebraska',     21159:'Nevada',
+  21160:'New Hampshire', 21161:'New Jersey', 21162:'New Mexico',   21163:'New York',
+  21164:'North Carolina', 21165:'North Dakota', 21166:'Ohio',      21167:'Oklahoma',
+  21168:'Oregon',     21169:'Pennsylvania',  21170:'Rhode Island', 21171:'South Carolina',
+  21172:'South Dakota', 21173:'Tennessee',   21174:'Texas',        21175:'Utah',
+  21176:'Vermont',    21177:'Virginia',      21178:'Washington',   21179:'West Virginia',
+  21180:'Wisconsin',  21181:'Wyoming',       21182:'Washington DC', 21183:'Puerto Rico'
+};
+
 function pushGeo(ss, range) {
   var sheet = getOrCreate(ss, 'Geo');
   sheet.clearContents();
   sheet.appendRow(['Date','CampaignName','Region','Country','Impressions','Clicks','Cost','Conversions','CPA']);
 
   var report = AdsApp.report(
-    'SELECT Date, CampaignName, Region, CountryCriteriaId, Impressions, Clicks, Cost, Conversions ' +
+    'SELECT Date, CampaignName, RegionCriteriaId, Impressions, Clicks, Cost, Conversions ' +
     'FROM GEO_PERFORMANCE_REPORT ' +
     'WHERE Impressions > 0 ' +
-    'AND IsTargetingLocation = FALSE ' +  // actual user locations, not just targeted locations
     'DURING ' + range
   );
 
-  // Aggregate by Date + Campaign + Region (state) to avoid duplicate rows
+  // Aggregate by Date + Campaign + State (criterion ID → state name)
   var agg = {};
   var rows = report.rows();
   while (rows.hasNext()) {
     var r = rows.next();
-    var region = r['Region'];
-    // Skip rows where Region is a zip code or numeric criterion
-    if (!region || /^\d+$/.test(region)) continue;
-    var key = r['Date'] + '|' + r['CampaignName'] + '|' + region;
-    if (!agg[key]) agg[key] = { date: r['Date'], campaign: r['CampaignName'], region: region,
-                                 country: 'United States', impr: 0, clicks: 0, cost: 0, conv: 0 };
-    agg[key].impr   += parseInt(r['Impressions'])  || 0;
-    agg[key].clicks += parseInt(r['Clicks'])       || 0;
-    agg[key].cost   += parseFloat(r['Cost'])       || 0;
+    var regionId = parseInt(r['RegionCriteriaId']) || 0;
+    var stateName = US_STATE_CRITERIA[regionId];
+    if (!stateName) continue; // skip non-US-state rows (countries, DMAs, cities)
+    var key = r['Date'] + '|' + r['CampaignName'] + '|' + stateName;
+    if (!agg[key]) agg[key] = { date: r['Date'], campaign: r['CampaignName'],
+                                 region: stateName, impr: 0, clicks: 0, cost: 0, conv: 0 };
+    agg[key].impr   += parseInt(r['Impressions'])   || 0;
+    agg[key].clicks += parseInt(r['Clicks'])        || 0;
+    agg[key].cost   += parseFloat(r['Cost'])        || 0;
     agg[key].conv   += parseFloat(r['Conversions']) || 0;
   }
 
   var data = Object.values(agg).map(function(a) {
     var cpa = a.conv > 0 ? (a.cost / a.conv).toFixed(2) : '0';
-    return [a.date, a.campaign, a.region, a.country,
+    return [a.date, a.campaign, a.region, 'United States',
             a.impr, a.clicks, a.cost.toFixed(2), a.conv.toFixed(2), cpa];
-  }).sort(function(a, b) { return a[0] < b[0] ? -1 : 1; }); // sort by date
+  }).sort(function(a, b) { return a[0] < b[0] ? -1 : 1; });
 
   if (data.length) sheet.getRange(2, 1, data.length, 9).setValues(data);
   Logger.log('Geo: ' + data.length + ' rows (state level)');
