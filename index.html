@@ -127,9 +127,9 @@ body::after{content:'';position:fixed;inset:0;background-image:linear-gradient(r
 .s-status{font-family:var(--mono);font-size:8px;padding:2px 6px;border-radius:3px;flex-shrink:0;min-width:48px;text-align:center}
 
 /* heatmap */
-.heatmap{display:grid;grid-template-columns:repeat(8,1fr);gap:3px}
-.hcell{aspect-ratio:1;border-radius:3px;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:8px;cursor:default;transition:transform .1s;position:relative}
-.hcell:hover{transform:scale(1.3);z-index:10}
+.heatmap{display:grid;grid-template-columns:repeat(8,1fr);gap:5px;flex:1;align-content:stretch}
+.hcell{border-radius:6px;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:13px;font-weight:700;cursor:default;transition:transform .1s,box-shadow .1s;position:relative;min-height:60px}
+.hcell:hover{transform:scale(1.05);z-index:10;box-shadow:0 0 14px rgba(0,0,0,0.4)}
 .hm-leg{display:flex;align-items:center;justify-content:flex-end;gap:10px;margin-top:8px}
 .hm-li{display:flex;align-items:center;gap:4px;font-family:var(--mono);font-size:8px;color:var(--muted)}
 .hm-dot{width:7px;height:7px;border-radius:2px}
@@ -143,8 +143,9 @@ body::after{content:'';position:fixed;inset:0;background-image:linear-gradient(r
 .proj-bf{height:100%;border-radius:2px;transition:width 1s ease}
 
 /* trend sparkline */
-.spark{display:flex;align-items:flex-end;gap:2px;height:32px;margin-top:6px}
-.spark-bar{flex:1;border-radius:1px 1px 0 0;min-width:4px;transition:height .5s ease}
+.spark{display:flex;align-items:flex-end;gap:3px;height:56px;margin-top:6px}
+.spark-bar{flex:1;border-radius:2px 2px 0 0;min-width:6px;transition:height .6s ease;position:relative;cursor:default}
+.spark-bar:hover{opacity:.8}
 
 /* tooltip */
 .tooltip{display:none;position:absolute;background:#1e293b;border:1px solid var(--border);border-radius:5px;padding:6px 10px;font-family:var(--mono);font-size:9px;color:var(--text);letter-spacing:1px;white-space:nowrap;z-index:100;pointer-events:none;top:-36px;left:50%;transform:translateX(-50%)}
@@ -444,12 +445,12 @@ body::after{content:'';position:fixed;inset:0;background-image:linear-gradient(r
     </div>
 
     <!-- Heatmap -->
-    <div class="panel">
+    <div class="panel" style="display:flex;flex-direction:column">
       <div class="panel-hdr">
         <div class="ptitle">Hour of Day · Cost/Conv</div>
         <div class="pmeta">GOOGLE ADS · LIVE</div>
       </div>
-      <div class="heatmap" id="heatmap">
+      <div class="heatmap" id="heatmap" style="flex:1">
         <div class="no-data-state" style="grid-column:1/-1"><div class="nd-icon">🕐</div><div class="nd-title">AWAITING LIVE DATA</div></div>
       </div>
       <div class="hm-leg">
@@ -461,12 +462,12 @@ body::after{content:'';position:fixed;inset:0;background-image:linear-gradient(r
     </div>
 
     <!-- Trajectory -->
-    <div class="panel">
+    <div class="panel" style="display:flex;flex-direction:column">
       <div class="panel-hdr">
         <div class="ptitle">Business Trajectory</div>
         <div class="pmeta">ACTUAL VS TARGET</div>
       </div>
-      <div id="trajectory" style="display:flex;flex-direction:column;justify-content:space-evenly;min-height:280px">
+      <div id="trajectory" style="display:flex;flex-direction:column;justify-content:space-evenly;flex:1;min-height:240px">
         <div class="no-data-state"><div class="nd-icon">📈</div><div class="nd-title">AWAITING LIVE DATA</div></div>
       </div>
       <div style="margin-top:12px;padding-top:10px;border-top:1px solid var(--border2)">
@@ -718,24 +719,64 @@ function renderChart(daily) {
 
 function renderKPIs(kpis) {
   const { spend, conversions, activations, googleCPA, activationCPA, estRevenue } = kpis;
-  const approvalRate = conversions > 0 ? fmtPct(conversions * 100 / conversions) : '—';
-  $('kv-activations').textContent = activations.toLocaleString();
-  $('ks-activations').innerHTML = `<span style="color:var(--muted)">est. from conv × 55.12%</span>`;
-  $('kv-revenue').textContent = fmtMoney(estRevenue);
-  $('ks-revenue').innerHTML = `<span style="color:var(--muted)">@ $25/activation</span>`;
+  const isToday = activeDateRange === 'today';
+
+  // Activations: BGOA reports T+1 — never show "today's activations" as real
+  if (isToday) {
+    // Pull yesterday's confirmed from BGOA instead
+    const bgoa = RAW.bgoa.map(parseBGOARow).filter(Boolean).sort((a,b)=>b.date.localeCompare(a.date));
+    const yest = bgoa[0];
+    $('kv-activations').textContent = '—';
+    $('kv-activations').style.color = 'var(--muted)';
+    $('ks-activations').innerHTML = `<span style="color:var(--muted);font-size:9px">REPORTS T+1 · ${yest ? 'YESTERDAY: ' + yest.activations : 'SEE BGOA'}</span>`;
+    $('kv-revenue').textContent = '—';
+    $('kv-revenue').style.color = 'var(--muted)';
+    $('ks-revenue').innerHTML = `<span style="color:var(--muted);font-size:9px">CONFIRMED T+1 · ${yest ? fmtMoney(yest.revenue) + ' YESTERDAY' : 'SEE BGOA'}</span>`;
+  } else {
+    $('kv-activations').textContent = activations.toLocaleString();
+    $('kv-activations').style.color = '';
+    $('ks-activations').innerHTML = `<span style="color:var(--muted)">est. Google conv × 55.12%</span>`;
+    $('kv-revenue').textContent = fmtMoney(estRevenue);
+    $('kv-revenue').style.color = '';
+    $('ks-revenue').innerHTML = `<span style="color:var(--muted)">@ $25/activation (est.)</span>`;
+  }
+
   $('kv-apps').textContent = Math.round(conversions).toLocaleString();
   $('ks-apps').innerHTML = `<span style="color:var(--muted)">Google conversions</span>`;
   $('kv-approval').textContent = conversions > 0 ? fmtPct(activations / conversions * 100) : '—';
   $('ks-approval').textContent = 'act / app rate';
   $('kv-spend').textContent = fmtMoney(spend);
-  $('ks-spend').innerHTML = `<span class="warn">TARGET: $1,800/day</span>`;
+
+  // Live daily budget: sum from CampaignMeta if loaded, else show 7-day avg
+  const liveBudget = (() => {
+    if (RAW.campaignMeta && RAW.campaignMeta.length > 0) {
+      const total = RAW.campaignMeta.filter(r => r.Status === 'ENABLED').reduce((s,r) => s + (parseFloat(r.DailyBudget)||0), 0);
+      if (total > 0) return { val: total, label: 'LIVE BUDGET' };
+    }
+    // Fallback: 7-day avg from daily data
+    const byDate = {};
+    RAW.daily.forEach(r => { const d = r.Date||''; if (d) { byDate[d] = (byDate[d]||0) + (parseFloat(r.Cost)||0); } });
+    // Use month-to-date average
+    const thisMonth = new Date().toISOString().substring(0,7);
+    const mtdDates = Object.keys(byDate).filter(d => d.startsWith(thisMonth)).sort();
+    const useDates = mtdDates.length >= 3 ? mtdDates : Object.keys(byDate).sort().slice(-7);
+    const label = mtdDates.length >= 3 ? 'MTD AVG/DAY' : '7D AVG/DAY';
+    if (useDates.length > 0) { const avg = useDates.reduce((s,d)=>s+byDate[d],0)/useDates.length; return { val: avg, label }; }
+    return null;
+  })();
+  $('ks-spend').innerHTML = liveBudget
+    ? `<span style="color:var(--muted)">${liveBudget.label}: ${fmtMoney(liveBudget.val)}</span>`
+    : `<span style="color:var(--muted)">daily spend</span>`;
+
   $('kv-gcpa').textContent = fmtCPA(googleCPA);
   const gcpaCol = googleCPA <= 6.41 ? 'var(--green)' : googleCPA <= 9 ? 'var(--amber)' : 'var(--red)';
   $('ks-gcpa').innerHTML = `<span style="color:${gcpaCol}">TARGET: $6.41</span>`;
   const acpaCol = activationCPA <= 10 ? 'var(--green)' : activationCPA <= 12.5 ? 'var(--accent)' : activationCPA <= 15 ? 'var(--amber)' : 'var(--red)';
-  $('kv-acpa').textContent = fmtCPA(activationCPA);
-  $('kv-acpa').style.color = acpaCol;
-  $('ks-acpa').innerHTML = `<span style="color:${acpaCol}">${activationCPA <= 10 ? 'FANTASTIC ✓' : activationCPA <= 12.5 ? 'EXCELLENT' : activationCPA <= 15 ? 'GOOD' : 'NEEDS WORK'}</span> · TARGET &lt;$10`;
+  $('kv-acpa').textContent = isToday ? '—' : fmtCPA(activationCPA);
+  $('kv-acpa').style.color = isToday ? 'var(--muted)' : acpaCol;
+  $('ks-acpa').innerHTML = isToday
+    ? `<span style="color:var(--muted);font-size:9px">REPORTS T+1</span>`
+    : `<span style="color:${acpaCol}">${activationCPA <= 10 ? 'FANTASTIC ✓' : activationCPA <= 12.5 ? 'EXCELLENT' : activationCPA <= 15 ? 'GOOD' : 'NEEDS WORK'}</span> · TARGET &lt;$10`;
 }
 
 function renderDevices(devData) {
@@ -799,14 +840,68 @@ function renderFeed(daily) {
     $('intelFeed').innerHTML = '<div class="no-data-state"><div class="nd-icon">📰</div><div class="nd-title">NO FEED DATA</div></div>';
     return;
   }
-  // Generate feed from most recent days with significant changes
+  // Build per-day totals AND per-campaign-per-day from RAW.daily
+  const byDate = {};
+  RAW.daily.forEach(r => {
+    const d = r.Date || '';
+    if (!d) return;
+    if (!byDate[d]) byDate[d] = { spend: 0, apps: 0, camps: {} };
+    const cost = parseFloat(r.Cost) || 0;
+    const conv = parseFloat(r.Conversions) || 0;
+    byDate[d].spend += cost;
+    byDate[d].apps  += conv;
+    const cn = (r.CampaignName || '').replace('Assurance Wireless','AW').replace('Search - ','').replace(' | SS','').replace('| SS','').trim();
+    if (cn) {
+      if (!byDate[d].camps[cn]) byDate[d].camps[cn] = { spend: 0, conv: 0 };
+      byDate[d].camps[cn].spend += cost;
+      byDate[d].camps[cn].conv  += conv;
+    }
+  });
+
   const sorted = [...daily].sort((a,b) => b.date.localeCompare(a.date)).slice(0, 7);
-  $('intelFeed').innerHTML = sorted.map(d => {
-    const cpa = d.spend > 0 && d.apps > 0 ? d.spend / d.apps : 0;
-    const col = cpa <= 6.41 ? 'var(--green)' : cpa <= 9 ? 'var(--amber)' : 'var(--red)';
-    return `<div class="feed-item">
-      <div class="feed-date" style="color:${col}">${d.date}</div>
-      <div class="feed-txt">${d.activations} activations · ${d.apps} apps · ${fmtMoney(d.spend)} spend · App CPA ${cpa > 0 ? fmtCPA(cpa) : 'N/A'}</div>
+  $('intelFeed').innerHTML = sorted.map((d, i) => {
+    const prev = sorted[i + 1];
+    const appCPA = d.spend > 0 && d.apps > 0 ? d.spend / d.apps : 0;
+    const cpaCol = appCPA <= 6.41 ? 'var(--green)' : appCPA <= 9 ? 'var(--amber)' : 'var(--red)';
+    const acts = Math.round(d.apps * ACT_RATE);
+    const actCPA = acts > 0 ? d.spend / acts : 0;
+
+    // Day-over-day deltas
+    let deltaHtml = '';
+    if (prev && prev.spend > 0) {
+      const spendDelta = ((d.spend - prev.spend) / prev.spend * 100).toFixed(0);
+      const appsDelta  = prev.apps > 0 ? ((d.apps  - prev.apps)  / prev.apps  * 100).toFixed(0) : null;
+      const cpaDelta   = prev.spend > 0 && prev.apps > 0 ? (appCPA - prev.spend/prev.apps) : null;
+      const sdCol = d.spend > prev.spend ? 'var(--amber)' : 'var(--green)';
+      const adCol = d.apps  > prev.apps  ? 'var(--green)' : 'var(--red)';
+      const cCol  = cpaDelta !== null ? (cpaDelta > 0 ? 'var(--red)' : 'var(--green)') : 'var(--muted)';
+      deltaHtml = `<div style="font-size:9px;color:var(--muted);margin-top:3px;display:flex;gap:10px;flex-wrap:wrap">` +
+        `<span style="color:${sdCol}">spend ${spendDelta > 0 ? '+' : ''}${spendDelta}%</span>` +
+        (appsDelta !== null ? `<span style="color:${adCol}">apps ${appsDelta > 0 ? '+' : ''}${appsDelta}%</span>` : '') +
+        (cpaDelta !== null ? `<span style="color:${cCol}">CPA ${cpaDelta > 0 ? '↑' : '↓'}${fmtCPA(Math.abs(cpaDelta))}</span>` : '') +
+        `</div>`;
+    }
+
+    // Campaign breakdown (top 3 by spend)
+    const raw = byDate[d.date.replace('-','').replace('-','') + '-' + d.date.substring(5)] ||
+                byDate[Object.keys(byDate).find(k => k.endsWith(d.date.substring(5)) || k === d.date) || ''] ||
+                byDate[d.date] || { camps: {} };
+    const campLines = Object.entries(raw.camps || {})
+      .sort((a,b) => b[1].spend - a[1].spend).slice(0, 3)
+      .map(([name, c]) => {
+        const ccpa = c.conv > 0 ? c.spend/c.conv : 0;
+        const cc = ccpa <= 6.41 ? 'var(--green)' : ccpa <= 9 ? 'var(--amber)' : 'var(--red)';
+        return `<span style="color:var(--muted)">${name}</span> <span style="color:${cc}">${fmtCPA(ccpa)}</span> <span style="color:var(--muted);font-size:8px">${fmtMoney(c.spend)}</span>`;
+      }).join('<span style="color:var(--border);padding:0 4px">|</span>');
+
+    const isToday = i === 0;
+    return `<div class="feed-item" style="border-left:2px solid ${cpaCol};padding-left:8px">
+      <div style="display:flex;align-items:baseline;gap:8px;margin-bottom:2px">
+        <div class="feed-date" style="color:${cpaCol}">${d.date}${isToday ? ' <span style="color:var(--muted);font-size:8px">TODAY</span>' : ''}</div>
+        <div style="font-family:var(--mono);font-size:9px;color:var(--muted)">${Math.round(d.apps)} apps · ${acts} acts · ${fmtMoney(d.spend)} · CPA <span style="color:${cpaCol}">${appCPA > 0 ? fmtCPA(appCPA) : '—'}</span> · ActCPA <span style="color:${actCPA <= 10 ? 'var(--green)' : actCPA <= 15 ? 'var(--amber)' : 'var(--red)'}">${actCPA > 0 ? fmtCPA(actCPA) : '—'}</span></div>
+      </div>
+      ${deltaHtml}
+      ${campLines ? `<div style="font-family:var(--mono);font-size:9px;margin-top:4px;line-height:1.8">${campLines}</div>` : ''}
     </div>`;
   }).join('');
 }
@@ -886,13 +981,23 @@ function renderTrajectory(monthly, daily) {
     </div>`;
   }).join('');
 
-  if (daily && daily.length) {
+  // Spark: use BGOA confirmed activations (real data, T+1), not estimated
+  const bgoaRows = RAW.bgoa.map(parseBGOARow).filter(Boolean).sort((a,b)=>a.date.localeCompare(b.date)).slice(-14);
+  if (bgoaRows.length > 0) {
+    const maxA = Math.max(...bgoaRows.map(r => r.activations), 1);
+    $('weekSpark').innerHTML = bgoaRows.map(r => {
+      const h = r.activations > 0 ? Math.max(6, Math.round((r.activations / maxA) * 56)) : 4;
+      const col = r.activations >= 60 ? 'var(--green)' : r.activations >= 30 ? 'var(--accent)' : r.activations > 0 ? 'var(--amber)' : 'rgba(255,255,255,0.05)';
+      return `<div class="spark-bar" title="${r.date}: ${r.activations} confirmed activations" style="height:${h}px;background:${col}"></div>`;
+    }).join('');
+  } else if (daily && daily.length) {
+    // Fallback to estimated if no BGOA data
     const last14 = [...daily].sort((a,b) => a.date.localeCompare(b.date)).slice(-14);
     const maxA = Math.max(...last14.map(d => d.activations), 1);
     $('weekSpark').innerHTML = last14.map(d => {
-      const h = Math.max(4, Math.round((d.activations / maxA) * 32));
-      const col = d.activations > 60 ? 'var(--green)' : d.activations > 30 ? 'var(--accent)' : d.activations > 0 ? 'var(--amber)' : 'var(--surface2)';
-      return `<div class="spark-bar" title="${d.date}: ${d.activations} activations" style="height:${h}px;background:${col}"></div>`;
+      const h = d.activations > 0 ? Math.max(6, Math.round((d.activations / maxA) * 56)) : 4;
+      const col = d.activations > 60 ? 'var(--green)' : d.activations > 30 ? 'var(--accent)' : d.activations > 0 ? 'var(--amber)' : 'rgba(255,255,255,0.05)';
+      return `<div class="spark-bar" title="${d.date}: ~${d.activations} est. activations" style="height:${h}px;background:${col}"></div>`;
     }).join('');
   }
 }
@@ -907,8 +1012,7 @@ function renderSummary(chartDaily, kpis) {
   $('summaryText').innerHTML =
     `<span style="color:var(--accent)">Period days:</span> ${days} days<br>` +
     `<span style="color:var(--accent)">Total spend:</span> ${fmtMoney(kpis.spend)}<br>` +
-    `<span style="color:var(--accent)">Daily avg spend:</span> ${fmtMoney(avgSpend)} · target $1,800<br>` +
-    `<span style="color:var(--accent)">Budget utilization:</span> <span style="color:var(--amber)">${Math.round(avgSpend/1800*100)}% of target</span><br>` +
+    `<span style="color:var(--accent)">Daily avg spend:</span> ${fmtMoney(avgSpend)}/day<br>` +
     `<span style="color:var(--accent)">Total apps:</span> ${Math.round(kpis.conversions).toLocaleString()} · avg ${avgApps.toFixed(1)}/day<br>` +
     `<span style="color:var(--accent)">Est. activations:</span> ${kpis.activations.toLocaleString()} · avg ${avgActs.toFixed(1)}/day<br>` +
     `<span style="color:var(--accent)">App CPA:</span> <span style="color:${cpaColor(kpis.googleCPA)}">${fmtCPA(kpis.googleCPA)} ${cpaLabel(kpis.googleCPA)}</span>`;
@@ -1133,14 +1237,20 @@ function renderBrief(dailyRaw, keywordsRaw, searchTermsRaw) {
     else actions.push({ type:'warn', icon:'📊', text:`App CPA stable: ${fmtCPA(yAppCPA)} yesterday vs ${fmtCPA(dbAppCPA)} day prior (${cpaTrend > 0 ? '+' : ''}${cpaTrend.toFixed(1)}%).` });
   }
 
-  // Spend vs target
-  const dailyTarget = 1800;
-  if (ySpend < dailyTarget * 0.7) {
-    actions.push({ type:'warn', icon:'💸', text:`Spend only ${fmtMoney(ySpend)} vs $${dailyTarget.toLocaleString()} target — ${Math.round(ySpend/dailyTarget*100)}% utilization. Check campaign budgets and bid caps; potential volume left on the table.` });
-  } else if (ySpend > dailyTarget * 1.2) {
-    actions.push({ type:'warn', icon:'💰', text:`Spend ${fmtMoney(ySpend)} exceeded daily target by ${Math.round((ySpend/dailyTarget-1)*100)}%. Monitor closely — ensure CPA stayed in range.` });
-  } else {
-    actions.push({ type:'good', icon:'✅', text:`Spend ${fmtMoney(ySpend)} well-paced against $${dailyTarget.toLocaleString()} target (${Math.round(ySpend/dailyTarget*100)}%).` });
+  // Spend vs 7-day rolling average (no hardcoded target)
+  const byDateSpend = {};
+  RAW.daily.forEach(r => { const d = r.Date||''; if (d) byDateSpend[d] = (byDateSpend[d]||0) + (parseFloat(r.Cost)||0); });
+  const recentDates = Object.keys(byDateSpend).sort().slice(-8, -1); // last 7 days excluding today
+  const avg7Spend = recentDates.length > 0 ? recentDates.reduce((s,d)=>s+byDateSpend[d],0)/recentDates.length : 0;
+  if (avg7Spend > 0) {
+    const spendRatio = ySpend / avg7Spend;
+    if (spendRatio < 0.7) {
+      actions.push({ type:'warn', icon:'💸', text:`Spend ${fmtMoney(ySpend)} — ${Math.round((1-spendRatio)*100)}% below your 7-day avg of ${fmtMoney(avg7Spend)}. Check campaign budgets and bid caps.` });
+    } else if (spendRatio > 1.3) {
+      actions.push({ type:'warn', icon:'💰', text:`Spend ${fmtMoney(ySpend)} — ${Math.round((spendRatio-1)*100)}% above your 7-day avg of ${fmtMoney(avg7Spend)}. Monitor closely — ensure CPA stayed in range.` });
+    } else {
+      actions.push({ type:'good', icon:'✅', text:`Spend ${fmtMoney(ySpend)} well-paced against 7-day avg of ${fmtMoney(avg7Spend)} (${Math.round(spendRatio*100)}%).` });
+    }
   }
 
   // Activation CPA vs $10 target
@@ -1742,26 +1852,31 @@ function buildDevices(devices) {
     byDevice[dev].cost += parseFloat(r.Cost)||0;
     byDevice[dev].conv += parseFloat(r.Conversions)||0;
   });
-  const cpa = (dev) => {
-    const d = byDevice[dev] || byDevice[dev+'s'];
+  // Google Ads reports full strings like "Mobile devices with full browsers"
+  const findKey = (partial) => Object.keys(byDevice).find(k => k.includes(partial));
+  const cpa = (partial) => {
+    const key = findKey(partial);
+    const d = key ? byDevice[key] : null;
     return d && d.conv > 0 ? d.cost / d.conv : 0;
   };
   const result = {
-    desktop: cpa('computers') || cpa('desktop') || 0,
+    desktop: cpa('computer') || cpa('desktop') || 0,
     mobile:  cpa('mobile') || 0,
-    tablets: cpa('tablet') || cpa('tablets') || 0,
+    tablets: cpa('tablet') || 0,
   };
   Object.entries(byDevice).forEach(([key, d]) => {
-    const suffix = 'Apps', actSuffix = 'Acts';
     if (key.includes('computer') || key.includes('desktop')) {
       result.desktopApps = (result.desktopApps||0) + d.conv;
       result.desktopActs = (result.desktopActs||0) + Math.round(d.conv * ACT_RATE);
+      result.desktopSpend = (result.desktopSpend||0) + d.cost;
     } else if (key.includes('mobile')) {
       result.mobileApps = (result.mobileApps||0) + d.conv;
       result.mobileActs = (result.mobileActs||0) + Math.round(d.conv * ACT_RATE);
+      result.mobileSpend = (result.mobileSpend||0) + d.cost;
     } else if (key.includes('tablet')) {
       result.tabletsApps = (result.tabletsApps||0) + d.conv;
       result.tabletsActs = (result.tabletsActs||0) + Math.round(d.conv * ACT_RATE);
+      result.tabletsSpend = (result.tabletsSpend||0) + d.cost;
     }
   });
   return result;
