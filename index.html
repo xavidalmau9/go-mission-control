@@ -1927,7 +1927,7 @@ async function init() {
     } else if (RAW.bgoa.length > 0) {
       hideLoader();
       $('errorBanner').style.display = 'block';
-      $('errorMsg').textContent = '⚠ GOOGLE ADS SCRIPT NOT PUSHING — Assurance direct data loaded. Go to Google Ads → Tools → Scripts and verify the script is running hourly. Click RETRY once confirmed.';
+      $('errorMsg').innerHTML = '⚠ SCRIPT IS RUNNING BUT SHEET IS UNPUBLISHED — Script ran OK but published CSV is inaccessible. Fix: open <a href="https://docs.google.com/spreadsheets/d/1ZLzpR9oGk5y2amRr0jS4QPVIIzC44m1VfBRIxDK64Vg/edit" target="_blank" style="color:var(--amber)">the Script spreadsheet</a>, go to File → Share → Publish to web, and re-publish all tabs as CSV. Then click ↻ RETRY.';
       $('liveStatus').textContent = 'PARTIAL · ASSURANCE ONLY';
       $('liveStatus').style.color = 'var(--amber)';
     } else {
