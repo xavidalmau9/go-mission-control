@@ -737,16 +737,21 @@ function gradeColor(g) {
   return '#f87171';
 }
 function getPeriodMeta(daily) {
-  if (!daily || daily.length === 0) return {label:'NO DATA', short:'—', banner:'REPORT WINDOW: NO DATA'};
-  const dates = daily.map(r => r.Date || r.date || '').filter(Boolean).sort();
-  const start = dates[0].substring(5).toUpperCase();
-  const end   = dates[dates.length-1].substring(5).toUpperCase();
-  const uniqueDates = [...new Set(dates)];
+  // Use the selected date range for day count — not data rows (Sundays/$0 days have no rows but still count)
+  const { from, to } = getDateRange();
+  if (!from || !to) return {label:'NO DATA', short:'—', banner:'REPORT WINDOW: NO DATA'};
+  const start = from.substring(5).toUpperCase();
+  const end   = to.substring(5).toUpperCase();
+  const msPerDay = 86400000;
+  const calDays = Math.round((new Date(to) - new Date(from)) / msPerDay) + 1;
+  const dataDays = daily ? [...new Set(daily.map(r => r.Date || r.date || '').filter(Boolean))].length : 0;
+  const noSpendDays = calDays - dataDays;
+  const suffix = noSpendDays > 0 ? ` · ${noSpendDays}d NO SPEND` : '';
   return {
     label:  `${start} – ${end}`,
-    short:  `${uniqueDates.length}-DAY WINDOW`,
-    banner: `REPORT WINDOW: ${start} – ${end} · ${uniqueDates.length} DAYS`,
-    days: uniqueDates.length, start, end,
+    short:  `${calDays}-DAY WINDOW`,
+    banner: `REPORT WINDOW: ${start} – ${end} · ${calDays} DAYS${suffix}`,
+    days: calDays, start, end,
   };
 }
 
@@ -801,27 +806,36 @@ function renderChart(daily) {
 }
 
 function renderKPIs(kpis) {
-  const { spend, conversions, activations, googleCPA, activationCPA, estRevenue } = kpis;
+  const { spend, conversions, activations, googleCPA, activationCPA, revenue,
+          isConfirmed, confirmedDays } = kpis;
   const isToday = activeDateRange === 'today';
 
-  // Activations: BGOA reports T+1 — never show "today's activations" as real
   if (isToday) {
-    // Pull yesterday's confirmed from BGOA instead
+    // Today: BGOA never has same-day data — show pending + yesterday's confirmed
     const bgoa = RAW.bgoa.map(parseBGOARow).filter(Boolean).sort((a,b)=>b.date.localeCompare(a.date));
     const yest = bgoa[0];
     $('kv-activations').textContent = '—';
     $('kv-activations').style.color = 'var(--muted)';
-    $('ks-activations').innerHTML = `<span style="color:var(--muted);font-size:9px">REPORTS T+1 · ${yest ? 'YESTERDAY: ' + yest.activations : 'SEE BGOA'}</span>`;
+    $('ks-activations').innerHTML = `<span style="color:var(--muted);font-size:9px">REPORTS T+1 · ${yest ? 'YESTERDAY: ' + yest.activations + ' confirmed' : 'SEE BGOA'}</span>`;
     $('kv-revenue').textContent = '—';
     $('kv-revenue').style.color = 'var(--muted)';
     $('ks-revenue').innerHTML = `<span style="color:var(--muted);font-size:9px">CONFIRMED T+1 · ${yest ? fmtMoney(yest.revenue) + ' YESTERDAY' : 'SEE BGOA'}</span>`;
-  } else {
+  } else if (isConfirmed) {
+    // BGOA confirmed data available for this range
     $('kv-activations').textContent = activations.toLocaleString();
-    $('kv-activations').style.color = '';
-    $('ks-activations').innerHTML = `<span style="color:var(--muted)">est. Google conv × 55.12%</span>`;
-    $('kv-revenue').textContent = fmtMoney(estRevenue);
+    $('kv-activations').style.color = 'var(--green)';
+    $('ks-activations').innerHTML = `<span style="color:var(--green);font-size:9px">✓ CONFIRMED · ${confirmedDays}d BGOA</span>`;
+    $('kv-revenue').textContent = fmtMoney(revenue);
     $('kv-revenue').style.color = '';
-    $('ks-revenue').innerHTML = `<span style="color:var(--muted)">@ $25/activation (est.)</span>`;
+    $('ks-revenue').innerHTML = `<span style="color:var(--green);font-size:9px">✓ CONFIRMED · $${PAYOUT}/activation</span>`;
+  } else {
+    // No BGOA data for range — show Google conv estimate
+    $('kv-activations').textContent = activations.toLocaleString();
+    $('kv-activations').style.color = 'var(--amber)';
+    $('ks-activations').innerHTML = `<span style="color:var(--amber);font-size:9px">EST · Google conv × ${(ACT_RATE*100).toFixed(1)}%</span>`;
+    $('kv-revenue').textContent = fmtMoney(revenue);
+    $('kv-revenue').style.color = 'var(--amber)';
+    $('ks-revenue').innerHTML = `<span style="color:var(--amber);font-size:9px">EST · $${PAYOUT}/activation</span>`;
   }
 
   $('kv-apps').textContent = Math.round(conversions).toLocaleString();
@@ -1085,7 +1099,10 @@ function renderTrajectory(monthly, daily) {
 
 function renderSummary(chartDaily, kpis) {
   if (!chartDaily || !chartDaily.length) return;
-  const days = chartDaily.length;
+  // Use calendar days in range, not data rows (Sundays/no-spend days still count)
+  const { from, to } = getDateRange();
+  const calDays = from && to ? Math.round((new Date(to) - new Date(from)) / 86400000) + 1 : chartDaily.length;
+  const days = calDays;
   const avgSpend = kpis.spend / days;
   const avgApps  = kpis.conversions / days;
   const avgActs  = kpis.activations / days;
@@ -1905,18 +1922,36 @@ function filterData() {
   };
 }
 
-// Build KPIs from filtered daily
+// Build KPIs — uses BGOA confirmed activations where available, estimates only as fallback
 function buildKPIs(daily) {
   const spend       = daily.reduce((s,r) => s + (parseFloat(r.Cost)||0), 0);
   const conversions = daily.reduce((s,r) => s + (parseFloat(r.Conversions)||0), 0);
   const clicks      = daily.reduce((s,r) => s + (parseFloat(r.Clicks)||0), 0);
   const impressions = daily.reduce((s,r) => s + (parseFloat(r.Impressions)||0), 0);
-  const activations = Math.round(conversions * ACT_RATE);
-  const googleCPA     = conversions > 0 ? spend / conversions : 0;
+  const googleCPA   = conversions > 0 ? spend / conversions : 0;
+
+  // Pull confirmed activations from BGOA for this date range
+  const { from, to } = getDateRange();
+  const bgoaRows = RAW.bgoa.map(parseBGOARow).filter(r => r && r.date >= from && r.date <= to);
+
+  let activations, revenue, isConfirmed, confirmedDays;
+  if (bgoaRows.length > 0) {
+    activations   = bgoaRows.reduce((s,r) => s + r.activations, 0);
+    revenue       = bgoaRows.reduce((s,r) => s + r.revenue, 0);
+    isConfirmed   = true;
+    confirmedDays = bgoaRows.length;
+  } else {
+    // No BGOA data for range — fall back to Google conv estimate
+    activations   = Math.round(conversions * ACT_RATE);
+    revenue       = activations * PAYOUT;
+    isConfirmed   = false;
+    confirmedDays = 0;
+  }
+
   const activationCPA = activations > 0 ? spend / activations : 0;
-  const estRevenue    = activations * PAYOUT;
-  const estProfit     = estRevenue - spend;
-  return { spend, clicks, impressions, conversions, activations, googleCPA, activationCPA, estRevenue, estProfit };
+  const profit        = revenue - spend;
+  return { spend, clicks, impressions, conversions, activations, googleCPA, activationCPA,
+           revenue, profit, isConfirmed, confirmedDays };
 }
 
 // Build chart daily from raw rows
