@@ -2278,9 +2278,10 @@ function buildStates(geo) {
       stateKey   = name  || 'Unknown';
       stateLabel = abbr  || 'Unknown';
     } else {
-      // Already a state name or abbreviation
-      stateKey   = raw;
-      stateLabel = STATE_ABBRS[raw] || raw;
+      // State name — handle "Maryland, United States", "Maryland", or abbreviation
+      const statePart = raw.replace(/,\s*(United States|USA|US)$/i, '').trim();
+      stateKey   = statePart;
+      stateLabel = STATE_ABBRS[statePart] || statePart.substring(0, 2).toUpperCase();
     }
     if (!byState[stateKey]) byState[stateKey] = { label: stateLabel, cost: 0, conv: 0 };
     byState[stateKey].cost += cost;
