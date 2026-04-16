@@ -120,7 +120,7 @@ body::after{content:'';position:fixed;inset:0;background-image:linear-gradient(r
 /* states */
 .state-row{display:flex;align-items:center;gap:7px;padding:5px 0;border-bottom:1px solid var(--border2)}
 .state-row:last-child{border-bottom:none}
-.s-code{font-family:var(--mono);font-size:11px;color:var(--accent);width:88px;flex-shrink:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.s-code{font-family:var(--mono);font-size:11px;color:var(--accent);width:26px;flex-shrink:0;text-align:center}
 .s-track{flex:1;height:7px;background:rgba(255,255,255,.04);border-radius:3px}
 .s-fill{height:100%;border-radius:3px;transition:width 1s ease}
 .s-count{font-family:var(--mono);font-size:11px;color:var(--text);width:34px;text-align:right;flex-shrink:0}
@@ -2113,8 +2113,8 @@ function filterData() {
   const { from, to } = getDateRange();
   const camp = activeCampaign;
   const filterRow = r => {
-    const date = (r.Date || r.date || '').substring(0,10);
-    if (date < from || date > to) return false;
+    const date = normDateStr(r.Date || r.date || '');
+    if (date && (date < from || date > to)) return false;
     if (camp !== 'all' && r.CampaignName !== camp) return false;
     return true;
   };
@@ -2219,11 +2219,14 @@ function buildChartDaily(daily) {
 function buildDevices(devices) {
   const byDevice = {};
   devices.forEach(r => {
-    const dev = (r.Device||'').toLowerCase();
+    // Google Ads CSV may use "Device", "DeviceType", "Device Type", "Device type", etc.
+    const dev = (r.Device || r.DeviceType || r['Device Type'] || r['Device type'] || r.device || '').toLowerCase();
     if (!dev) return;
+    const cost = parseFloat(r.Cost || r.cost || 0) || 0;
+    const conv = parseFloat(r.Conversions || r.conversions || 0) || 0;
     if (!byDevice[dev]) byDevice[dev] = { cost: 0, conv: 0 };
-    byDevice[dev].cost += parseFloat(r.Cost)||0;
-    byDevice[dev].conv += parseFloat(r.Conversions)||0;
+    byDevice[dev].cost += cost;
+    byDevice[dev].conv += conv;
   });
   // Google Ads reports full strings like "Mobile devices with full browsers"
   const findKey = (partial) => Object.keys(byDevice).find(k => k.includes(partial));
@@ -2255,27 +2258,34 @@ function buildDevices(devices) {
   return result;
 }
 
-// Build geo rows — each zip/area keeps its own row (granularity), labeled with state name.
-// Does NOT collapse all Maryland zips to one row — that loses useful detail.
+// Build geo rows — aggregate by STATE so we see state-level performance.
+// All Maryland zip codes roll up into one "Maryland" row.
 function buildStates(geo) {
   if (!geo.length) return [];
-  const byKey = {};
+  const byState = {};
   geo.forEach(r => {
     const raw = (r.Region || r.RegionName || r.State || r.state || '').trim();
     if (!raw) return;
-    let label = raw;
+    const cost = parseFloat(r.Cost)||0;
+    const conv = parseFloat(r.Conversions)||0;
+    let stateKey, stateLabel;
     const isNumericGeo = /^\d{4,}$/.test(raw);
     if (isNumericGeo) {
       const zipPart = raw.padStart(5,'0').substring(0,5);
-      const stateAbbr = zipToStateAbbr(zipPart);
-      // Show "MD · 21137" — abbreviation keeps label compact
-      label = stateAbbr ? `${stateAbbr} · ${raw}` : `?? · ${raw}`;
+      const name = zipToStateName(zipPart);
+      const abbr = name ? (STATE_ABBRS[name] || name.substring(0,2).toUpperCase()) : null;
+      stateKey   = name  || 'Unknown';
+      stateLabel = abbr  || 'Unknown';
+    } else {
+      // Already a state name or abbreviation
+      stateKey   = raw;
+      stateLabel = STATE_ABBRS[raw] || raw;
     }
-    if (!byKey[raw]) byKey[raw] = { label, cost:0, conv:0 };
-    byKey[raw].cost += parseFloat(r.Cost)||0;
-    byKey[raw].conv += parseFloat(r.Conversions)||0;
+    if (!byState[stateKey]) byState[stateKey] = { label: stateLabel, cost: 0, conv: 0 };
+    byState[stateKey].cost += cost;
+    byState[stateKey].conv += conv;
   });
-  return Object.values(byKey)
+  return Object.values(byState)
     .map(d => ({ code: d.label, cpa: d.conv > 0 ? d.cost/d.conv : 0, count: Math.round(d.conv), spend: d.cost }))
     .filter(d => d.spend > 0)
     .sort((a,b) => b.spend - a.spend)
@@ -2339,8 +2349,8 @@ function applyFilters() {
   // NO FALLBACKS — if a period has no data, show empty state, not all history.
   // Wrong data is worse than no data.
   const daily   = f.daily;
-  const devices = f.devices.length ? f.devices : RAW.devices; // devices: ok to use full set (no date col issue)
-  const geo     = f.geo.length     ? f.geo     : RAW.geo;     // geo: same
+  const devices = f.devices;
+  const geo     = f.geo;
   const hourly  = f.hourly;
 
   // If no Google Ads data for the selected period, show a clear message instead of garbage
