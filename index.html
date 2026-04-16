@@ -745,8 +745,8 @@ function getPeriodMeta(daily) {
   const msPerDay = 86400000;
   const calDays = Math.round((new Date(to) - new Date(from)) / msPerDay) + 1;
   const dataDays = daily ? [...new Set(daily.map(r => r.Date || r.date || '').filter(Boolean))].length : 0;
-  const noSpendDays = calDays - dataDays;
-  const suffix = noSpendDays > 0 ? ` · ${noSpendDays}d NO SPEND` : '';
+  const noAdsDays = calDays - dataDays;
+  const suffix = noAdsDays > 0 ? ` · ${noAdsDays}d NO ADS` : '';
   return {
     label:  `${start} – ${end}`,
     short:  `${calDays}-DAY WINDOW`,
@@ -1957,14 +1957,37 @@ function buildKPIs(daily) {
 // Build chart daily from raw rows
 function buildChartDaily(daily) {
   const byDate = {};
+  // Step 1: build from Google Ads rows (spend + apps)
   daily.forEach(r => {
-    const d = (r.Date||'').substring(5);
+    const full = (r.Date||'').substring(0,10);
+    const d    = full.substring(5);
     if (!d) return;
-    if (!byDate[d]) byDate[d] = { date: d, activations: 0, spend: 0, apps: 0 };
-    byDate[d].spend       += parseFloat(r.Cost)||0;
-    byDate[d].apps        += parseFloat(r.Conversions)||0;
-    byDate[d].activations += Math.round((parseFloat(r.Conversions)||0) * ACT_RATE);
+    if (!byDate[d]) byDate[d] = { date: d, fullDate: full, activations: 0, spend: 0, apps: 0, confirmed: false };
+    byDate[d].spend += parseFloat(r.Cost)||0;
+    byDate[d].apps  += parseFloat(r.Conversions)||0;
   });
+
+  // Step 2: overlay BGOA confirmed activations for the same date range
+  // This adds Sunday/no-ad days that have cookie-window activations
+  const { from, to } = getDateRange();
+  const bgoaAll = RAW.bgoa.map(parseBGOARow).filter(r => r && r.date >= from && r.date <= to);
+  bgoaAll.forEach(r => {
+    const d = r.date.substring(5);
+    if (!byDate[d]) {
+      // Day not in Google Ads (e.g. Sunday) — add it with $0 spend
+      byDate[d] = { date: d, fullDate: r.date, activations: r.activations, spend: 0, apps: 0, confirmed: true };
+    } else {
+      // Day exists in both — use confirmed activations from BGOA
+      byDate[d].activations = r.activations;
+      byDate[d].confirmed   = true;
+    }
+  });
+
+  // Step 3: for days with no BGOA data, estimate from Google conv
+  Object.values(byDate).forEach(d => {
+    if (!d.confirmed) d.activations = Math.round(d.apps * ACT_RATE);
+  });
+
   return Object.values(byDate).sort((a,b) => a.date.localeCompare(b.date));
 }
 
