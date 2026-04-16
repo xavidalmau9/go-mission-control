@@ -993,20 +993,20 @@ function renderKPIs(kpis) {
 function renderDevices(devData) {
   const panel = $('devicePanel');
   if (!panel) return;
-  if (!devData || (!devData.desktop && !devData.mobile && !devData.tablets)) {
-    panel.innerHTML = '<div class="no-data-state"><div class="nd-icon">📱</div><div class="nd-title">NO DEVICE DATA</div><div class="nd-sub">Devices tab may still be loading or has no data for this period</div></div>';
-    return;
-  }
-  // Set period label
+  // Always update period label first
   const dp = $('devicePeriod');
   if (dp) { const { from, to } = getDateRange(); dp.textContent = from && to ? from.substring(5) + ' → ' + to.substring(5) : 'LIVE DATA'; }
+  if (!devData || (!devData.desktop && !devData.mobile && !devData.tablets)) {
+    panel.innerHTML = '<div class="no-data-state"><div class="nd-icon">📱</div><div class="nd-title">NO DEVICE DATA</div><div class="nd-sub">No device breakdown available for this period</div></div>';
+    return;
+  }
   const devices = [{key:'desktop',label:'DESKTOP'},{key:'tablets',label:'TABLETS'},{key:'mobile',label:'MOBILE'}];
   // Only compare the three CPA values (not spend/apps which would dwarf them)
   const maxCpa = Math.max(devData.desktop || 0, devData.mobile || 0, devData.tablets || 0) || 1;
   function colBg(col) {
     return col.replace('var(--green)','rgba(52,211,153,0.12)').replace('var(--amber)','rgba(251,191,36,0.12)').replace('var(--red)','rgba(248,113,113,0.12)').replace('var(--muted)','rgba(100,116,139,0.12)');
   }
-  $('devicePanel').innerHTML = devices.map(({key,label}) => {
+  const devHtml = devices.map(({key,label}) => {
     const appCpa = devData[key] || 0;
     if (!appCpa) return '';
     const actCpa = appCpa * MULT;
@@ -1027,6 +1027,8 @@ function renderDevices(devData) {
       </div>
     </div>`;
   }).join('');
+  // If all device cards are empty (all $0 CPA for this period), show explicit message
+  panel.innerHTML = devHtml.trim() || '<div class="no-data-state"><div class="nd-icon">📱</div><div class="nd-title">NO DEVICE DATA FOR PERIOD</div><div class="nd-sub">No device spend found — try a wider date range</div></div>';
 }
 
 function renderCampaigns(camps, period) {
@@ -2203,27 +2205,28 @@ function buildDevices(devices) {
   return result;
 }
 
-// Build states — aggregates zip-level geo data into state names
+// Build geo rows — each zip/area keeps its own row (granularity), labeled with state name.
+// Does NOT collapse all Maryland zips to one row — that loses useful detail.
 function buildStates(geo) {
   if (!geo.length) return [];
-  const byRegion = {};
+  const byKey = {};
   geo.forEach(r => {
-    let region = r.Region || r.RegionName || r.State || r.state || '';
-    if (!region) return;
-    // If region looks like a zip code (4-5 digits), map to state name
-    // Detect any all-numeric geo code (zip, criterion ID, etc.) — take first 5 digits as zip
-    const isNumericGeo = /^\d{4,}$/.test(region.trim());
+    const raw = (r.Region || r.RegionName || r.State || r.state || '').trim();
+    if (!raw) return;
+    let label = raw;
+    const isNumericGeo = /^\d{4,}$/.test(raw);
     if (isNumericGeo) {
-      const zipPart = region.trim().padStart(5,'0').substring(0,5);
+      const zipPart = raw.padStart(5,'0').substring(0,5);
       const stateName = zipToStateName(zipPart);
-      region = stateName || ('Zip ' + zipPart);
+      label = stateName || ('Area ' + zipPart);
     }
-    if (!byRegion[region]) byRegion[region] = { cost:0, conv:0 };
-    byRegion[region].cost += parseFloat(r.Cost)||0;
-    byRegion[region].conv += parseFloat(r.Conversions)||0;
+    if (!byKey[raw]) byKey[raw] = { label, cost:0, conv:0 };
+    byKey[raw].cost += parseFloat(r.Cost)||0;
+    byKey[raw].conv += parseFloat(r.Conversions)||0;
   });
-  return Object.entries(byRegion)
-    .map(([code, d]) => ({ code, cpa: d.conv > 0 ? d.cost/d.conv : 0, count: Math.round(d.conv), spend: d.cost }))
+  return Object.values(byKey)
+    .map(d => ({ code: d.label, cpa: d.conv > 0 ? d.cost/d.conv : 0, count: Math.round(d.conv), spend: d.cost }))
+    .filter(d => d.spend > 0)
     .sort((a,b) => b.spend - a.spend)
     .slice(0, 20);
 }
@@ -2282,10 +2285,31 @@ function applyFilters() {
   $('errorBanner').style.display = 'none';
 
   const f = filterData();
-  const daily   = f.daily.length   ? f.daily   : RAW.daily;
-  const devices = f.devices.length ? f.devices : RAW.devices;
-  const geo     = f.geo.length     ? f.geo     : RAW.geo;
-  const hourly  = f.hourly.length  ? f.hourly  : RAW.hourly;
+  // NO FALLBACKS — if a period has no data, show empty state, not all history.
+  // Wrong data is worse than no data.
+  const daily   = f.daily;
+  const devices = f.devices.length ? f.devices : RAW.devices; // devices: ok to use full set (no date col issue)
+  const geo     = f.geo.length     ? f.geo     : RAW.geo;     // geo: same
+  const hourly  = f.hourly;
+
+  // If no Google Ads data for the selected period, show a clear message instead of garbage
+  if (!daily.length) {
+    const { from, to } = getDateRange();
+    const isToday = activeDateRange === 'today';
+    const msg = isToday
+      ? `No Google Ads data yet for today (${from}). Script pushes hourly — check back shortly.`
+      : `No Google Ads data for ${from} → ${to}. Try a different date range.`;
+    $('periodBanner').textContent = `REPORT WINDOW: ${from} – ${to} · NO DATA`;
+    $('chartRange').textContent = from + ' → ' + to;
+    // Clear all panels cleanly
+    ['kpiRow','mainChart','devicePanel','stateList','heatmap','intelFeed','summaryText','projectionText','trajectory','campCards'].forEach(id => {
+      const el = $(id);
+      if (el) el.innerHTML = `<div class="no-data-state"><div class="nd-icon">📭</div><div class="nd-title">NO DATA FOR THIS PERIOD</div><div class="nd-sub" style="max-width:340px">${msg}</div></div>`;
+    });
+    try { renderKeywords(f.keywords, activeCampaign); } catch(e) {}
+    try { renderSearchTerms(f.searchTerms, activeCampaign); } catch(e) {}
+    return;
+  }
 
   let kpis, chartData, period;
   try { kpis      = buildKPIs(daily); }      catch(e) { console.error('buildKPIs',e); kpis = { spend:0, clicks:0, impressions:0, conversions:0, activations:0, googleCPA:0, activationCPA:0, revenue:0, profit:0, isConfirmed:false, confirmedDays:0, confirmedSources:'' }; }
@@ -2315,14 +2339,16 @@ function applyFilters() {
       campAgg[c].clicks      += parseFloat(r.Clicks)||0;
       campAgg[c].impressions += parseFloat(r.Impressions)||0;
     });
-    const camps = Object.values(campAgg).map(c => ({
-      name:  c.name,
-      spend: c.spend,
-      conv:  c.conv,
-      cpa:   c.conv > 0 ? c.spend/c.conv : 0,
-      ctr:   c.impressions > 0 ? (c.clicks/c.impressions*100).toFixed(1)+'%' : '—',
-      grade: (() => { const cpa = c.conv > 0 ? c.spend/c.conv : 99; const t=getAppTiers(); return cpa<=t.FANTASTIC?'A':cpa<=t.EXCELLENT?'B':cpa<=t.GOOD?'C':cpa<=t.FATAL?'D':'F'; })()
-    })).sort((a,b) => b.spend - a.spend);
+    const camps = Object.values(campAgg)
+      .filter(c => c.spend > 0) // hide paused/inactive campaigns with $0 spend in this period
+      .map(c => ({
+        name:  c.name,
+        spend: c.spend,
+        conv:  c.conv,
+        cpa:   c.conv > 0 ? c.spend/c.conv : 0,
+        ctr:   c.impressions > 0 ? (c.clicks/c.impressions*100).toFixed(1)+'%' : '—',
+        grade: (() => { const cpa = c.conv > 0 ? c.spend/c.conv : 99; const t=getAppTiers(); return cpa<=t.FANTASTIC?'A':cpa<=t.EXCELLENT?'B':cpa<=t.GOOD?'C':cpa<=t.FATAL?'D':'F'; })()
+      })).sort((a,b) => b.spend - a.spend);
     renderCampaigns(camps, period.label);
   } catch(e) { console.error('Camps',e); }
 
