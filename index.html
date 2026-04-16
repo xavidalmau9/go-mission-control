@@ -947,7 +947,8 @@ function renderChart(daily) {
 
 function renderKPIs(kpis) {
   const { spend, conversions, applications, activations, googleCPA, appCPA, activationCPA,
-          revenue, isConfirmed, confirmedDays, confirmedSources } = kpis;
+          revenue, isConfirmed, confirmedDays, confirmedSources,
+          googleApps, confirmedApps } = kpis;
   const isToday = activeDateRange === 'today';
   const isSingleCampaign = activeCampaign && activeCampaign !== 'all';
 
@@ -982,7 +983,10 @@ function renderKPIs(kpis) {
   // Applications: use BGOA confirmed count when available, else Google conversions as fallback
   $('kv-apps').textContent = Math.round(applications).toLocaleString();
   $('ks-apps').innerHTML = isConfirmed
-    ? `<span style="color:var(--green);font-size:9px">✓ CONFIRMED · ${confirmedSources} · Google: ${Math.round(conversions)}</span>`
+    ? (() => {
+        const src = googleApps > confirmedApps ? 'Google (fresher)' : `${confirmedSources} (higher)`;
+        return `<span style="color:var(--green);font-size:9px">✓ ${src} · Assurance: ${confirmedApps} · Google: ${googleApps}</span>`;
+      })()
     : `<span style="color:var(--amber);font-size:9px">EST · Google conversions</span>`;
   // Activation rate: use actual period data from BGOA (excluding last 5 unsettled days)
   // Falls back to settled monthly rate, then baseline
@@ -2186,7 +2190,11 @@ function buildKPIs(daily) {
     const bgocActs = bgocRows.reduce((s,r) => s + r.activations, 0);
     const bgoaRev  = bgoaRows.reduce((s,r) => s + r.revenue, 0);
     const bgocRev  = bgocRows.reduce((s,r) => s + r.revenue, 0);
-    applications     = bgoaApps + bgocApps;   // confirmed from Assurance tracking
+    const confirmedApps = bgoaApps + bgocApps;
+    const googleApps    = Math.round(conversions);
+    // Always use whichever is higher — Google has fresher data (same day),
+    // Assurance catches up a day later with confirmed numbers that are often higher.
+    applications     = Math.max(confirmedApps, googleApps);
     activations      = bgoaActs + bgocActs;   // confirmed from Assurance tracking
     revenue          = bgoaRev  + bgocRev;
     isConfirmed      = true;
@@ -2216,9 +2224,13 @@ function buildKPIs(daily) {
   console.log('[MC] Spend by campaign:', campTotals, '| Total:', spend.toFixed(2),
               '| Apps (BGOA):', applications, '| Acts (BGOA):', activations);
 
+  const googleApps    = Math.round(conversions);
+  const confirmedApps = (hasBGOA || hasBGOC)
+    ? bgoaRows.reduce((s,r)=>s+r.applications,0) + bgocRows.reduce((s,r)=>s+r.applications,0)
+    : 0;
   return { spend, clicks, impressions, conversions, applications, activations,
            googleCPA, appCPA, activationCPA, revenue, profit,
-           isConfirmed, confirmedDays, confirmedSources };
+           isConfirmed, confirmedDays, confirmedSources, googleApps, confirmedApps };
 }
 
 // Build chart daily from raw rows
