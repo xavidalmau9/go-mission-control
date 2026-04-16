@@ -54,8 +54,9 @@ function pushDailyCampaign(ss, range) {
   var rows = report.rows(), data = [];
   while (rows.hasNext()) {
     var r = rows.next();
-    data.push([r['Date'], r['CampaignName'], r['Impressions'], r['Clicks'],
-               r['Cost'], r['Conversions']]);
+    data.push([r['Date'], r['CampaignName'],
+               cleanNum(r['Impressions']), cleanNum(r['Clicks']),
+               cleanNum(r['Cost']),        cleanNum(r['Conversions'])]);
   }
   if (data.length) sheet.getRange(2, 1, data.length, 6).setValues(data);
   Logger.log('DailyCampaign: ' + data.length + ' rows');
@@ -77,8 +78,9 @@ function pushDevices(ss, range) {
   var rows = report.rows(), data = [];
   while (rows.hasNext()) {
     var r = rows.next();
-    data.push([r['Date'], r['CampaignName'], r['Device'], r['Impressions'],
-               r['Clicks'], r['Cost'], r['Conversions']]);
+    data.push([r['Date'], r['CampaignName'], r['Device'],
+               cleanNum(r['Impressions']), cleanNum(r['Clicks']),
+               cleanNum(r['Cost']),        cleanNum(r['Conversions'])]);
   }
   if (data.length) sheet.getRange(2, 1, data.length, 7).setValues(data);
   Logger.log('Devices: ' + data.length + ' rows');
@@ -160,8 +162,9 @@ function pushHourly(ss, range) {
   var rows = report.rows(), data = [];
   while (rows.hasNext()) {
     var r = rows.next();
-    data.push([r['HourOfDay'], r['CampaignName'], r['Cost'], r['Conversions'],
-               r['Clicks'], r['Impressions']]);
+    data.push([r['HourOfDay'], r['CampaignName'],
+               cleanNum(r['Cost']),        cleanNum(r['Conversions']),
+               cleanNum(r['Clicks']),      cleanNum(r['Impressions'])]);
   }
   if (data.length) sheet.getRange(2, 1, data.length, 6).setValues(data);
   Logger.log('Hourly: ' + data.length + ' rows');
@@ -219,4 +222,11 @@ function pushSearchTerms(ss, range) {
 // ── HELPER ────────────────────────────────────────────────────────────────────
 function getOrCreate(ss, name) {
   return ss.getSheetByName(name) || ss.insertSheet(name);
+}
+
+// Strip commas from AWQL numeric strings (e.g. "1,083.67" → 1083.67)
+// AWQL returns numbers with comma separators for values >= 1000.
+// parseFloat("1,083.67") = 1 — so we must strip commas before writing to sheet.
+function cleanNum(v) {
+  return parseFloat(String(v || '').replace(/,/g, '')) || 0;
 }

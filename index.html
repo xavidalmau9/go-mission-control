@@ -783,6 +783,10 @@ function zipToStateAbbr(zip) {
 }
 
 // Normalize date strings to YYYY-MM-DD regardless of input format
+// Parse numeric strings from Google Ads CSV — strips commas (e.g. "1,083.67" → 1083.67)
+// AWQL returns numbers with comma separators for values >= 1000; parseFloat stops at comma.
+function pn(v) { return parseFloat(String(v||'').replace(/,/g,'')) || 0; }
+
 function normDateStr(s) {
   if (!s) return '';
   const t = String(s).trim();
@@ -1004,7 +1008,7 @@ function renderKPIs(kpis) {
     }
     // Fallback: MTD avg from Google Ads DailyCampaign (all campaigns)
     const byDate = {};
-    RAW.daily.forEach(r => { const d = normDateStr(r.Date||''); if (d) { byDate[d] = (byDate[d]||0) + (parseFloat(r.Cost)||0); } });
+    RAW.daily.forEach(r => { const d = normDateStr(r.Date||''); if (d) { byDate[d] = (byDate[d]||0) + (pn(r.Cost)); } });
     const _n = new Date(); const thisMonth = `${_n.getFullYear()}-${String(_n.getMonth()+1).padStart(2,'0')}`;
     const mtdDates = Object.keys(byDate).filter(d => d.startsWith(thisMonth)).sort();
     const useDates = mtdDates.length >= 3 ? mtdDates : Object.keys(byDate).sort().slice(-7);
@@ -1322,10 +1326,10 @@ function renderKeywords(keywords, campaign) {
     if (campaign !== 'all' && r.CampaignName !== campaign) return;
     const key = (r.Keyword || r.keyword || '') + '|' + (r.MatchType || r.matchType || '');
     if (!agg[key]) agg[key] = { keyword: r.Keyword || r.keyword || '', matchType: r.MatchType || r.matchType || '', campaign: r.CampaignName || '', adGroup: r.AdGroupName || '', impressions: 0, clicks: 0, cost: 0, conv: 0 };
-    agg[key].impressions += parseFloat(r.Impressions)||0;
-    agg[key].clicks      += parseFloat(r.Clicks)||0;
-    agg[key].cost        += parseFloat(r.Cost)||0;
-    agg[key].conv        += parseFloat(r.Conversions)||0;
+    agg[key].impressions += pn(r.Impressions);
+    agg[key].clicks      += pn(r.Clicks);
+    agg[key].cost        += pn(r.Cost);
+    agg[key].conv        += pn(r.Conversions);
   });
   const rows = Object.values(agg)
     .map(r => ({ ...r, ctr: r.impressions > 0 ? r.clicks/r.impressions*100 : 0, cpa: r.conv > 0 ? r.cost/r.conv : 0 }))
@@ -1388,10 +1392,10 @@ function renderSearchTerms(searchTerms, campaign) {
     const key = r.SearchTerm || r.searchTerm || r.Query || '';
     if (!key) return;
     if (!agg[key]) agg[key] = { term: key, campaign: r.CampaignName || '', impressions: 0, clicks: 0, cost: 0, conv: 0 };
-    agg[key].impressions += parseFloat(r.Impressions)||0;
-    agg[key].clicks      += parseFloat(r.Clicks)||0;
-    agg[key].cost        += parseFloat(r.Cost)||0;
-    agg[key].conv        += parseFloat(r.Conversions)||0;
+    agg[key].impressions += pn(r.Impressions);
+    agg[key].clicks      += pn(r.Clicks);
+    agg[key].cost        += pn(r.Cost);
+    agg[key].conv        += pn(r.Conversions);
   });
   const rows = Object.values(agg)
     .map(r => ({ ...r, ctr: r.impressions > 0 ? r.clicks/r.impressions*100 : 0, cpa: r.conv > 0 ? r.cost/r.conv : 0 }))
@@ -1452,10 +1456,10 @@ function renderBrief(dailyRaw, keywordsRaw, searchTermsRaw) {
     const d = (r.Date || '').substring(0,10);
     if (!d) return;
     if (!byDate[d]) byDate[d] = { spend:0, conv:0, clicks:0, impressions:0 };
-    byDate[d].spend       += parseFloat(r.Cost)||0;
-    byDate[d].conv        += parseFloat(r.Conversions)||0;
-    byDate[d].clicks      += parseFloat(r.Clicks)||0;
-    byDate[d].impressions += parseFloat(r.Impressions)||0;
+    byDate[d].spend       += pn(r.Cost);
+    byDate[d].conv        += pn(r.Conversions);
+    byDate[d].clicks      += pn(r.Clicks);
+    byDate[d].impressions += pn(r.Impressions);
   });
 
   const yData  = byDate[yStr]  || null;
@@ -1495,19 +1499,19 @@ function renderBrief(dailyRaw, keywordsRaw, searchTermsRaw) {
   dailyRaw.filter(r => (r.Date||'').startsWith(yStr)).forEach(r => {
     const c = r.CampaignName || 'Unknown';
     if (!campData[c]) campData[c] = { spend:0, conv:0 };
-    campData[c].spend += parseFloat(r.Cost)||0;
-    campData[c].conv  += parseFloat(r.Conversions)||0;
+    campData[c].spend += pn(r.Cost);
+    campData[c].conv  += pn(r.Conversions);
   });
 
   // Top wasted search terms
   const wastedTerms = (searchTermsRaw||[])
-    .filter(r => (parseFloat(r.Cost)||0) > 20 && (parseFloat(r.Conversions)||0) === 0)
+    .filter(r => (pn(r.Cost)) > 20 && (pn(r.Conversions)) === 0)
     .sort((a,b) => (parseFloat(b.Cost)||0) - (parseFloat(a.Cost)||0))
     .slice(0, 3);
 
   // Best keywords — those in FANTASTIC tier
   const bestKW = (keywordsRaw||[])
-    .filter(r => { const c = parseFloat(r.Conversions)||0, s = parseFloat(r.Cost)||0; return c > 0 && (s/c) <= getAppTiers().FANTASTIC; })
+    .filter(r => { const c = pn(r.Conversions), s = pn(r.Cost); return c > 0 && (s/c) <= getAppTiers().FANTASTIC; })
     .sort((a,b) => (parseFloat(b.Conversions)||0) - (parseFloat(a.Conversions)||0))
     .slice(0, 3);
 
@@ -1524,7 +1528,7 @@ function renderBrief(dailyRaw, keywordsRaw, searchTermsRaw) {
   // Spend vs 7-day rolling average (no hardcoded target)
   // normDateStr required so M/D/YYYY and YYYY-MM-DD dates sort and group together
   const byDateSpend = {};
-  RAW.daily.forEach(r => { const d = normDateStr(r.Date||''); if (d) byDateSpend[d] = (byDateSpend[d]||0) + (parseFloat(r.Cost)||0); });
+  RAW.daily.forEach(r => { const d = normDateStr(r.Date||''); if (d) byDateSpend[d] = (byDateSpend[d]||0) + (pn(r.Cost)); });
   const recentDates = Object.keys(byDateSpend).sort().slice(-8, -1); // last 7 days excluding today
   const avg7Spend = recentDates.length > 0 ? recentDates.reduce((s,d)=>s+byDateSpend[d],0)/recentDates.length : 0;
   if (avg7Spend > 0) {
@@ -2154,10 +2158,10 @@ function filterData() {
 
 // Build KPIs — uses BGOA confirmed data where available, Google Ads as fallback
 function buildKPIs(daily) {
-  const googleSpend  = daily.reduce((s,r) => s + (parseFloat(r.Cost)||0), 0);
-  const conversions  = daily.reduce((s,r) => s + (parseFloat(r.Conversions)||0), 0);
-  const clicks       = daily.reduce((s,r) => s + (parseFloat(r.Clicks)||0), 0);
-  const impressions  = daily.reduce((s,r) => s + (parseFloat(r.Impressions)||0), 0);
+  const googleSpend  = daily.reduce((s,r) => s + pn(r.Cost), 0);
+  const conversions  = daily.reduce((s,r) => s + pn(r.Conversions), 0);
+  const clicks       = daily.reduce((s,r) => s + pn(r.Clicks), 0);
+  const impressions  = daily.reduce((s,r) => s + pn(r.Impressions), 0);
 
   const { from, to } = getDateRange();
   const isSingleCampaign = activeCampaign && activeCampaign !== 'all';
@@ -2207,7 +2211,7 @@ function buildKPIs(daily) {
   const campTotals = {};
   daily.forEach(r => {
     const c = r.CampaignName || '(no name)';
-    campTotals[c] = (campTotals[c] || 0) + (parseFloat(r.Cost) || 0);
+    campTotals[c] = (campTotals[c] || 0) + pn(r.Cost);
   });
   console.log('[MC] Spend by campaign:', campTotals, '| Total:', spend.toFixed(2),
               '| Apps (BGOA):', applications, '| Acts (BGOA):', activations);
@@ -2226,8 +2230,8 @@ function buildChartDaily(daily) {
     const d    = full.substring(5);
     if (!d) return;
     if (!byDate[d]) byDate[d] = { date: d, fullDate: full, activations: 0, spend: 0, apps: 0, confirmed: false };
-    byDate[d].spend += parseFloat(r.Cost)||0;
-    byDate[d].apps  += parseFloat(r.Conversions)||0;
+    byDate[d].spend += pn(r.Cost);
+    byDate[d].apps  += pn(r.Conversions);
   });
 
   // Step 2: overlay BGOA confirmed activations for the same date range
@@ -2305,8 +2309,8 @@ function buildStates(geo) {
   geo.forEach(r => {
     const raw = (r.Region || r.RegionName || r.State || r.state || '').trim();
     if (!raw) return;
-    const cost = parseFloat(r.Cost)||0;
-    const conv = parseFloat(r.Conversions)||0;
+    const cost = pn(r.Cost);
+    const conv = pn(r.Conversions);
     let stateKey, stateLabel;
     const isNumericGeo = /^\d{4,}$/.test(raw);
     if (isNumericGeo) {
@@ -2339,9 +2343,9 @@ function buildHourly(hourly) {
   hourly.forEach(r => {
     const h = parseInt(r.HourOfDay)||0;
     if (!byHour[h]) byHour[h] = { cost:0, conv:0, clicks:0 };
-    byHour[h].cost   += parseFloat(r.Cost)||0;
-    byHour[h].conv   += parseFloat(r.Conversions)||0;
-    byHour[h].clicks += parseFloat(r.Clicks)||0;
+    byHour[h].cost   += pn(r.Cost);
+    byHour[h].conv   += pn(r.Conversions);
+    byHour[h].clicks += pn(r.Clicks);
   });
   return Array.from({length:24}, (_,h) => ({
     hour:   h,
@@ -2456,10 +2460,10 @@ function applyFilters() {
     daily.forEach(r => {
       const c = r.CampaignName || 'Unknown';
       if (!campAgg[c]) campAgg[c] = { name:c, spend:0, conv:0, clicks:0, impressions:0 };
-      campAgg[c].spend       += parseFloat(r.Cost)||0;
-      campAgg[c].conv        += parseFloat(r.Conversions)||0;
-      campAgg[c].clicks      += parseFloat(r.Clicks)||0;
-      campAgg[c].impressions += parseFloat(r.Impressions)||0;
+      campAgg[c].spend       += pn(r.Cost);
+      campAgg[c].conv        += pn(r.Conversions);
+      campAgg[c].clicks      += pn(r.Clicks);
+      campAgg[c].impressions += pn(r.Impressions);
     });
     const camps = Object.values(campAgg)
       .filter(c => c.spend > 0) // hide paused/inactive campaigns with $0 spend in this period
