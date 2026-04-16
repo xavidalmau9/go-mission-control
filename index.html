@@ -941,9 +941,10 @@ function renderChart(daily) {
 }
 
 function renderKPIs(kpis) {
-  const { spend, conversions, activations, googleCPA, activationCPA, revenue,
+  const { spend, googleOnlySpend, conversions, activations, googleCPA, activationCPA, revenue,
           isConfirmed, confirmedDays, confirmedSources } = kpis;
   const isToday = activeDateRange === 'today';
+  const isSingleCampaign = activeCampaign && activeCampaign !== 'all';
 
   if (isToday) {
     // Today: BGOA never has same-day data — show pending + yesterday's confirmed
@@ -988,27 +989,30 @@ function renderKPIs(kpis) {
   }
   $('kv-spend').textContent = fmtMoney(spend);
 
-  // Live daily budget: sum from CampaignMeta if loaded, else show 7-day avg
-  const liveBudget = (() => {
+  // Spend tile subtitle: show source breakdown + MTD avg
+  // When BGOA+BGOC confirmed: show "GOOGLE + META" so it's clear this is all-channel total
+  // When single campaign or no confirmed data: show MTD avg from Google Ads DailyCampaign
+  const spendSubtitle = (() => {
+    if (isConfirmed && confirmedSources && !isSingleCampaign) {
+      const gOnly = googleOnlySpend > 0 ? ` (G:${fmtMoney(googleOnlySpend)})` : '';
+      return `<span style="color:var(--green);font-size:9px">✓ ALL CHANNELS · ${confirmedSources}${gOnly}</span>`;
+    }
     if (RAW.campaignMeta && RAW.campaignMeta.length > 0) {
       const total = RAW.campaignMeta.filter(r => r.Status === 'ENABLED').reduce((s,r) => s + (parseFloat(r.DailyBudget)||0), 0);
-      if (total > 0) return { val: total, label: 'LIVE BUDGET' };
+      if (total > 0) return `<span style="color:var(--muted)">LIVE BUDGET: ${fmtMoney(total)}</span>`;
     }
-    // Fallback: 7-day avg from daily data
+    // Fallback: MTD avg from Google Ads DailyCampaign
     // normDateStr required — raw Date field may be M/D/YYYY which breaks startsWith('YYYY-MM')
     const byDate = {};
     RAW.daily.forEach(r => { const d = normDateStr(r.Date||''); if (d) { byDate[d] = (byDate[d]||0) + (parseFloat(r.Cost)||0); } });
-    // Use month-to-date average (local month, not UTC)
     const _n = new Date(); const thisMonth = `${_n.getFullYear()}-${String(_n.getMonth()+1).padStart(2,'0')}`;
     const mtdDates = Object.keys(byDate).filter(d => d.startsWith(thisMonth)).sort();
     const useDates = mtdDates.length >= 3 ? mtdDates : Object.keys(byDate).sort().slice(-7);
     const label = mtdDates.length >= 3 ? 'MTD AVG/DAY' : '7D AVG/DAY';
-    if (useDates.length > 0) { const avg = useDates.reduce((s,d)=>s+byDate[d],0)/useDates.length; return { val: avg, label }; }
-    return null;
+    if (useDates.length > 0) { const avg = useDates.reduce((s,d)=>s+byDate[d],0)/useDates.length; return `<span style="color:var(--muted)">${label}: ${fmtMoney(avg)}</span>`; }
+    return `<span style="color:var(--muted)">daily spend</span>`;
   })();
-  $('ks-spend').innerHTML = liveBudget
-    ? `<span style="color:var(--muted)">${liveBudget.label}: ${fmtMoney(liveBudget.val)}</span>`
-    : `<span style="color:var(--muted)">daily spend</span>`;
+  $('ks-spend').innerHTML = spendSubtitle;
 
   const t = getAppTiers();
   $('kv-gcpa').textContent = fmtCPA(googleCPA);
@@ -2168,19 +2172,25 @@ function buildKPIs(daily) {
   const hasBGOA  = bgoaRows.length > 0;
   const hasBGOC  = bgocRows.length > 0;
 
-  let activations, revenue, isConfirmed, confirmedDays, confirmedSources;
+  let activations, revenue, isConfirmed, confirmedDays, confirmedSources, totalSpend;
   if (hasBGOA || hasBGOC) {
-    const bgoaActs = bgoaRows.reduce((s,r) => s + r.activations, 0);
-    const bgocActs = bgocRows.reduce((s,r) => s + r.activations, 0);
-    const bgoaRev  = bgoaRows.reduce((s,r) => s + r.revenue, 0);
-    const bgocRev  = bgocRows.reduce((s,r) => s + r.revenue, 0);
+    const bgoaActs  = bgoaRows.reduce((s,r) => s + r.activations, 0);
+    const bgocActs  = bgocRows.reduce((s,r) => s + r.activations, 0);
+    const bgoaRev   = bgoaRows.reduce((s,r) => s + r.revenue, 0);
+    const bgocRev   = bgocRows.reduce((s,r) => s + r.revenue, 0);
+    // #1 Rule: use confirmed BGOA+BGOC spend as total — this is Google Ads + Meta combined,
+    // the real number we spent. Google Ads DailyCampaign only captures one channel.
+    const bgoaSpend = bgoaRows.reduce((s,r) => s + r.spend, 0);
+    const bgocSpend = bgocRows.reduce((s,r) => s + r.spend, 0);
+    totalSpend       = (bgoaSpend + bgocSpend) > 0 ? bgoaSpend + bgocSpend : spend;
     activations      = bgoaActs + bgocActs;
     revenue          = bgoaRev  + bgocRev;
     isConfirmed      = true;
     confirmedDays    = Math.max(bgoaRows.length, bgocRows.length);
     confirmedSources = [hasBGOA ? 'BGOA' : null, hasBGOC ? 'BGOC' : null].filter(Boolean).join('+');
   } else {
-    // No confirmed data (or single campaign selected) — fall back to Google conv estimate
+    // No confirmed data (or single campaign selected) — use Google Ads DailyCampaign spend
+    totalSpend       = spend;
     activations      = Math.round(conversions * ACT_RATE);
     revenue          = activations * PAYOUT;
     isConfirmed      = false;
@@ -2188,10 +2198,11 @@ function buildKPIs(daily) {
     confirmedSources = isSingleCampaign ? 'CAMPAIGN ESTIMATE' : '';
   }
 
-  const activationCPA = activations > 0 ? spend / activations : 0;
-  const profit        = revenue - spend;
-  return { spend, clicks, impressions, conversions, activations, googleCPA, activationCPA,
-           revenue, profit, isConfirmed, confirmedDays, confirmedSources };
+  const activationCPA = activations > 0 ? totalSpend / activations : 0;
+  const profit        = revenue - totalSpend;
+  return { spend: totalSpend, googleOnlySpend: spend, clicks, impressions, conversions,
+           activations, googleCPA, activationCPA, revenue, profit,
+           isConfirmed, confirmedDays, confirmedSources };
 }
 
 // Build chart daily from raw rows
