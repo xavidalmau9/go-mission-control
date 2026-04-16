@@ -1,6 +1,6 @@
 # Mission Control Dashboard — Claude Project Instructions
 **GO Advertising · Assurance Wireless / BGOA Partner Dashboard**
-**Last updated: April 2026**
+**Last updated: April 16, 2026**
 
 > This file is read by Claude at the start of every session. Update it whenever significant decisions are made.
 
@@ -12,14 +12,22 @@ A single-page real-time performance dashboard (`index.html`) for tracking Google
 
 - **Live URL:** https://xavidalmau9.github.io/go-mission-control/
 - **GitHub:** https://github.com/xavidalmau9/go-mission-control
-- **All code is in one file:** `/Users/305partners/assurance/index.html`
+- **All dashboard code is in one file:** `/Users/305partners/assurance/index.html`
+- **Google Ads Script:** `/Users/305partners/assurance/google-ads-script.js` (paste into Google Ads → Tools → Scripts)
 - **Data reference:** `/Users/305partners/assurance/DATA_SOURCES.md`
 
 ---
 
 ## The #1 Rule
 
-**Always prefer Assurance Wireless confirmed data (BGOA/BGOC) over Google Ads estimates.** We get paid on Assurance numbers, not Google's. If both sources have data for a date, use Assurance. Google data is only used as a fallback when Assurance hasn't reported yet.
+**Ad Spend always comes from Google Ads (DailyCampaign sheet) — never from the BGOA manual spreadsheet.**
+Google is always accurate for spend and has it broken down by campaign. BGOA is manually entered and can have mistakes.
+
+**Applications: always show whichever number is higher — Google conversions or Assurance confirmed.**
+Google has fresher same-day data. Assurance catches up T+1 with confirmed numbers that are often higher.
+Logic: `Math.max(confirmedApps, googleApps)` — never hardcode one source.
+
+**Activations always come from BGOA/BGOC confirmed data.** We get paid on Assurance numbers, not Google's.
 
 ---
 
@@ -30,6 +38,7 @@ A single-page real-time performance dashboard (`index.html`) for tracking Google
 - **Reporting lag:** Assurance reports activations T+1 — today's count is never available same day
 - **30-day cookie window:** Sundays with $0 Google spend still generate activations (attributed from earlier clicks)
 - **Activation rate lag:** Daily activation data takes ~5 days to fully settle
+- **Partial last-day BGOA data:** BGOA cuts off ~10am daily, so the most recent day always has partial applications/approvals. They fill in on the next report. This is expected — do not try to fix it.
 
 ### CPA Tiers (HARDCODED — do not change without explicit instruction)
 ```
@@ -41,7 +50,14 @@ FATAL     : > $25.00 per activation (costs more than we earn)
 ```
 App CPA thresholds are DERIVED: App CPA tier = Act CPA tier × activation_rate (never hardcoded)
 
-### Original Projections (from projections spreadsheet — confirmed correct)
+### Active Campaigns (as of Apr 2026)
+4 enabled Google Search campaigns:
+- Search - Assurance Wireless Lifeline
+- Search - Assurance Wireless Lifeline v2
+- Search - Prime Time | SS
+- Assurance Wireless Search | SS
+
+### Original Projections (confirmed correct)
 | Month | Projected Activations |
 |-------|----------------------|
 | Jan 2026 | 0 (testing month) |
@@ -69,14 +85,19 @@ Spreadsheet: `1ZLzpR9oGk5y2amRr0jS4QPVIIzC44m1VfBRIxDK64Vg`
 
 | Key | Sheet | What it contains |
 |-----|-------|-----------------|
-| `daily` | DailyCampaign | Date, Campaign, Cost, Conversions, Clicks, Impressions |
-| `devices` | Devices | Date, Campaign, Device, Cost, Conversions |
-| `geo` | Geo | Date, Campaign, Region (zip codes — dashboard converts to state names) |
-| `hourly` | Hourly | Hour, Cost, Conversions |
-| `keywords` | Keywords | Date, Campaign, Keyword, MatchType, Cost, Conversions, Impressions, Clicks |
-| `searchTerms` | SearchTerms | Date, Campaign, SearchTerm, Cost, Conversions, Impressions, Clicks |
+| `daily` | DailyCampaign | Date, CampaignName, Impressions, Clicks, Cost, Conversions |
+| `devices` | Devices | Date, CampaignName, Device, Impressions, Clicks, Cost, Conversions |
+| `geo` | Geo | Date, CampaignName, Region (STATE NAME e.g. "Maryland"), Country, Impressions, Clicks, Cost, Conversions, CPA |
+| `hourly` | Hourly | HourOfDay, CampaignName, Cost, Conversions, Clicks, Impressions |
+| `keywords` | Keywords | Date, CampaignName, AdGroupName, Keyword, MatchType, Impressions, Clicks, Cost, Conversions |
+| `searchTerms` | SearchTerms | Date, CampaignName, AdGroupName, SearchTerm, MatchType, Impressions, Clicks, Cost, Conversions |
 
-**Script note:** `LAST_90_DAYS` is an invalid AWQL constant. Script uses `dateRange(60)` dynamic helper instead.
+**Script file:** `google-ads-script.js` — this is the canonical version. Always update this file when script changes are made.
+
+**Critical script rules:**
+- `pushDailyCampaign` uses `WHERE Cost > 0` (NOT `WHERE Impressions > 0`) — captures ALL spending campaigns including those with no/low impressions
+- All numeric values written to sheets use `cleanNum()` to strip AWQL comma separators before writing
+- `pushGeo` uses `RegionCriteriaId` + `US_STATE_CRITERIA` lookup — writes state names, not zip codes
 
 ### Assurance Wireless Daily Tracking (manually updated daily)
 Spreadsheet: `1Yr0gtdyf5x0TOjjzrGhCYRjZFjxPehKCBJwwlXorCxw`
@@ -100,52 +121,89 @@ Key: `projVsReal` (GID 849051862)
 
 ## Key Functions — What They Do and Why
 
-### `parseBGOARow(r)` 
-Parses a single row from BGOA or BGOC CSV. Returns `{ date, spend, applications, approvals, activations, revenue, ... }` or `null` if the row isn't a date row (skips totals/blank rows by checking `day.match(/^\d{4}-\d{2}-\d{2}$/)`).
+### `pn(v)` — CRITICAL numeric parser
+**Always use `pn()` instead of `parseFloat()` for any Google Ads CSV field.**
+AWQL returns numbers with comma separators for values ≥ 1000 (e.g. `"1,083.67"`).
+`parseFloat("1,083.67")` = **1** — stops at the comma. This caused a campaign spending $1,083/day to appear as $1.
+```javascript
+function pn(v) { return parseFloat(String(v||'').replace(/,/g,'')) || 0; }
+```
+Applied to: `r.Cost`, `r.Conversions`, `r.Clicks`, `r.Impressions` everywhere in the dashboard.
+
+### `cleanNum(v)` — script-side numeric cleaner
+Same as `pn()` but lives in `google-ads-script.js`. Applied to all numeric fields before writing to Google Sheets so the data is clean at the source.
+```javascript
+function cleanNum(v) {
+  return parseFloat(String(v || '').replace(/,/g, '')) || 0;
+}
+```
+
+### `normDateStr(s)`
+**CRITICAL** — Normalizes any date string to `YYYY-MM-DD` before comparisons. Handles both `YYYY-MM-DD` and `M/D/YYYY` formats (Google Ads CSV dates vary by sheet). Returns `''` if format unrecognized (row treated as undated, passes date filter).
+```javascript
+function normDateStr(s) {
+  if (!s) return '';
+  const t = String(s).trim();
+  if (/^\d{4}-\d{2}-\d{2}/.test(t)) return t.substring(0, 10);
+  const m = t.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+  if (m) return `${m[3]}-${m[1].padStart(2,'0')}-${m[2].padStart(2,'0')}`;
+  return '';
+}
+```
+**Always use `normDateStr` in `filterRow` and `filterKW`** — raw string comparison of dates breaks when formats differ between sheets.
+
+### `filterRow(r)` inside `filterData()`
+Uses `normDateStr` for date comparison. Filters by date AND campaign. Applied to daily, devices, geo, hourly, keywords, searchTerms.
+
+### `getMostRecentWeek(rawArr)` inside `applyFilters()`
+When geo or devices have no data for the selected period (T+1 lag — geo/device data never exists for TODAY), falls back to the 7 most recent available days. NOT all-history — just the last week.
+
+### `parseBGOARow(r)`
+Parses a single row from BGOA or BGOC CSV. Returns `{ date, spend, applications, approvals, activations, revenue, ... }` or `null` if not a date row.
 
 ### `getLiveActRate()`
-Returns the activation rate (acts/apps) from the last **settled** month. After the 15th of each month, the prior month is settled. Falls back to March 2026, then 55.12% baseline. Updates the global `ACT_RATE` variable.
+Returns activation rate from last settled month. After the 15th, prior month is settled. Falls back to March 2026, then 55.12% baseline.
 
 ### `getPeriodActRate(from, to)`
-**NEW (Apr 2026)** — Returns actual activation rate for a specific date range from BGOA daily data, excluding the last 5 days (not yet settled). Returns `{ rate, days, acts, apps }` or `null` if insufficient data. Used by the Activation Rate KPI tile so it shows real data, not always the static monthly rate.
-
-### `getSettledRateLabel()`
-Returns a human-readable label for the current settled rate source, e.g. "Mar 26 settled".
+Returns actual activation rate for a date range from BGOA daily data, excluding the last 5 days (unsettled). Returns `{ rate, days, acts, apps }` or `null` if insufficient data.
 
 ### `getAppTiers(actRate)`
-Derives App CPA thresholds from ACT_TIERS × activation rate. Never hardcode app CPA values — always call this.
+Derives App CPA thresholds from ACT_TIERS × activation rate. NEVER hardcode app CPA values.
 
 ### `buildKPIs(daily)`
-Builds KPI summary for date range. Uses BGOA+BGOC confirmed activations when available. Falls back to `conversions × ACT_RATE` estimate only if no Assurance data exists for the range. Returns `{ spend, conversions, activations, revenue, profit, activationCPA, googleCPA, isConfirmed, confirmedSources }`.
+- **Spend:** Always `googleSpend` from DailyCampaign — never BGOA manual entry
+- **Applications:** `Math.max(confirmedApps, googleApps)` — whichever is higher
+- **Activations:** BGOA+BGOC confirmed only. Falls back to `conversions × ACT_RATE` if no Assurance data
+- Returns `{ ..., googleApps, confirmedApps }` so `renderKPIs` can show which source won in subtitle
+
+### `renderKPIs(kpis)`
+Applications tile subtitle shows: `✓ [source] (higher/fresher) · Assurance: N · Google: N`
+Always transparent about both numbers and which won.
 
 ### `buildChartDaily(daily)`
-Merges Google Ads rows (spend/apps) with BGOA confirmed activations. Step 1: Google Ads rows → spend + apps per day. Step 2: BGOA overlay → confirmed activations (including Sundays with $0 spend). Step 3: estimate for any remaining days with no BGOA data.
-
-### `getPeriodMeta(daily)`
-Computes date range label and day counts using **calendar math** (not data rows), so Sundays and no-ad days count correctly.
-
-### `filterData()`
-Applies active date range + campaign filter to ALL data sources including keywords and search terms (ALL panels are date-filtered).
-
-### `applyFilters()`
-Main re-render function. Called when date range or campaign changes, and after Phase 2 data loads. ALL render calls go through here.
+Merges Google Ads rows with BGOA confirmed activations. Includes Sundays with $0 spend that still have BGOA activations (30-day cookie window).
 
 ### `buildDevices(devices)`
-Uses partial string matching (`k.includes('mobile')`, `k.includes('computer')`, `k.includes('tablet')`) because Google Ads reports full strings like "Mobile devices with full browsers".
+Uses partial string matching (`k.includes('mobile')`, `k.includes('computer')`, `k.includes('tablet')`).
+Activation CPA = `appCpa / ACT_RATE` — **do NOT use a `MULT` variable** (it was never defined and caused a silent ReferenceError that froze the panel).
 
 ### `buildStates(geo)`
-Auto-detects numeric geo codes (zip codes OR Google criterion IDs). Takes first 5 digits as zip prefix → `zipToStateName()` → aggregates by state name. Handles the fact that Google Ads Geo tab writes zip codes, not state names.
+Aggregates geo rows by STATE. Handles three input formats:
+1. **State name**: `"Maryland"` → `STATE_ABBRS["Maryland"]` → `"MD"`
+2. **State name with country**: `"Maryland, United States"` → strips suffix → `"MD"`
+3. **Numeric criterion ID**: See geo bug history — these should no longer appear after script fix
 
-### `zipToStateName(zip)`
-Maps 3-digit zip prefix to US state name. Handles all 50 states + DC + PR.
+Does NOT show individual zip codes — all rows for the same state are summed into one row.
+
+### `zipToStateName(zip)` / `STATE_ABBRS`
+Still present for legacy fallback but the script no longer writes zip codes. Primary path is state names directly.
 
 ### `renderAssuranceIntelligence()`
-Renders the full Assurance Intelligence section: monthly table, CPA trend chart, BGOC panel, Projections vs Reality. Projections come from `ORIG_PROJ` constant (correct values, not shifted). Actuals pulled live from BGOA+BGOC monthly aggregation. April shows live projected full-month total.
+Renders monthly table, CPA trend, BGOC panel, Projections vs Reality. `ORIG_PROJ` constant has correct projection values.
 
 ### `fetchAllSheets()`
-Two-phase loading:
-- **Phase 1** (awaited): bgoa, daily, devices, hourly, geo → render immediately
-- **Phase 2** (background): bgoc, keywords, searchTerms, monthly, gva, projVsReal → calls `applyFilters()` when done (NOT `renderKeywords(RAW.keywords)` directly — that bypasses date filtering)
+- **Phase 1** (awaited): bgoa, daily, devices, hourly, geo
+- **Phase 2** (background): bgoc, keywords, searchTerms, monthly, gva, projVsReal → calls `applyFilters()` when done
 
 ---
 
@@ -154,44 +212,105 @@ Two-phase loading:
 | Issue | What Was Wrong | Fix |
 |-------|---------------|-----|
 | Google Ads Script error | `LAST_90_DAYS` is invalid AWQL | Use `dateRange(60)` dynamic helper |
-| BGOA CSV blank rows | Blank separator rows before header were treated as header | `parseCSV` filters blank rows |
-| Devices showing 1 device | Exact string match `'mobile'` failed vs `'Mobile devices with full browsers'` | Partial `.includes()` matching |
+| BGOA CSV blank rows | Blank separator rows before header treated as header | `parseCSV` filters blank rows |
+| Devices showing 1 device | Exact string match failed | Partial `.includes()` matching |
 | Day counts wrong | Counted data rows, missed Sundays | Calendar math in `getPeriodMeta` |
-| Today shows activations | T+1 lag — impossible to have same-day data | TODAY view shows "—" for activations |
-| Approval Rate tile wrong | Dividing BGOA activations by Google conversions (different things) | Replaced with real period activation rate |
-| Activation Rate static | Always showed Mar 2026 rate regardless of date filter | `getPeriodActRate()` computes real rate from BGOA daily data, 5-day lag |
-| Geo shows zip codes | Google Ads reports zip codes not state names | `zipToStateName()` lookup + aggregate by state |
-| Keywords not date-filtering | Phase 2 overwrote with `RAW.keywords` (unfiltered) | Phase 2 calls `applyFilters()` |
-| Projections wrong | Values were shifted +1 month in hardcoded array | `ORIG_PROJ` constant with correct values, actuals pulled live |
-| `maxCpa` in devices wrong | Included spend/apps values, dwarfed CPA scale | Only compare the 3 device CPA values |
+| Today shows activations | T+1 lag | TODAY view shows "—" for activations |
+| Activation Rate tile wrong | `activations / Google_conversions` (different things) | `getPeriodActRate()` from BGOA daily |
+| Geo shows only 2 states | See full geo bug history below | `RegionCriteriaId` + state lookup |
+| Keywords not date-filtering | Phase 2 called `renderKeywords(RAW.keywords)` directly | Phase 2 calls `applyFilters()` |
+| Keywords wrong dates | Raw string comparison broke M/D/YYYY format | `normDateStr()` in filterRow |
+| Devices frozen "AWAITING LIVE DATA" | `MULT` variable used but never defined → silent ReferenceError | Use `appCpa / ACT_RATE` directly |
+| Date filter broken for all panels | `filterRow` used raw string comparison, M/D/YYYY > YYYY-MM-DD | `normDateStr()` in filterRow |
+| Device badge unreadable | Transparent colored bg + colored text on top of colored bar | Solid dark background + colored border |
+| States panel layout gaps | `justify-content:space-evenly` with 2-3 rows = giant gaps | `flex-start` + `min-height:0` |
+| Projections wrong | Values shifted +1 month | `ORIG_PROJ` constant, actuals pulled live |
+| Wrong timezone in date range | `toISOString()` converts midnight local to UTC, returning wrong date | Use local date parts: `d.getFullYear()`, `d.getMonth()+1`, `d.getDate()` |
+| MTD avg missing campaigns | Raw `r.Date` without `normDateStr` — M/D/YYYY dates not grouped | `normDateStr(r.Date||'')` in spend tile, renderBrief, renderFeed |
+| Ad spend showing only $1,161 instead of $2,244 | Two bugs: (1) `WHERE Impressions > 0` missed campaigns with low impressions; (2) AWQL comma bug: `parseFloat("1,083.67")` = 1 | (1) Changed to `WHERE Cost > 0`; (2) Added `cleanNum()` in script + `pn()` in dashboard |
+| Spend source wrong | Was using BGOA manual entry for spend — can have mistakes, no per-campaign breakdown | Always use Google DailyCampaign for spend |
+| Applications showing lower number | Was always using BGOA confirmed, but Google has fresher same-day data | `Math.max(confirmedApps, googleApps)` — always use whichever is higher |
 
 ---
 
-## What "TODAY" Means in This Dashboard
+## Geo Bug History (CRITICAL — read before touching geo code)
 
-- **Today**: Can only show applications (Google Ads conversions). Never activations (T+1 lag).
-- **Yesterday**: Shows confirmed activations from BGOA (pulled `bgoaYest.activations`)
-- **Last 7/14/30 days**: Calendar days, not data rows. Sundays count even with $0 spend.
-- **"LAST X DAYS"**: Excludes today. Today's data is partial and unreliable for CPA calculations.
+This took multiple sessions to fully resolve. Do not re-introduce any of these bugs.
+
+### What the Geo CSV used to contain (WRONG)
+The old script used `MostSpecificCriteriaId` which returned the most granular geographic level. For this campaign, that meant:
+- Maryland zip codes: `21133`, `21135`, `21136`... (5-digit US postal zip codes)
+- California metro IDs: `9073451`, `9073452`... (7-digit Google criterion IDs)
+
+### Why only MD and CA showed on the dashboard
+`buildStates` fed those numbers into `zipToStateName()` which treats the first 3 digits as a zip prefix:
+- `211xx` → prefix 211 → falls in Maryland range (206-219) → **"Maryland"** ✗
+- `907xxxx` → prefix 907 → California → **"California"** ✓ (lucky match)
+
+So ALL state criterion IDs (21132=Alabama through 21183=Puerto Rico) were being collapsed to "Maryland" because they all start with 211.
+
+### The actual fix
+Script now uses `RegionCriteriaId` from `GEO_PERFORMANCE_REPORT`. This returns Google's geographic criterion IDs for US states:
+```
+21132=Alabama, 21133=Alaska, 21134=Arizona, 21135=Arkansas,
+21136=California, 21137=Colorado ... 21151=Maryland ... 21183=Puerto Rico
+```
+A `US_STATE_CRITERIA` lookup table in the script converts these to state names ("Maryland", "California", etc.) before writing to the sheet. The dashboard receives plain state names and maps them to abbreviations via `STATE_ABBRS`.
+
+### What NOT to do with geo
+- **Never use `Region` as an AWQL field** — it is not valid in `GEO_PERFORMANCE_REPORT` (throws InputError)
+- **Never use `MostSpecificCriteriaId`** — returns zip codes, all map to wrong states
+- **Never feed criterion IDs (21132-21183) into `zipToStateName()`** — they all map to Maryland
+- **Never show individual zip codes** — always aggregate to state level
+
+---
+
+## T+1 Data Lag Rules
+
+| Panel | Has TODAY data? | Fallback when empty |
+|-------|----------------|---------------------|
+| KPIs / Chart | Partial (no activations) | Show "—" for acts |
+| Geo | Never (T+1) | Last 7 available days |
+| Devices | Never (T+1) | Last 7 available days |
+| Hourly heatmap | Yes (current day) | None needed |
+| Keywords | Yes (date-filtered) | Show count + hint |
+| Search Terms | Yes (date-filtered) | Show count + hint |
 
 ---
 
 ## What NOT to Do
 
+- **Never use `parseFloat(r.Cost)` directly** — always use `pn(r.Cost)` (AWQL adds commas to numbers ≥ 1000)
+- **Never use BGOA Ad Spend as the spend source** — always use Google DailyCampaign for spend
+- **Never use only one source for applications** — always `Math.max(confirmedApps, googleApps)`
 - **Never hardcode App CPA thresholds** — always derive from `getAppTiers(ACT_RATE)`
 - **Never hardcode activation rate** — use `getPeriodActRate()` for ranges, `getLiveActRate()` for defaults
-- **Never use Google conversions as a proxy for activations** when BGOA data is available
-- **Never add a daily spend target** — budget changes daily (use MTD average instead)
-- **Never cap date range to 30 days** — the Google Ads script goes back 60 days
+- **Never add a daily spend target** — budget changes daily
+- **Never cap date range to 30 days** — script goes back 60 days
 - **Never call `renderKeywords(RAW.keywords)` directly** — always go through `applyFilters()`
-- **Never show today's activations** — always "—" with a note about T+1
-- **Do not use `LAST_90_DAYS` or `LAST_60_DAYS` in AWQL** — these are invalid; use `dateRange(N)` helper
+- **Never show today's activations** — always "—" with T+1 note
+- **Never use `LAST_90_DAYS` or `LAST_60_DAYS` in AWQL** — invalid; use `dateRange(N)` helper
+- **Never use raw string date comparison** — always use `normDateStr()` first
+- **Never use a `MULT` variable** — it was never defined; use `appCpa / ACT_RATE` directly
+- **Never use `Region` as AWQL field in `GEO_PERFORMANCE_REPORT`** — not valid
+- **Never use `MostSpecificCriteriaId` for geo** — returns zip codes that map to wrong states
+- **Never show all-history data as a fallback** — wrong data is worse than no data
+- **Never use `WHERE Impressions > 0` in `pushDailyCampaign`** — use `WHERE Cost > 0` to capture all spending campaigns
+- **Never use `toISOString()` for date ranges** — converts midnight local to UTC, returns wrong date for Eastern timezone
+
+---
+
+## Favicon
+
+Inline SVG data URI in `<head>` — black rounded square with bold white "GO". No external file needed.
+```html
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,...">
+```
 
 ---
 
 ## Pending / Known Issues (as of Apr 16, 2026)
 
-- **Device panel** sometimes shows "AWAITING LIVE DATA" — root cause still unclear (likely a rendering timing issue or Google Ads Devices tab temporarily empty). Error is caught silently. If it happens: reload the page.
 - **Budget/bid change history** — user wants to see daily change log. Requires Google Ads Script modification to write to a BudgetHistory tab. Not yet implemented.
-- **CampaignMeta tab** — not yet published by user. Dashboard falls back to MTD avg for live budget display.
-- **BGOC (Meta)** — very early data (started Apr 2026). CPA will normalize as volume grows.
+- **CampaignMeta tab** — not yet published. Dashboard falls back to MTD avg for live budget display.
+- **BGOC (Meta)** — early data (started Apr 2026). CPA will normalize as volume grows.
