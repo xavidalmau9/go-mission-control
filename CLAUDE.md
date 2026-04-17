@@ -1,6 +1,6 @@
 # Mission Control Dashboard — Claude Project Instructions
 **GO Advertising · Assurance Wireless / BGOA Partner Dashboard**
-**Last updated: April 16, 2026 (session 4)**
+**Last updated: April 16, 2026 (session 5)**
 
 > This file is read by Claude at the start of every session. Update it whenever significant decisions are made.
 
@@ -241,6 +241,12 @@ Renders monthly table, CPA trend, BGOC panel, Projections vs Reality. `ORIG_PROJ
 | GvA panel hardcoded monthly data | Would go stale; required manual update each month | Fully dynamic from RAW.bgoa + RAW.daily; auto-updates on every refresh |
 | GvA panel showing "Pre-script" / "Script not active" text | Raw message shown instead of clean N/A | All unavailable fields now show N/A |
 | KPI top row had 7-column grid after removing Activation Rate tile | 6 cards stretched unevenly across 7 columns | Changed to repeat(6,1fr) |
+| GvA/projVsReal showing wrong status | Current month labeled PENDING, March labeled PAID | Fixed: current = CURRENT MONTH, prev = PENDING, older = PAID ✓ |
+| Projections vs Reality using low BGOA daily counts | BGOA daily has activation lag — shows lower numbers | Now uses Math.max(BGOA, Lifeline) — always higher confirmed number |
+| projVsReal table cramped/bunched | Dense HTML table with 5 columns in tiny font | Replaced with spacious card rows matching GvA panel style |
+| Dec projection shown as 0 | Dec was a Soft-Launch with no target | Now shows "Soft-Launch" / "No target" |
+| Jan projection shown as 0 with "—" for vs proj | Correct — Jan projection was 0, it was a ramp month | Shows "Ramp month" label |
+| Trajectory panel had hardcoded 1483 for Mar | Wrong and stale | Now pulls from getLifelineActuals() with Math.max fallback |
 | All states data wrong — CA showing 1 conversion | Same AWQL comma bug in `pushGeo`, `pushKeywords`, `pushSearchTerms` — `parseFloat("1,234")` = 1 | Applied `cleanNum()` to all numeric fields in all 6 script functions |
 | Remaining `parseFloat` calls in dashboard | `renderBrief`, `buildDevices`, keyword CPA list still used raw `parseFloat()` | All converted to `pn()` |
 | Activation Rate showing confirmed % for TODAY | TODAY has no confirmed activation data (T+1) — showing 55.8% implied it was real | TODAY and fallback views now show "PROJECTED" label in amber |
@@ -355,6 +361,47 @@ AWQL (Google Ads Query Language, used by Google Ads Scripts) returns numeric val
 - **Activations / Revenue / Act CPA subtitles on TODAY view** — now show `N/A` instead of verbose T+1 messages.
 - **Yesterday at a Glance** — replaced tiny `.bkpi` mini-cards with full `.kpi` grid cards, identical visual style to the top KPI row. 6-column grid: App CPA · Act CPA · Spend · Applications · Activations · Profit.
 - **Google vs Assurance panel** — fully dynamic, no hardcoded monthly data. Built from `RAW.bgoa` (BGOA monthly acts/spend) + `RAW.daily` (Google monthly convs/spend). Refreshes live with every data load. Pre-script months (Dec 2025, Jan 2026) show "—" / "Pre-script" for Google column. Status auto-derives: current month = PENDING, prior = PAID ✓.
+
+## Month Status Logic (CRITICAL — do not change)
+- **Current calendar month** → always labeled **CURRENT MONTH** (blue)
+- **Previous calendar month** → always labeled **PENDING** (amber) — stays PENDING until explicitly paid
+- **All months before that** → **PAID ✓** (green)
+- Never call a prior month PAID unless it has actually been paid. March is PENDING until payment is received.
+
+## Confirmed Activation Counts (from Lifeline spreadsheet)
+These are the official numbers. Always use `Math.max(BGOA daily, Lifeline)` — the higher wins:
+
+| Month | Activations | Revenue | Status |
+|-------|-------------|---------|--------|
+| Dec 2025 | 44 | $1,100 | PAID |
+| Jan 2026 | 415 | $10,375 | PAID |
+| Feb 2026 | 552 | $13,800 | PAID |
+| Mar 2026 | 1,404 | $35,100 | PENDING |
+| Apr 2026 | 1,042+ (MTD) | — | CURRENT MONTH |
+
+Mar 2026 shows 1,404 because activations lag — final paid count will be higher.
+
+## Original Projections (correct values — do not change)
+| Month | Projection |
+|-------|-----------|
+| Dec 2025 | Soft-Launch (no target) |
+| Jan 2026 | 0 (ramp month) |
+| Feb 2026 | 500 |
+| Mar 2026 | 1,000 |
+| Apr 2026 | 2,000 |
+| May 2026 | 3,000 |
+| Jun 2026 | 4,000 |
+
+We have **beaten every month with a real target**.
+
+## Lifeline Spreadsheet (Projections vs Reality)
+- **ID:** `1JQWn6RHVuOVZWPnVgxFRXBFGka6ae7qYQ6Jik74t60Q` GID `849051862`
+- **Already fetched** as `RAW.projVsReal` and `RAW.projVsRealRows`
+- Sheet is transposed (months = columns, metrics = rows) — standard parseCSV breaks on it
+- `parseCSVRaw(text)` → stores as `RAW.projVsRealRows` (array of arrays, column-indexed)
+- `getLifelineActuals()` → finds REALITY section, extracts Activations/Gross/Ad Spend per month
+- Called in `renderAssuranceIntelligence()` and `buildTrajectory()`
+- Updates daily — dashboard reads it on every refresh cycle
 
 ### Google vs Assurance Panel — How It Now Works
 - Groups `RAW.bgoa` by month → Assurance confirmed activations + BGOA spend
