@@ -1,6 +1,6 @@
 # Mission Control Dashboard — Claude Project Instructions
 **GO Advertising · Assurance Wireless / BGOA Partner Dashboard**
-**Last updated: April 16, 2026 (session 5)**
+**Last updated: April 16, 2026 (session 6)**
 
 > This file is read by Claude at the start of every session. Update it whenever significant decisions are made.
 
@@ -247,6 +247,11 @@ Renders monthly table, CPA trend, BGOC panel, Projections vs Reality. `ORIG_PROJ
 | Dec projection shown as 0 | Dec was a Soft-Launch with no target | Now shows "Soft-Launch" / "No target" |
 | Jan projection shown as 0 with "—" for vs proj | Correct — Jan projection was 0, it was a ramp month | Shows "Ramp month" label |
 | Trajectory panel had hardcoded 1483 for Mar | Wrong and stale | Now pulls from getLifelineActuals() with Math.max fallback |
+| projVsReal Dec/Jan showed 'Soft-Launch'/'Ramp month' | User wanted 0 shown with BEAT ✓ | Now shows '0' projected, '+47'/'+415' BEAT ✓ in vs proj card |
+| GvA panel Google Activations showed N/A for pre-script months | N/A replaced with '0' and 'Not tracked' | Dec/Jan Google column shows 0 / Not tracked |
+| 'App'/'Act'/'Apps'/'Acts' abbreviations used throughout | User wants full words wherever space allows | Expanded: Application CPA, Activation CPA, Applications, Activations everywhere with room |
+| Device panel title 'App & Activation CPA' | Incomplete label | Now 'Application & Activation CPA' |
+| $15 CPA target missing from Dec/Jan projected cards | Was showing 'No target set' | $15 CPA target is universal — shown on all months including 0-projection months |
 | All states data wrong — CA showing 1 conversion | Same AWQL comma bug in `pushGeo`, `pushKeywords`, `pushSearchTerms` — `parseFloat("1,234")` = 1 | Applied `cleanNum()` to all numeric fields in all 6 script functions |
 | Remaining `parseFloat` calls in dashboard | `renderBrief`, `buildDevices`, keyword CPA list still used raw `parseFloat()` | All converted to `pn()` |
 | Activation Rate showing confirmed % for TODAY | TODAY has no confirmed activation data (T+1) — showing 55.8% implied it was real | TODAY and fallback views now show "PROJECTED" label in amber |
@@ -416,6 +421,17 @@ We have **beaten every month with a real target**.
 
 ## Universal N/A Rule
 **Whenever a value is unavailable for any reason, always show `N/A` — never show raw technical messages like "Pre-script", "Script not active", "SEE BGOA", or similar.** This applies to all panels across the dashboard.
+
+## Label Rules (permanent)
+- Always write **Activations** in full. Only use "Acts" if space genuinely cannot fit the full word.
+- Always write **Applications** in full. Only use "Apps" if space genuinely cannot fit the full word.
+- Always write **Application CPA** and **Activation CPA** in full wherever space allows.
+- **$15 CPA target is universal** — it applies to every single month, including months with 0 volume projection. Always show "$15 CPA target" in the projected card subtitle.
+
+## CPA Target (permanent, hardcoded business rule)
+- **Target Activation CPA: $15.00** — this never changes unless explicitly instructed
+- This applies to ALL months including Soft-Launch and ramp months
+- The CPA tiers (FANTASTIC ≤$10, EXCELLENT ≤$12.50, GOOD ≤$15, POOR >$15, FATAL >$25) are derived from this
 
 ---
 
