@@ -1859,29 +1859,38 @@ function renderAssuranceIntelligence() {
   });
   const _now = new Date();
   const _curMonth = `${_now.getFullYear()}-${String(_now.getMonth()+1).padStart(2,'0')}`;
+  const _prevDate  = new Date(_now.getFullYear(), _now.getMonth() - 1, 1);
+  const _prevMonth = `${_prevDate.getFullYear()}-${String(_prevDate.getMonth()+1).padStart(2,'0')}`;
+  // Pull Lifeline actuals (higher confirmed numbers from the Projections vs Reality sheet)
+  const lifelineActs = getLifelineActuals();
   // All months with BGOA data, most recent first
   const gvaData = Object.keys(bgoaByMonth).sort().reverse()
     .filter(mk => bgoaByMonth[mk].acts > 0 || bgoaByMonth[mk].spend > 0)
     .map(mk => {
-      const bgoa   = bgoaByMonth[mk];
-      const google = googleByMonth[mk] || null;
-      // Always use Google Ads spend when available (more accurate); fall back to BGOA manual entry
-      const spend  = google ? google.spend : bgoa.spend;
-      const label  = new Date(mk + '-15').toLocaleDateString('en-US', { month:'short', year:'numeric' }).toUpperCase();
+      const bgoa    = bgoaByMonth[mk];
+      const google  = googleByMonth[mk] || null;
+      const lifeline = lifelineActs[mk] || null;
+      // Always use the higher activation count — Lifeline vs BGOA daily
+      const bestActs = Math.max(bgoa.acts, lifeline?.acts || 0);
+      // Always use Google Ads spend when available; fall back to Lifeline, then BGOA manual
+      const spend   = google ? google.spend : (lifeline?.spend || bgoa.spend);
+      const label   = new Date(mk + '-15').toLocaleDateString('en-US', { month:'short', year:'numeric' }).toUpperCase();
+      // Status: current month = CURRENT MONTH, prior month = PENDING, older = PAID ✓
+      const status  = mk === _curMonth ? 'CURRENT MONTH' : mk === _prevMonth ? 'PENDING' : 'PAID ✓';
       return {
         month:         label,
-        assuranceActs: bgoa.acts,
+        assuranceActs: bestActs,
         googleActs:    google ? Math.round(google.convs) : null,
-        assuranceCPA:  bgoa.acts > 0 && spend > 0 ? spend / bgoa.acts : null,
+        assuranceCPA:  bestActs > 0 && spend > 0 ? spend / bestActs : null,
         googleCPA:     google && google.convs > 0 ? google.spend / google.convs : null,
-        paidOut:       bgoa.acts * PAYOUT,
-        status:        mk === _curMonth ? 'PENDING' : 'PAID ✓',
+        paidOut:       bestActs * PAYOUT,
+        status,
         noGoogleData:  !google,
       };
     });
   $('gvaPanel').innerHTML = gvaData.map(g => `
     <div style="padding:8px 0;border-bottom:1px solid var(--border2)">
-      <div style="font-family:var(--mono);font-size:9px;color:var(--accent);letter-spacing:1px;margin-bottom:6px">${g.month} <span style="color:${g.status.includes('PAID')?'var(--green)':'var(--amber)'};margin-left:8px">${g.status}</span></div>
+      <div style="font-family:var(--mono);font-size:9px;color:var(--accent);letter-spacing:1px;margin-bottom:6px">${g.month} <span style="color:${g.status==='PAID ✓'?'var(--green)':g.status==='PENDING'?'var(--amber)':'var(--accent)'};margin-left:8px">${g.status}</span></div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px">
         <div style="background:var(--surface2);border-radius:4px;padding:6px 8px">
           <div style="font-family:var(--mono);font-size:13px;color:var(--accent)">${g.assuranceActs.toLocaleString()}</div>
@@ -1932,31 +1941,45 @@ function renderAssuranceIntelligence() {
 
   // ── Projections vs Reality ──
   // Correct original projections (from "original plan/projections" tab)
-  const ORIG_PROJ = { '2025-12':0, '2026-01':0, '2026-02':500, '2026-03':1000, '2026-04':2000, '2026-05':3000, '2026-06':4000 };
+  // Dec = Soft-Launch (no target), Jan = 0 target (ramp), Feb+ = real targets
+  const ORIG_PROJ = { '2025-12':'SOFT-LAUNCH', '2026-01':0, '2026-02':500, '2026-03':1000, '2026-04':2000, '2026-05':3000, '2026-06':4000 };
 
-  // Build monthly actuals from BGOA + BGOC live data
+  // Build monthly actuals: use Math.max(BGOA daily, Lifeline sheet) — always the higher confirmed number
   const allBgoaRows = RAW.bgoa.map(parseBGOARow).filter(Boolean);
   const allBgocRows = RAW.bgoc.map(parseBGOARow).filter(Boolean);
-  const mActuals = {};
+  const mActualsBgoa = {};
   [...allBgoaRows, ...allBgocRows].forEach(r => {
     const m = r.date.substring(0,7);
-    if (!mActuals[m]) mActuals[m] = { acts:0, spend:0, confirmedDays:0 };
-    mActuals[m].acts  += r.activations;
-    mActuals[m].spend += r.spend;
-    if (r.activations > 0) mActuals[m].confirmedDays++;
+    if (!mActualsBgoa[m]) mActualsBgoa[m] = { acts:0, spend:0, confirmedDays:0 };
+    mActualsBgoa[m].acts  += r.activations;
+    mActualsBgoa[m].spend += r.spend;
+    if (r.activations > 0) mActualsBgoa[m].confirmedDays++;
+  });
+  // Merge with Lifeline: use highest acts count, prefer Google Ads spend
+  const mActuals = {};
+  const allMkeys = new Set([...Object.keys(mActualsBgoa), ...Object.keys(lifelineActs)]);
+  allMkeys.forEach(mk => {
+    const b = mActualsBgoa[mk] || { acts:0, spend:0, confirmedDays:0 };
+    const l = lifelineActs[mk]  || { acts:0, spend:0 };
+    const g = googleByMonth[mk] || null;
+    mActuals[mk] = {
+      acts:         Math.max(b.acts, l.acts),
+      spend:        g ? g.spend : (l.spend || b.spend),
+      confirmedDays: b.confirmedDays,
+    };
   });
 
-  // April full-month projection based on confirmed daily rate
-  const aprKey = '2026-04';
+  // Current month full-month projection from confirmed daily rate
+  const aprKey = _curMonth;
   const aprD = mActuals[aprKey];
   const aprProjFull = aprD && aprD.confirmedDays >= 5
     ? Math.round(aprD.acts / aprD.confirmedDays * 30)
     : null;
 
-  // Settled monthly totals (for all-time summary)
-  const allMonths = Object.keys(mActuals).sort();
-  const totActs  = allMonths.reduce((s,m)=>s+(mActuals[m]?.acts||0),0);
-  const totSpend = allMonths.reduce((s,m)=>s+(mActuals[m]?.spend||0),0);
+  // Settled totals (exclude current month from revenue summary)
+  const settledMkeys = Object.keys(mActuals).filter(mk => mk < _curMonth).sort();
+  const totActs  = settledMkeys.reduce((s,m)=>s+(mActuals[m]?.acts||0),0);
+  const totSpend = settledMkeys.reduce((s,m)=>s+(mActuals[m]?.spend||0),0);
   const totRev   = totActs * PAYOUT;
   const totNet   = totRev - totSpend;
   const totROI   = totSpend > 0 ? (totNet/totSpend*100) : 0;
@@ -1964,46 +1987,115 @@ function renderAssuranceIntelligence() {
   const showMonths = ['2025-12','2026-01','2026-02','2026-03','2026-04'];
   const projDataDyn = showMonths.map(mk => {
     const d = mActuals[mk] || { acts:0, spend:0, confirmedDays:0 };
-    const isCurrent = mk === aprKey;
+    const isCurrent = mk === _curMonth;
     const label = new Date(mk+'-15').toLocaleDateString('en-US',{month:'short',year:'numeric'}).toUpperCase();
-    return { month:label, projected:ORIG_PROJ[mk]||0, actual:d.acts, spend:d.spend, partial:isCurrent, projFull: isCurrent ? aprProjFull : null };
+    const proj = ORIG_PROJ[mk];
+    const status = mk === _curMonth ? 'CURRENT MONTH' : mk === _prevMonth ? 'PENDING' : 'PAID ✓';
+    return { month:label, projected:proj, actual:d.acts, spend:d.spend, partial:isCurrent, projFull: isCurrent ? aprProjFull : null, status, mk };
   });
 
-  $('projVsReal').innerHTML = `<table class="intel-table">
-    <thead><tr><th>Month</th><th class="num">Proj</th><th class="num">Actual</th><th class="num">vs Proj</th><th class="num">Spend</th></tr></thead>
-    <tbody>${projDataDyn.map(p => {
-      const hasProjTarget = p.projected > 0;
-      const pct = hasProjTarget ? (p.actual/p.projected*100) : null;
-      const pctStr = pct !== null ? `${Math.round(pct)}%` : '—';
-      const beat = pct !== null && pct >= 100;
-      const pctCol = pct === null ? 'var(--muted)' : beat ? 'var(--green)' : pct >= 75 ? 'var(--amber)' : 'var(--red)';
-      const beatBadge = beat && !p.partial ? ` <span style="color:var(--green);font-size:8px">▲</span>` : '';
-      let actualCell = p.actual.toLocaleString();
-      if (p.partial && p.projFull) {
-        const onTrack = p.projFull >= p.projected;
-        actualCell += ` <span style="font-size:8px;color:${onTrack?'var(--green)':'var(--muted)'}">→ ~${p.projFull.toLocaleString()} proj${onTrack?' ▲':''}</span>`;
-      }
-      return `<tr>
-        <td style="color:var(--text)">${p.month}${p.partial?' <span style="color:var(--muted);font-size:8px">~</span>':''}</td>
-        <td class="num" style="color:var(--muted)">${p.projected > 0 ? p.projected.toLocaleString() : '—'}</td>
-        <td class="num" style="color:var(--accent)">${actualCell}</td>
-        <td class="num" style="color:${pctCol}">${pctStr}${beatBadge}</td>
-        <td class="num" style="color:var(--amber)">${p.spend > 0 ? fmtMoney(p.spend) : '—'}</td>
-      </tr>`;
-    }).join('')}</tbody>
-  </table>
-  <div style="font-family:var(--mono);font-size:8px;color:var(--muted);margin-top:8px;padding:6px;background:rgba(56,189,248,0.04);border-radius:4px;line-height:1.6">
+  $('projVsReal').innerHTML = projDataDyn.map(p => {
+    const hasProjTarget = typeof p.projected === 'number' && p.projected > 0;
+    const pct = hasProjTarget ? (p.actual / p.projected * 100) : null;
+    const beat = pct !== null && pct >= 100;
+    const pctCol = pct === null ? 'var(--muted)' : beat ? 'var(--green)' : pct >= 75 ? 'var(--amber)' : 'var(--red)';
+    const pctStr = pct !== null ? `${Math.round(pct)}%` : '—';
+    const projDisplay = p.projected === 'SOFT-LAUNCH' ? 'Soft-Launch' : (p.projected > 0 ? p.projected.toLocaleString() : '—');
+    const statusCol = p.status === 'PAID ✓' ? 'var(--green)' : p.status === 'PENDING' ? 'var(--amber)' : 'var(--accent)';
+    return `
+    <div style="padding:8px 0;border-bottom:1px solid var(--border2)">
+      <div style="font-family:var(--mono);font-size:9px;color:var(--accent);letter-spacing:1px;margin-bottom:6px">
+        ${p.month} <span style="color:${statusCol};margin-left:8px">${p.status}</span>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:4px">
+        <div style="background:var(--surface2);border-radius:4px;padding:6px 8px">
+          <div style="font-family:var(--mono);font-size:18px;font-weight:700;color:var(--accent)">${p.actual > 0 ? p.actual.toLocaleString() : '—'}</div>
+          <div style="font-family:var(--mono);font-size:7px;color:var(--muted);letter-spacing:1px;margin-top:2px">ACTUAL ACTS</div>
+          <div style="font-family:var(--mono);font-size:9px;color:var(--amber);margin-top:3px">${p.spend > 0 ? fmtMoney(p.spend) : '—'}</div>
+        </div>
+        <div style="background:var(--surface2);border-radius:4px;padding:6px 8px">
+          <div style="font-family:var(--mono);font-size:18px;font-weight:700;color:var(--muted)">${projDisplay}</div>
+          <div style="font-family:var(--mono);font-size:7px;color:var(--muted);letter-spacing:1px;margin-top:2px">PROJECTED</div>
+          <div style="font-family:var(--mono);font-size:9px;color:var(--muted);margin-top:3px">${p.projected === 'SOFT-LAUNCH' ? 'No target' : hasProjTarget ? '$15 CPA target' : 'Ramp month'}</div>
+        </div>
+        <div style="background:var(--surface2);border-radius:4px;padding:6px 8px">
+          <div style="font-family:var(--mono);font-size:18px;font-weight:700;color:${pctCol}">${pctStr}${beat ? ' ▲' : ''}</div>
+          <div style="font-family:var(--mono);font-size:7px;color:var(--muted);letter-spacing:1px;margin-top:2px">VS PROJ</div>
+          <div style="font-family:var(--mono);font-size:9px;color:${pctCol};margin-top:3px">${beat ? 'BEAT ✓' : hasProjTarget ? 'BELOW TARGET' : '—'}</div>
+        </div>
+      </div>
+      ${p.partial && p.projFull ? `<div style="font-family:var(--mono);font-size:8px;color:var(--muted);margin-top:5px">Full month projection: ~${p.projFull.toLocaleString()} acts</div>` : ''}
+    </div>`;
+  }).join('') + `<div style="font-family:var(--mono);font-size:8px;color:var(--muted);margin-top:8px;padding:6px;background:rgba(56,189,248,0.04);border-radius:4px;line-height:1.6">
     Original plan: $15 CPA · 1,000 acts/mo by Month 3.<br>
-    Reality: <span style="color:var(--green)">beat projections every month</span> — ${mActuals['2026-03']?.acts||1188} acts in Mar vs 1,000 projected.<br>
+    Reality: <span style="color:var(--green)">beat projections every month with real targets</span> — ${(mActuals['2026-03']?.acts||1404).toLocaleString()} acts in Mar vs 1,000 projected.<br>
     <span style="color:var(--green)">To-date: ${fmtMoney(totRev)} gross · ${fmtMoney(totNet)} net · ${totROI.toFixed(0)}% ROI</span>
   </div>`;
 }
 
 // ── LIVE DATA LAYER ── //
-let RAW = { daily: [], devices: [], geo: [], hourly: [], keywords: [], searchTerms: [], bgoa: [], bgoc: [], gva: [], projVsReal: [] };
+let RAW = { daily: [], devices: [], geo: [], hourly: [], keywords: [], searchTerms: [], bgoa: [], bgoc: [], gva: [], projVsReal: [], projVsRealRows: [] };
 let activeCampaign  = 'all';
 let activeDateRange = 'today';
 let customFrom = null, customTo = null;
+
+// Raw CSV parser — returns array of arrays (preserves column indices for transposed sheets)
+function parseCSVRaw(text) {
+  const lines = text.trim().split('\n').filter(l => l.replace(/[,\s"]/g, '') !== '');
+  function parseLine(line) {
+    const res = []; let cur = '', inQ = false;
+    for (const ch of line) {
+      if (ch === '"') inQ = !inQ;
+      else if (ch === ',' && !inQ) { res.push(cur.trim()); cur = ''; }
+      else cur += ch;
+    }
+    res.push(cur.trim()); return res;
+  }
+  return lines.map(parseLine);
+}
+
+// Extract monthly actuals from Lifeline (Projections vs Reality) sheet
+// The sheet is transposed: months are columns, metrics are rows
+function getLifelineActuals() {
+  const rows = RAW.projVsRealRows || [];
+  if (!rows.length) return {};
+  // Find REALITY section
+  let realityIdx = -1;
+  for (let i = 0; i < rows.length; i++) {
+    if (rows[i].some(v => v.trim() === 'REALITY')) { realityIdx = i; break; }
+  }
+  if (realityIdx < 0) return {};
+  // Find the month headers row (contains 'December', 'January', etc.)
+  let monthIdx = -1;
+  for (let i = realityIdx + 1; i < Math.min(realityIdx + 5, rows.length); i++) {
+    if (rows[i].some(v => /December|January|February|March|April|May|June/.test(v))) { monthIdx = i; break; }
+  }
+  if (monthIdx < 0) return {};
+  // Map column index → month key
+  const MONTH_KEYS = { "December '25":'2025-12', 'December':'2025-12', 'January':'2026-01',
+    'February':'2026-02', 'March':'2026-03', 'April':'2026-04', 'May':'2026-05', 'June':'2026-06' };
+  const colToMonth = {};
+  rows[monthIdx].forEach((v, i) => { const mk = MONTH_KEYS[v.trim()]; if (mk) colToMonth[i] = mk; });
+  // Find Activations, Gross (revenue), Ad Spend rows
+  let actsIdx = -1, grossIdx = -1, spendIdx = -1;
+  for (let i = monthIdx + 1; i < Math.min(monthIdx + 8, rows.length); i++) {
+    if (rows[i].some(v => v.trim() === 'Activations') && actsIdx < 0) actsIdx = i;
+    if (rows[i].some(v => v.trim() === 'Gross') && grossIdx < 0) grossIdx = i;
+    if (rows[i].some(v => v.trim() === 'Ad Spend') && spendIdx < 0) spendIdx = i;
+  }
+  // Extract by column
+  const clean = v => parseFloat((v||'').replace(/[$,%\s]/g,'').replace(/,/g,'')) || 0;
+  const result = {};
+  Object.entries(colToMonth).forEach(([ci, mk]) => {
+    const c = parseInt(ci);
+    result[mk] = {
+      acts:  actsIdx  >= 0 ? clean(rows[actsIdx][c])  : 0,
+      gross: grossIdx >= 0 ? clean(rows[grossIdx][c]) : 0,
+      spend: spendIdx >= 0 ? clean(rows[spendIdx][c]) : 0,
+    };
+  });
+  return result;
+}
 
 // CSV parser
 function parseCSV(text) {
@@ -2076,6 +2168,8 @@ async function loadSheet(key, url) {
   const text = await fetchCSV(url);
   const data = parseCSV(text);
   RAW[key] = data;
+  // For transposed sheets, also store raw arrays for column-based parsing
+  if (key === 'projVsReal') RAW.projVsRealRows = parseCSVRaw(text);
   console.log(`[MC] ${key}: ${data.length} rows`);
   return key;
 }
@@ -2455,9 +2549,9 @@ function buildTrajectory(kpis, chartDaily) {
     {label:`${monthName} ACTIVATIONS (PROJ)`, val:projectedActs, target:3000, color:'var(--accent)', proj:2000, isProjOnly:true},
     {label:`${monthName} SPEND (PROJ)`,        val:Math.round(kpis.spend / dayOfMonth * daysInMonth), target:40000, color:'var(--amber)', isDollar:true},
     {label:`${monthName} REVENUE (PROJ)`,      val:Math.round(projectedActs * PAYOUT), target:75000, color:'var(--green)', isDollar:true},
-    {label:'MAR 2026 PENDING',                 val:1483,  target:3000, color:'var(--amber)', proj:1000},
-    {label:'FEB 2026 CLOSED',                  val:552,   target:3000, color:'var(--muted)', proj:500},
-    {label:'REVENUE SETTLED',                  val:25325, target:100000, color:'var(--green)', isDollar:true},
+    {label:'MAR 2026 PENDING',                 val: Math.max(getLifelineActuals()['2026-03']?.acts||0, 1404), target:3000, color:'var(--amber)', proj:1000},
+    {label:'FEB 2026 CLOSED',                  val: Math.max(getLifelineActuals()['2026-02']?.acts||0, 552),  target:3000, color:'var(--muted)', proj:500},
+    {label:'REVENUE SETTLED',                  val:(Math.max(getLifelineActuals()['2025-12']?.acts||0,44)+Math.max(getLifelineActuals()['2026-01']?.acts||0,415)+Math.max(getLifelineActuals()['2026-02']?.acts||0,552))*PAYOUT, target:100000, color:'var(--green)', isDollar:true},
   ];
 }
 
