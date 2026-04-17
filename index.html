@@ -1477,12 +1477,17 @@ function renderBrief(dailyRaw, keywordsRaw, searchTermsRaw) {
     return;
   }
 
-  const yApps = yData.conv, ySpend = yData.spend;
-  const yAppCPA = yApps > 0 ? ySpend / yApps : 0;
+  const ySpend = yData.spend;
 
-  // Use BGOA confirmed activations for yesterday — this is what we get paid on
+  // Applications: always use whichever is higher — BGOA confirmed or Google conversions
   const bgoaYest = RAW.bgoa.map(parseBGOARow).filter(Boolean).find(r => r.date === yStr);
   const bgoaDB   = RAW.bgoa.map(parseBGOARow).filter(Boolean).find(r => r.date === dbStr);
+  const googleAppsY = yData.conv;
+  const confirmedAppsY = bgoaYest ? bgoaYest.applications : 0;
+  const yApps = Math.max(googleAppsY, confirmedAppsY);
+  const yAppCPA = yApps > 0 ? ySpend / yApps : 0;
+
+  // Activations always from BGOA confirmed
   const yActs    = bgoaYest ? bgoaYest.activations : Math.round(yApps * ACT_RATE);
   const yActsConfirmed = !!bgoaYest;
   // Pending = BGOA row exists for yesterday but activations = 0 (Assurance hasn't reported yet)
@@ -1492,7 +1497,10 @@ function renderBrief(dailyRaw, keywordsRaw, searchTermsRaw) {
   const yProfit  = yRevenue - ySpend;
   const yCTR      = yData.impressions > 0 ? yData.clicks / yData.impressions * 100 : 0;
 
-  const dbApps   = dbData ? dbData.conv    : null;
+  // Day-before apps: same rule — whichever is higher
+  const googleAppsDB  = dbData ? dbData.conv : null;
+  const confirmedAppsDB = bgoaDB ? bgoaDB.applications : 0;
+  const dbApps   = googleAppsDB !== null ? Math.max(googleAppsDB, confirmedAppsDB) : null;
   const dbSpend  = dbData ? dbData.spend   : null;
   const dbAppCPA = dbData && dbApps > 0 ? dbSpend / dbApps : null;
 
