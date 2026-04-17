@@ -1,6 +1,6 @@
 # Mission Control Dashboard — Claude Project Instructions
 **GO Advertising · Assurance Wireless / BGOA Partner Dashboard**
-**Last updated: April 16, 2026 (session 2)**
+**Last updated: April 16, 2026 (session 3)**
 
 > This file is read by Claude at the start of every session. Update it whenever significant decisions are made.
 
@@ -235,6 +235,10 @@ Renders monthly table, CPA trend, BGOC panel, Projections vs Reality. `ORIG_PROJ
 | Spend source wrong | Was using BGOA manual entry for spend — can have mistakes, no per-campaign breakdown | Always use Google DailyCampaign for spend |
 | Applications showing lower number | Was always using BGOA confirmed, but Google has fresher same-day data | `Math.max(confirmedApps, googleApps)` — always use whichever is higher |
 | App CPA tile showing wrong number | `kv-gcpa` was rendering `googleCPA` (spend/conversions=$12.47) instead of `appCPA` (spend/applications=$9.23) | Fixed to use `appCPA` — the tile is labeled "App CPA" so it must use applications not conversions |
+| KPI tiles showing "loading..." on TODAY | Removed kv-approval HTML element but left JS code referencing it → null TypeError halted renderKPIs | Removed dead kv-approval/ks-approval block from renderKPIs |
+| T+1 subtitles verbose and confusing | "REPORTS T+1 · YESTERDAY: 0 confirmed" etc | Simplified to "N/A" for activations, revenue, act CPA on TODAY view |
+| Yesterday at a Glance ugly mini-cards | Used tiny .bkpi inline style cards instead of proper .kpi tiles | Replaced with same .kpi grid style as top KPI row (6 columns) |
+| GvA panel hardcoded monthly data | Would go stale; required manual update each month | Fully dynamic from RAW.bgoa + RAW.daily; auto-updates on every refresh |
 | All states data wrong — CA showing 1 conversion | Same AWQL comma bug in `pushGeo`, `pushKeywords`, `pushSearchTerms` — `parseFloat("1,234")` = 1 | Applied `cleanNum()` to all numeric fields in all 6 script functions |
 | Remaining `parseFloat` calls in dashboard | `renderBrief`, `buildDevices`, keyword CPA list still used raw `parseFloat()` | All converted to `pn()` |
 | Activation Rate showing confirmed % for TODAY | TODAY has no confirmed activation data (T+1) — showing 55.8% implied it was real | TODAY and fallback views now show "PROJECTED" label in amber |
@@ -339,6 +343,25 @@ AWQL (Google Ads Query Language, used by Google Ads Scripts) returns numeric val
 - `Hourly`: Any hour with cost > $999 had wrong values
 
 **The fix:** `cleanNum()` in the script, `pn()` in the dashboard — both strip commas before `parseFloat`. Applied to ALL numeric fields in ALL 6 sheet functions. Do not ever use raw `parseFloat()` on AWQL data.
+
+---
+
+## Session 3 Changes (Apr 16, 2026)
+
+### Fixed
+- **KPI tiles (AD SPEND, APP CPA, ACT CPA) showing "loading..."** — removed dead `kv-approval`/`ks-approval` JS block from `renderKPIs`. The Activation Rate tile was removed from HTML but JS still referenced it, causing a null TypeError that halted the entire render function.
+- **Activations / Revenue / Act CPA subtitles on TODAY view** — now show `N/A` instead of verbose T+1 messages.
+- **Yesterday at a Glance** — replaced tiny `.bkpi` mini-cards with full `.kpi` grid cards, identical visual style to the top KPI row. 6-column grid: App CPA · Act CPA · Spend · Applications · Activations · Profit.
+- **Google vs Assurance panel** — fully dynamic, no hardcoded monthly data. Built from `RAW.bgoa` (BGOA monthly acts/spend) + `RAW.daily` (Google monthly convs/spend). Refreshes live with every data load. Pre-script months (Dec 2025, Jan 2026) show "—" / "Pre-script" for Google column. Status auto-derives: current month = PENDING, prior = PAID ✓.
+
+### Google vs Assurance Panel — How It Now Works
+- Groups `RAW.bgoa` by month → Assurance confirmed activations + BGOA spend
+- Groups `RAW.daily` by month → Google-reported conversions + actual spend
+- Uses Google Ads spend when available (per #1 rule); falls back to BGOA manual entry for pre-script months
+- Renders all months where BGOA has data, sorted most recent first
+- For months before Google script was active: Google column shows "—" / "Pre-script"
+- `paidOut` = assuranceActs × $25 (PAYOUT constant)
+- `status`: current month key = PENDING, all prior = PAID ✓
 
 ---
 
