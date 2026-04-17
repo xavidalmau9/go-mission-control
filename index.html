@@ -953,10 +953,10 @@ function renderKPIs(kpis) {
     const yest = bgoa[0];
     $('kv-activations').textContent = '—';
     $('kv-activations').style.color = 'var(--muted)';
-    $('ks-activations').innerHTML = `<span style="color:var(--muted);font-size:9px">REPORTS T+1 · ${yest ? 'YESTERDAY: ' + yest.activations + ' confirmed' : 'SEE BGOA'}</span>`;
+    $('ks-activations').innerHTML = `<span style="color:var(--muted);font-size:9px">N/A</span>`;
     $('kv-revenue').textContent = '—';
     $('kv-revenue').style.color = 'var(--muted)';
-    $('ks-revenue').innerHTML = `<span style="color:var(--muted);font-size:9px">CONFIRMED T+1 · ${yest ? fmtMoney(yest.revenue) + ' YESTERDAY' : 'SEE BGOA'}</span>`;
+    $('ks-revenue').innerHTML = `<span style="color:var(--muted);font-size:9px">N/A</span>`;
   } else if (isConfirmed) {
     // Confirmed data from BGOA and/or BGOC
     $('kv-activations').textContent = activations.toLocaleString();
@@ -986,18 +986,6 @@ function renderKPIs(kpis) {
   // Activation rate: use actual period data from BGOA (excluding last 5 unsettled days)
   // Falls back to settled monthly rate, then baseline
   // TODAY view: always projected — no confirmed activations same day (T+1 lag)
-  const { from: arFrom, to: arTo } = getDateRange();
-  const periodRate = getPeriodActRate(arFrom, arTo);
-  if (isToday) {
-    $('kv-approval').textContent = fmtPct(ACT_RATE * 100);
-    $('ks-approval').innerHTML = `<span style="color:var(--amber);font-size:9px">PROJECTED · ${getSettledRateLabel()}</span>`;
-  } else if (periodRate) {
-    $('kv-approval').textContent = fmtPct(periodRate.rate * 100);
-    $('ks-approval').innerHTML = `<span style="color:var(--green);font-size:9px">✓ REAL · ${periodRate.days}d · ${periodRate.acts}/${periodRate.apps} apps</span>`;
-  } else {
-    $('kv-approval').textContent = fmtPct(ACT_RATE * 100);
-    $('ks-approval').innerHTML = `<span style="color:var(--muted);font-size:9px">PROJECTED · ${getSettledRateLabel()}</span>`;
-  }
   $('kv-spend').textContent = fmtMoney(spend);
 
   // Spend tile subtitle: campaign count + MTD avg
@@ -1029,7 +1017,7 @@ function renderKPIs(kpis) {
   $('kv-acpa').textContent = isToday ? '—' : fmtCPA(activationCPA);
   $('kv-acpa').style.color = isToday ? 'var(--muted)' : acpaCol;
   $('ks-acpa').innerHTML = isToday
-    ? `<span style="color:var(--muted);font-size:9px">REPORTS T+1</span>`
+    ? `<span style="color:var(--muted);font-size:9px">N/A</span>`
     : `<span style="color:${acpaCol}">${actCpaLabel(activationCPA)}</span> · TARGET ≤$${ACT_TIERS.FANTASTIC}`;
 }
 
