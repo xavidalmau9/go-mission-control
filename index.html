@@ -2059,11 +2059,7 @@ function renderAssuranceIntelligence() {
       </div>
       ${p.partial && p.projFull ? `<div style="font-family:var(--mono);font-size:8px;color:var(--muted);margin-top:5px">Full month projection: ~${p.projFull.toLocaleString()} activations</div>` : ''}
     </div>`;
-  }).join('') + `<div style="font-family:var(--mono);font-size:8px;color:var(--muted);margin-top:8px;padding:6px;background:rgba(56,189,248,0.04);border-radius:4px;line-height:1.6">
-    Original plan: $15 CPA · 1,000 acts/mo by Month 3.<br>
-    Reality: <span style="color:var(--green)">beat projections every month with real targets</span> — ${(mActuals['2026-03']?.acts||1404).toLocaleString()} acts in Mar vs 1,000 projected.<br>
-    <span style="color:var(--green)">To-date: ${fmtMoney(totRev)} gross · ${fmtMoney(totNet)} net · ${totROI.toFixed(0)}% ROI</span>
-  </div>`;
+  }).join('');
 }
 
 // ── LIVE DATA LAYER ── //
