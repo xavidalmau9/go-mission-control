@@ -135,13 +135,23 @@ body::after{content:'';position:fixed;inset:0;background-image:linear-gradient(r
 .hm-li{display:flex;align-items:center;gap:4px;font-family:var(--mono);font-size:8px;color:var(--muted)}
 .hm-dot{width:7px;height:7px;border-radius:2px}
 
-/* projection */
-.proj-row{display:flex;align-items:center;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--border2)}
-.proj-row:last-child{border-bottom:none}
-.proj-lbl{font-family:var(--mono);font-size:9px;color:var(--muted);letter-spacing:1px}
-.proj-val{font-family:var(--mono);font-size:11px}
-.proj-bw{width:72px;height:4px;background:rgba(255,255,255,.04);border-radius:2px;flex-shrink:0}
-.proj-bf{height:100%;border-radius:2px;transition:width 1s ease}
+/* trajectory rows — pill-based, no progress bar */
+.traj-row{display:grid;grid-template-columns:1fr auto;align-items:center;gap:14px;padding:9px 0;border-bottom:1px solid var(--border2)}
+.traj-row:last-child{border-bottom:none}
+.traj-left{display:flex;align-items:center;gap:8px;min-width:0;flex-wrap:wrap}
+.traj-right{display:flex;align-items:center;gap:8px;justify-self:end;white-space:nowrap}
+.traj-month{font-family:var(--mono);font-size:11px;color:var(--text);letter-spacing:1.2px;font-weight:600}
+.traj-metric{font-family:var(--mono);font-size:9px;color:var(--muted);letter-spacing:1px}
+.traj-val{font-family:var(--mono);font-size:15px;font-weight:600}
+.traj-pill{font-family:var(--mono);font-size:8px;padding:3px 8px;border-radius:10px;letter-spacing:1.2px;white-space:nowrap;font-weight:600}
+.traj-pill-proj{background:rgba(56,189,248,.12);color:var(--accent);border:1px solid rgba(56,189,248,.25)}
+.traj-pill-pending{background:rgba(251,191,36,.12);color:var(--amber);border:1px solid rgba(251,191,36,.3)}
+.traj-pill-paid{background:rgba(52,211,153,.12);color:var(--green);border:1px solid rgba(52,211,153,.3)}
+.traj-pill-current{background:rgba(56,189,248,.12);color:var(--accent);border:1px solid rgba(56,189,248,.3)}
+.traj-pill-beat{background:rgba(52,211,153,.15);color:var(--green)}
+.traj-pill-beat-proj{background:rgba(56,189,248,.12);color:var(--accent)}
+.traj-summary{display:grid;grid-template-columns:1fr auto;align-items:center;gap:14px;padding:12px 0 4px;margin-top:6px;border-top:1px solid var(--border)}
+.traj-summary-lbl{font-family:var(--mono);font-size:10px;color:var(--muted);letter-spacing:1.5px;font-weight:600}
 
 /* trend sparkline */
 .spark{display:flex;align-items:flex-end;gap:3px;height:56px;margin-top:6px}
@@ -208,7 +218,8 @@ body::after{content:'';position:fixed;inset:0;background-image:linear-gradient(r
   .kpi-val{font-size:17px}
   .kpi{padding:10px 10px 8px}
   .panel{padding:10px;overflow:hidden}
-  .proj-row{flex-wrap:wrap;gap:4px}
+  .traj-row{grid-template-columns:1fr;gap:6px}
+  .traj-right{justify-self:start}
   .ptitle{white-space:normal;word-break:break-word}
   .pmeta{white-space:normal}
 }
@@ -388,7 +399,7 @@ body::after{content:'';position:fixed;inset:0;background-image:linear-gradient(r
         <div style="font-family:var(--mono);font-size:13px;line-height:2.2;letter-spacing:.2px">
           <div style="display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid var(--border2)">
             <span style="color:var(--muted)">MAR 2026</span>
-            <span style="color:var(--amber)">AWAITING PAYMENT</span>
+            <span style="color:var(--amber)">PENDING</span>
           </div>
           <div style="display:flex;justify-content:space-between;padding:2px 0 4px;border-bottom:1px solid var(--border2)">
             <span style="font-size:9px;color:var(--muted)">BGOA: 1,188 act · $29,700</span>
@@ -1213,27 +1224,41 @@ function renderTrajectory(monthly, daily) {
     $('trajectory').innerHTML = '<div class="no-data-state"><div class="nd-icon">📈</div><div class="nd-title">NO TRAJECTORY DATA</div></div>';
     return;
   }
+  const statusPillClass = s =>
+    s === 'PROJECTED'     ? 'traj-pill-proj' :
+    s === 'PENDING'       ? 'traj-pill-pending' :
+    s === 'CURRENT MONTH' ? 'traj-pill-current' :
+    s === 'PAID ✓'        ? 'traj-pill-paid' : 'traj-pill-proj';
+
   $('trajectory').innerHTML = monthly.map(m => {
-    const pct = m.isTarget ? 100 : Math.min(100, Math.round((m.val / m.target) * 100));
-    let valStr;
-    if (m.isTarget) {
-      valStr = `<span style="color:var(--muted);opacity:.5">${m.val > 0 ? m.val.toLocaleString() : 'TARGET'}</span>`;
-    } else if (m.isDollar) {
-      valStr = `<span style="color:${m.color}">${fmtMoney(m.val)}</span>`;
-    } else {
-      valStr = `<span style="color:${m.color}">${m.val.toLocaleString()}</span>`;
+    // Summary row (e.g. REVENUE SETTLED) — no month/status, just label + value
+    if (m.isSummary) {
+      const valStr = m.isDollar ? fmtMoney(m.val) : m.val.toLocaleString();
+      return `<div class="traj-summary">
+        <div class="traj-summary-lbl">${m.summaryLabel}</div>
+        <div class="traj-val" style="color:${m.color}">${valStr}</div>
+      </div>`;
     }
+
+    const valStr = m.isDollar ? fmtMoney(m.val) : m.val.toLocaleString();
     let beat = '';
-    if (!m.isTarget && m.proj !== undefined && m.val > m.proj) {
+    if (m.proj !== undefined && m.val > m.proj) {
       const diff = (m.val - m.proj).toLocaleString();
-      beat = m.isProjOnly
-        ? `<span style="font-family:var(--mono);font-size:8px;padding:2px 7px;border-radius:3px;background:rgba(56,189,248,0.12);color:var(--accent);letter-spacing:1px;white-space:nowrap">▲ PROJ +${diff}</span>`
-        : `<span style="font-family:var(--mono);font-size:8px;padding:2px 7px;border-radius:3px;background:rgba(52,211,153,0.15);color:var(--green);letter-spacing:1px;white-space:nowrap">▲ BEAT +${diff}</span>`;
+      const cls  = m.isProjOnly ? 'traj-pill-beat-proj' : 'traj-pill-beat';
+      const txt  = m.isProjOnly ? `▲ PROJ +${diff}` : `▲ BEAT +${diff}`;
+      beat = `<span class="traj-pill ${cls}">${txt}</span>`;
     }
-    return `<div class="proj-row">
-      <div class="proj-lbl">${m.label}</div>
-      <div style="display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:6px;min-width:0;text-align:center">${valStr}${beat}</div>
-      <div class="proj-bw"><div class="proj-bf" style="width:${pct}%;background:${m.color}${m.isTarget?';opacity:.2':''}"></div></div>
+
+    return `<div class="traj-row">
+      <div class="traj-left">
+        <span class="traj-month">${m.month}</span>
+        <span class="traj-pill ${statusPillClass(m.status)}">${m.status}</span>
+        <span class="traj-metric">${m.metric}</span>
+      </div>
+      <div class="traj-right">
+        <span class="traj-val" style="color:${m.color}">${valStr}</span>
+        ${beat}
+      </div>
     </div>`;
   }).join('');
 
@@ -1690,8 +1715,9 @@ function renderAssuranceIntelligence() {
     byMonth[m].revenue     += r.revenue;
   });
   // Confirmed paid amounts (from Assurance payment history)
-  const confirmedPaid = { '2025-12': 1150, '2026-01': 10375, '2026-02': 13800, '2026-03': 29700 };
-  const confirmedActs = { '2025-12': 46,   '2026-01': 415,   '2026-02': 552,   '2026-03': 1188 };
+  // March 2026 is NOT included — still PENDING until actually paid (per month status rule)
+  const confirmedPaid = { '2025-12': 1150, '2026-01': 10375, '2026-02': 13800 };
+  const confirmedActs = { '2025-12': 46,   '2026-01': 415,   '2026-02': 552,   '2026-03': 1404 };
   const monthNames = { '2025-12':'DEC 2025','2026-01':'JAN 2026','2026-02':'FEB 2026','2026-03':'MAR 2026','2026-04':'APR 2026' };
 
   $('monthlyActuals').innerHTML = `<table class="intel-table">
@@ -1703,11 +1729,15 @@ function renderAssuranceIntelligence() {
       const cpaCol = actCPA <= 10 ? 'var(--green)' : actCPA <= 15 ? 'var(--amber)' : 'var(--red)';
       const paid = confirmedPaid[m];
       const paidActs = confirmedActs[m];
+      // Status labels must match the rest of the dashboard:
+      // current month = CURRENT MONTH, previous month = PENDING, older = PAID ✓
+      const _now = new Date();
+      const _curKey = `${_now.getFullYear()}-${String(_now.getMonth()+1).padStart(2,'0')}`;
       const status = paid
         ? `<span style="color:var(--green);font-size:8px">✓ PAID ${fmtMoney(paid)}</span>`
-        : m < new Date().toISOString().substring(0,7)
-          ? `<span style="color:var(--amber);font-size:8px">PENDING</span>`
-          : `<span style="color:var(--accent);font-size:8px">IN PROGRESS</span>`;
+        : m === _curKey
+          ? `<span style="color:var(--accent);font-size:8px">CURRENT MONTH</span>`
+          : `<span style="color:var(--amber);font-size:8px">PENDING</span>`;
       const displayActs = paidActs || d.activations;
       return `<tr>
         <td><b style="color:var(--text)">${monthNames[m]||m}</b></td>
@@ -1739,7 +1769,7 @@ function renderAssuranceIntelligence() {
   // ── Business Health KPIs ──
   const totalSpend      = rows.reduce((s,r) => s+r.spend, 0);
   const totalActs       = Object.values(confirmedActs).reduce((s,v)=>s+v, 0) + (byMonth['2026-04']?.activations||0);
-  const totalRevConfirm = 1150+10375+13800+29700; // confirmed paid
+  const totalRevConfirm = 1150+10375+13800; // confirmed paid (Mar still PENDING — not yet received)
   const totalRevBGOA    = rows.reduce((s,r)=>s+r.revenue, 0);
   const netToDate       = totalRevBGOA - totalSpend;
   const roi             = totalSpend > 0 ? (netToDate/totalSpend*100) : 0;
@@ -2553,12 +2583,12 @@ function buildTrajectory(kpis, chartDaily) {
   const projectedActs = Math.round(mtdConfirmedActs + dailyPace * remainingDays);
 
   return [
-    {label:`${monthName} ACTIVATIONS (PROJ)`, val:projectedActs, target:3000, color:'var(--accent)', proj:2000, isProjOnly:true},
-    {label:`${monthName} SPEND (PROJ)`,        val:Math.round(kpis.spend / dayOfMonth * daysInMonth), target:40000, color:'var(--amber)', isDollar:true},
-    {label:`${monthName} REVENUE (PROJ)`,      val:Math.round(projectedActs * PAYOUT), target:75000, color:'var(--green)', isDollar:true},
-    {label:'MAR 2026 PENDING',                 val: Math.max(getLifelineActuals()['2026-03']?.acts||0, 1404), target:3000, color:'var(--amber)', proj:1000},
-    {label:'FEB 2026 CLOSED',                  val: Math.max(getLifelineActuals()['2026-02']?.acts||0, 552),  target:3000, color:'var(--muted)', proj:500},
-    {label:'REVENUE SETTLED',                  val:(Math.max(getLifelineActuals()['2025-12']?.acts||0,44)+Math.max(getLifelineActuals()['2026-01']?.acts||0,415)+Math.max(getLifelineActuals()['2026-02']?.acts||0,552))*PAYOUT, target:100000, color:'var(--green)', isDollar:true},
+    {month:monthName, status:'PROJECTED', metric:'Activations', val:projectedActs, color:'var(--accent)', proj:2000, isProjOnly:true},
+    {month:monthName, status:'PROJECTED', metric:'Spend',        val:Math.round(kpis.spend / dayOfMonth * daysInMonth), color:'var(--amber)', isDollar:true},
+    {month:monthName, status:'PROJECTED', metric:'Revenue',      val:Math.round(projectedActs * PAYOUT), color:'var(--green)', isDollar:true},
+    {month:'MAR 2026', status:'PENDING',  metric:'Activations', val: Math.max(getLifelineActuals()['2026-03']?.acts||0, 1404), color:'var(--amber)', proj:1000},
+    {month:'FEB 2026', status:'PAID ✓',   metric:'Activations', val: Math.max(getLifelineActuals()['2026-02']?.acts||0, 552),  color:'var(--green)', proj:500},
+    {isSummary:true,  summaryLabel:'REVENUE SETTLED', val:(Math.max(getLifelineActuals()['2025-12']?.acts||0,44)+Math.max(getLifelineActuals()['2026-01']?.acts||0,415)+Math.max(getLifelineActuals()['2026-02']?.acts||0,552))*PAYOUT, color:'var(--green)', isDollar:true},
   ];
 }
 

@@ -1,6 +1,6 @@
 # Mission Control Dashboard — Claude Project Instructions
 **GO Advertising · Assurance Wireless / BGOA Partner Dashboard**
-**Last updated: April 16, 2026 (session 6)**
+**Last updated: April 17, 2026 (session 7)**
 
 > This file is read by Claude at the start of every session. Update it whenever significant decisions are made.
 
@@ -68,13 +68,15 @@ App CPA thresholds are DERIVED: App CPA tier = Act CPA tier × activation_rate (
 | Jun 2026 | 4,000 |
 
 ### Confirmed Paid History
-| Month | BGOA Acts | Paid |
-|-------|-----------|------|
-| Dec 2025 | 46 | $1,150 |
-| Jan 2026 | 415 | $10,375 |
-| Feb 2026 | 552 | $13,800 |
-| Mar 2026 | 1,188 | $29,700 (pending) |
-| Apr 2026 | in progress | — |
+| Month | Activations | Revenue | Status |
+|-------|-------------|---------|--------|
+| Dec 2025 | 46 | $1,150 | PAID ✓ |
+| Jan 2026 | 415 | $10,375 | PAID ✓ |
+| Feb 2026 | 552 | $13,800 | PAID ✓ |
+| Mar 2026 | 1,404 | $35,100 | **PENDING** (not yet received) |
+| Apr 2026 | in progress | — | **CURRENT MONTH** |
+
+**Settled to date = $25,325** (Dec + Jan + Feb only — Mar is NOT yet paid).
 
 ---
 
@@ -359,18 +361,37 @@ AWQL (Google Ads Query Language, used by Google Ads Scripts) returns numeric val
 
 ---
 
+## Session 7 Changes (Apr 17, 2026)
+
+### Fixed
+- **Monthly Actuals table still showed March as PAID** — `confirmedPaid` dictionary hardcoded `'2026-03': 29700`, and the status branch showed `IN PROGRESS` / `AWAITING PAYMENT` instead of the standardized labels. Removed March from `confirmedPaid`, simplified status to only use **CURRENT MONTH** / **PENDING** / **PAID ✓** (matching the Month Status Logic).
+- **Closed Month Actuals block label "AWAITING PAYMENT"** — replaced with standardized `PENDING`.
+- **`totalRevConfirm` included $29,700 for March** — removed, since March is not yet paid. Settled to date is now correctly $25,325.
+- **`confirmedActs['2026-03']`** updated from 1,188 → 1,404 to match Lifeline confirmed count (per Math.max rule).
+
+### Added
+- **"This Month" date range filter** — new button between "Last 30" and "Last Month". Returns MTD: 1st of current month → today.
+
+### CLAUDE.md updates
+- **Status labels** — now explicitly documented as the ONLY allowed terms. No more variants like "AWAITING PAYMENT", "IN PROGRESS", "CLOSED".
+- **Confirmed Paid History table** (top of file) — updated to match single source of truth: Mar 2026 = 1,404 acts / $35,100 / PENDING.
+
+---
+
 ## Session 3 Changes (Apr 16, 2026)
 
 ### Fixed
 - **KPI tiles (AD SPEND, APP CPA, ACT CPA) showing "loading..."** — removed dead `kv-approval`/`ks-approval` JS block from `renderKPIs`. The Activation Rate tile was removed from HTML but JS still referenced it, causing a null TypeError that halted the entire render function.
 - **Activations / Revenue / Act CPA subtitles on TODAY view** — now show `N/A` instead of verbose T+1 messages.
 - **Yesterday at a Glance** — replaced tiny `.bkpi` mini-cards with full `.kpi` grid cards, identical visual style to the top KPI row. 6-column grid: App CPA · Act CPA · Spend · Applications · Activations · Profit.
-- **Google vs Assurance panel** — fully dynamic, no hardcoded monthly data. Built from `RAW.bgoa` (BGOA monthly acts/spend) + `RAW.daily` (Google monthly convs/spend). Refreshes live with every data load. Pre-script months (Dec 2025, Jan 2026) show "—" / "Pre-script" for Google column. Status auto-derives: current month = PENDING, prior = PAID ✓.
+- **Google vs Assurance panel** — fully dynamic, no hardcoded monthly data. Built from `RAW.bgoa` (BGOA monthly acts/spend) + `RAW.daily` (Google monthly convs/spend). Refreshes live with every data load. Pre-script months (Dec 2025, Jan 2026) show "—" / "Pre-script" for Google column. Status auto-derives per Month Status Logic: current = CURRENT MONTH, previous = PENDING, older = PAID ✓.
 
 ## Month Status Logic (CRITICAL — do not change)
-- **Current calendar month** → always labeled **CURRENT MONTH** (blue)
-- **Previous calendar month** → always labeled **PENDING** (amber) — stays PENDING until explicitly paid
-- **All months before that** → **PAID ✓** (green)
+These are the ONLY allowed status labels. Every panel must use these exact terms — no variants like "AWAITING PAYMENT", "IN PROGRESS", "CLOSED", etc.
+- **Current calendar month** → always labeled **CURRENT MONTH** (blue / `var(--accent)`)
+- **Previous calendar month** → always labeled **PENDING** (amber / `var(--amber)`) — stays PENDING until payment is actually received
+- **All months before that** → **PAID ✓** (green / `var(--green)`)
+- Labels roll over on the 1st of each month: when May 1 hits, April becomes PENDING and May becomes CURRENT MONTH automatically. March stays PENDING until Assurance actually pays — then becomes PAID ✓.
 - Never call a prior month PAID unless it has actually been paid. March is PENDING until payment is received.
 
 ## Confirmed Activation Counts (from Lifeline spreadsheet)
@@ -415,7 +436,7 @@ We have **beaten every month with a real target**.
 - Renders all months where BGOA has data, sorted most recent first
 - For months before Google script was active: Google column shows "—" / "Pre-script"
 - `paidOut` = assuranceActs × $25 (PAYOUT constant)
-- `status`: current month key = PENDING, all prior = PAID ✓
+- `status`: current month = CURRENT MONTH, previous month = PENDING, older = PAID ✓ (per Month Status Logic)
 
 ---
 
