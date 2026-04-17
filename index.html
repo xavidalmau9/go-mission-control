@@ -309,7 +309,7 @@ body::after{content:'';position:fixed;inset:0;background-image:linear-gradient(r
     <div class="kpi c-green"><div class="kpi-lbl">Total Revenue</div><div class="kpi-val" style="color:var(--green)" id="kv-revenue">—</div><div class="kpi-sub" id="ks-revenue">loading...</div></div>
     <div class="kpi c-amber"><div class="kpi-lbl">Applications</div><div class="kpi-val" style="color:var(--amber)" id="kv-apps">—</div><div class="kpi-sub" id="ks-apps">loading...</div></div>
     <div class="kpi c-green"><div class="kpi-lbl">Ad Spend</div><div class="kpi-val" style="color:var(--green)" id="kv-spend">—</div><div class="kpi-sub" id="ks-spend">loading...</div></div>
-    <div class="kpi c-amber"><div class="kpi-lbl">App CPA</div><div class="kpi-val" style="color:var(--amber)" id="kv-gcpa">—</div><div class="kpi-sub" id="ks-gcpa">loading...</div></div>
+    <div class="kpi c-amber"><div class="kpi-lbl">Application CPA</div><div class="kpi-val" style="color:var(--amber)" id="kv-gcpa">—</div><div class="kpi-sub" id="ks-gcpa">loading...</div></div>
     <div class="kpi c-red"><div class="kpi-lbl">Activation CPA</div><div class="kpi-val" style="color:var(--red)" id="kv-acpa">—</div><div class="kpi-sub" id="ks-acpa">loading...</div></div>
   </div>
 
@@ -328,7 +328,7 @@ body::after{content:'';position:fixed;inset:0;background-image:linear-gradient(r
 
       <div class="panel" style="flex:1;display:flex;flex-direction:column">
         <div class="panel-hdr">
-          <div class="ptitle">Device Performance · App &amp; Activation CPA</div>
+          <div class="ptitle">Device Performance · Application &amp; Activation CPA</div>
           <div class="pmeta" id="devicePeriod">LIVE DATA</div>
         </div>
         <div id="devicePanel" style="flex:1;display:flex;flex-direction:column;justify-content:space-evenly;gap:8px">
@@ -1606,12 +1606,12 @@ function renderBrief(dailyRaw, keywordsRaw, searchTermsRaw) {
         <div class="brief-section-title">Yesterday at a Glance — ${yFmt}</div>
         <div class="brief-kpi-row">
           <div class="kpi c-amber">
-            <div class="kpi-lbl">APP CPA</div>
+            <div class="kpi-lbl">Application CPA</div>
             <div class="kpi-val" style="color:${cpaColor(yAppCPA)}">${fmtCPA(yAppCPA)}</div>
             <div class="kpi-sub">${cpaTrend !== null ? `<span style="color:${cpaTrend < 0 ? 'var(--green)' : 'var(--red)'}">${cpaTrend < 0 ? '↓' : '↑'}${Math.abs(cpaTrend).toFixed(1)}% vs prior</span>` : '<span style="color:var(--muted)">—</span>'}</div>
           </div>
           <div class="kpi ${yActsPending ? 'c-accent' : yActCPA <= 10 ? 'c-green' : yActCPA <= 15 ? 'c-amber' : 'c-red'}">
-            <div class="kpi-lbl">ACT CPA</div>
+            <div class="kpi-lbl">Activation CPA</div>
             <div class="kpi-val" style="color:${yActsPending ? 'var(--muted)' : yActCPA <= 10 ? 'var(--green)' : yActCPA <= 15 ? 'var(--amber)' : 'var(--red)'}">${yActsPending ? 'N/A' : fmtCPA(yActCPA)}</div>
             <div class="kpi-sub"><span style="color:var(--muted)">${yActsPending ? 'N/A' : 'TARGET ≤$10'}</span></div>
           </div>
@@ -1695,7 +1695,7 @@ function renderAssuranceIntelligence() {
 
   $('monthlyActuals').innerHTML = `<table class="intel-table">
     <thead><tr>
-      <th>Month</th><th class="num">Spend</th><th class="num">Apps</th><th class="num">Acts</th><th class="num">Act CPA</th><th class="num">Revenue</th><th class="num">Status</th>
+      <th>Month</th><th class="num">Spend</th><th class="num">Applications</th><th class="num">Activations</th><th class="num">Act CPA</th><th class="num">Revenue</th><th class="num">Status</th>
     </tr></thead>
     <tbody>${Object.entries(byMonth).sort((a,b)=>a[0].localeCompare(b[0])).map(([m, d]) => {
       const actCPA = d.activations > 0 ? d.spend/d.activations : 0;
@@ -1932,7 +1932,7 @@ function renderAssuranceIntelligence() {
         <div><div style="font-family:var(--mono);font-size:16px;font-weight:700;color:var(--accent2)">${fmtMoney(bgocTotSpend||472.50)}</div><div style="font-family:var(--mono);font-size:8px;color:var(--muted)">AD SPEND</div></div>
         <div><div style="font-family:var(--mono);font-size:16px;font-weight:700;color:var(--green)">${(bgocTotActs||4).toLocaleString()}</div><div style="font-family:var(--mono);font-size:8px;color:var(--muted)">ACTIVATIONS</div></div>
         <div><div style="font-family:var(--mono);font-size:16px;font-weight:700;color:var(--amber)">${(bgocTotApps||13).toLocaleString()}</div><div style="font-family:var(--mono);font-size:8px;color:var(--muted)">APPLICATIONS</div></div>
-        <div><div style="font-family:var(--mono);font-size:16px;font-weight:700;color:${bgocCPA>0&&bgocCPA<=10?'var(--green)':bgocCPA>15?'var(--red)':'var(--amber)'}">${bgocCPA > 0 ? fmtCPA(bgocCPA) : '$118.13'}</div><div style="font-family:var(--mono);font-size:8px;color:var(--muted)">ACT CPA</div></div>
+        <div><div style="font-family:var(--mono);font-size:16px;font-weight:700;color:${bgocCPA>0&&bgocCPA<=10?'var(--green)':bgocCPA>15?'var(--red)':'var(--amber)'}">${bgocCPA > 0 ? fmtCPA(bgocCPA) : '$118.13'}</div><div style="font-family:var(--mono);font-size:8px;color:var(--muted)">Activation CPA</div></div>
       </div>
       <div style="font-family:var(--mono);font-size:8px;color:var(--muted);padding:6px;background:rgba(129,140,248,0.06);border-radius:4px;line-height:1.6">
         ⚡ Meta campaign just started April 2026. Very early data — CPA will normalize as more activations come in. 4 activations from $472.50 spend. Revenue: ${fmtMoney(bgocTotActs*25||100)}.
@@ -2196,7 +2196,7 @@ async function fetchAllSheets() {
   console.log(`[MC] Live act rate: ${(ACT_RATE*100).toFixed(2)}% | App CPA tiers: FANTASTIC≤${fmtCPA(liveT.FANTASTIC)} EXCELLENT≤${fmtCPA(liveT.EXCELLENT)} GOOD≤${fmtCPA(liveT.GOOD)} FATAL>${fmtCPA(liveT.FATAL)}`);
   // Update brief meta with live-derived app CPA thresholds
   const bm = $('briefMeta');
-  if (bm) bm.textContent = `YESTERDAY VS DAY BEFORE · ACT CPA: ≤$${ACT_TIERS.FANTASTIC} FANTASTIC · ≤$${ACT_TIERS.EXCELLENT} EXCELLENT · ≤$${ACT_TIERS.GOOD} GOOD · APP CPA: ≤${fmtCPA(liveT.FANTASTIC)} FANTASTIC (${(ACT_RATE*100).toFixed(1)}% act rate)`;
+  if (bm) bm.textContent = `YESTERDAY VS DAY BEFORE · Activation CPA: ≤$${ACT_TIERS.FANTASTIC} FANTASTIC · ≤$${ACT_TIERS.EXCELLENT} EXCELLENT · ≤$${ACT_TIERS.GOOD} GOOD · Application CPA: ≤${fmtCPA(liveT.FANTASTIC)} FANTASTIC (${(ACT_RATE*100).toFixed(1)}% act rate)`;
 
   // Render what we have immediately after priority sheets
   if (RAW.bgoa.length) try { renderAssuranceIntelligence(); } catch(e) { console.error('AssuranceIntel', e); }
