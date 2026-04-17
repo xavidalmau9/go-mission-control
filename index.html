@@ -470,10 +470,6 @@ body::after{content:'';position:fixed;inset:0;background-image:linear-gradient(r
       <div id="trajectory" style="display:flex;flex-direction:column;justify-content:space-evenly;flex:1;min-height:240px">
         <div class="no-data-state"><div class="nd-icon">📈</div><div class="nd-title">AWAITING LIVE DATA</div></div>
       </div>
-      <div style="margin-top:12px;padding-top:10px;border-top:1px solid var(--border2)">
-        <div class="spark" id="weekSpark"></div>
-        <div style="font-family:var(--mono);font-size:8px;color:var(--muted);letter-spacing:1px;margin-top:4px;text-align:center">DAILY ACTIVATIONS · LAST 14 DAYS</div>
-      </div>
     </div>
   </div>
 
@@ -1295,23 +1291,45 @@ function renderSummary(chartDaily, kpis) {
     `<span style="color:var(--accent)">Est. activations:</span> ${kpis.activations.toLocaleString()} · avg ${avgActs.toFixed(1)}/day<br>` +
     `<span style="color:var(--accent)">App CPA:</span> <span style="color:${cpaColor(kpis.googleCPA)}">${fmtCPA(kpis.googleCPA)} ${cpaLabel(kpis.googleCPA)}</span>`;
 
-  // April projection (remaining days estimation)
+  // April projection — MTD confirmed activations + pace × remaining days
   const today = new Date();
-  const endOfMonth = new Date(today.getFullYear(), today.getMonth()+1, 0);
-  const remainDays = Math.max(0, endOfMonth.getDate() - today.getDate());
-  const projRemainSpend = remainDays * avgSpend;
-  const projTotalSpend  = kpis.spend + projRemainSpend;
-  const projTotalConv   = kpis.conversions + (remainDays * avgApps);
-  const projTotalActs   = Math.round(projTotalConv * ACT_RATE);
-  const projRevenue     = projTotalActs * PAYOUT;
-  const projProfit      = projRevenue - projTotalSpend;
-  const projActCPA      = projTotalActs > 0 ? projTotalSpend / projTotalActs : 0;
+  const daysInMonth2 = new Date(today.getFullYear(), today.getMonth()+1, 0).getDate();
+  const dayOfMonth2  = today.getDate();
+  const remainDays   = Math.max(0, daysInMonth2 - dayOfMonth2);
+
+  // MTD confirmed from BGOA
+  const aprPfx2  = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}`;
+  const bgoaMTD2 = (RAW && RAW.bgoa) ? RAW.bgoa.map(parseBGOARow).filter(r => r && r.date.startsWith(aprPfx2)) : [];
+  const mtdActs  = bgoaMTD2.reduce((s,r) => s + r.activations, 0);
+  const mtdSpend = (RAW && RAW.daily)
+    ? RAW.daily.filter(r => (r.Date||'').startsWith(aprPfx2)).reduce((s,r) => s + pn(r.Cost), 0)
+    : kpis.spend;
+
+  // Daily pace from last 7 settled days
+  const cutoff2 = new Date(today); cutoff2.setDate(cutoff2.getDate()-2);
+  const cutStr2 = `${cutoff2.getFullYear()}-${String(cutoff2.getMonth()+1).padStart(2,'0')}-${String(cutoff2.getDate()).padStart(2,'0')}`;
+  const lookbk2 = new Date(cutoff2); lookbk2.setDate(lookbk2.getDate()-7);
+  const lookStr2= `${lookbk2.getFullYear()}-${String(lookbk2.getMonth()+1).padStart(2,'0')}-${String(lookbk2.getDate()).padStart(2,'0')}`;
+  const paceRows2 = (RAW && RAW.bgoa) ? RAW.bgoa.map(parseBGOARow).filter(r => r && r.date >= lookStr2 && r.date <= cutStr2 && r.activations > 0) : [];
+  const dailyActPace = paceRows2.length > 0 ? paceRows2.reduce((s,r) => s+r.activations,0)/paceRows2.length : (mtdActs / Math.max(dayOfMonth2-2,1));
+  const dailySpdPace = mtdSpend / Math.max(dayOfMonth2,1);
+
+  // Full month = confirmed MTD + projected remaining
+  const projTotalActs  = Math.round(mtdActs + dailyActPace * remainDays);
+  const projTotalSpend = mtdSpend + (dailySpdPace * remainDays);
+  const projRevenue    = projTotalActs * PAYOUT;
+  const projProfit     = projRevenue - projTotalSpend;
+  const projActCPA     = projTotalActs > 0 ? projTotalSpend / projTotalActs : 0;
+  const actRatePct     = (ACT_RATE * 100).toFixed(1);
+
   $('projectionText').innerHTML =
-    `<span style="color:var(--accent)">Remaining days this month:</span> ~${remainDays}<br>` +
-    `<span style="color:var(--accent)">Proj. remaining spend:</span> ~${fmtMoney(projRemainSpend)}<br>` +
-    `<span style="color:var(--accent)">Proj. month total spend:</span> ~${fmtMoney(projTotalSpend)}<br>` +
-    `<span style="color:var(--accent)">Proj. total conversions:</span> ~${Math.round(projTotalConv).toLocaleString()}<br>` +
-    `<span style="color:var(--accent)">Proj. activations (55.12%):</span> <span style="color:var(--green)">~${projTotalActs.toLocaleString()}</span><br>` +
+    `<span style="color:var(--accent)">MTD confirmed activations:</span> <span style="color:var(--green)">${mtdActs.toLocaleString()}</span> confirmed<br>` +
+    `<span style="color:var(--accent)">Daily pace (7d avg):</span> ~${dailyActPace.toFixed(1)} acts/day<br>` +
+    `<span style="color:var(--accent)">Remaining days:</span> ${remainDays}<br>` +
+    `<span style="color:var(--accent)">Proj. remaining activations:</span> ~${Math.round(dailyActPace * remainDays).toLocaleString()}<br>` +
+    `<hr style="border:none;border-top:1px solid var(--border2);margin:6px 0">` +
+    `<span style="color:var(--accent)">Proj. full month activations:</span> <span style="color:var(--green);font-weight:700">~${projTotalActs.toLocaleString()}</span><br>` +
+    `<span style="color:var(--accent)">Proj. full month spend:</span> ~${fmtMoney(projTotalSpend)}<br>` +
     `<span style="color:var(--accent)">Proj. revenue:</span> <span style="color:var(--green)">~${fmtMoney(projRevenue)}</span><br>` +
     `<span style="color:var(--accent)">Proj. profit:</span> <span style="color:${projProfit>0?'var(--green)':'var(--red)'}">${projProfit>0?'+':''}${fmtMoney(projProfit)}</span><br>` +
     `<span style="color:var(--accent)">Proj. activation CPA:</span> ~${fmtCPA(projActCPA)} <span style="color:${projActCPA<=10?'var(--green)':'var(--amber)'}">(${projActCPA<=10?'ON TARGET':'NEEDS WORK'})</span>`;
@@ -2410,8 +2428,8 @@ function buildTrajectory(kpis, chartDaily) {
     {label:`${monthName} ACTIVATIONS (PROJ)`, val:projectedActs, target:3000, color:'var(--accent)', proj:2000, isProjOnly:true},
     {label:`${monthName} SPEND (PROJ)`,        val:Math.round(kpis.spend / dayOfMonth * daysInMonth), target:40000, color:'var(--amber)', isDollar:true},
     {label:`${monthName} REVENUE (PROJ)`,      val:Math.round(projectedActs * PAYOUT), target:75000, color:'var(--green)', isDollar:true},
-    {label:'FEB 2026 CLOSED',                  val:552,   target:3000, color:'var(--muted)', proj:500},
     {label:'MAR 2026 PENDING',                 val:1483,  target:3000, color:'var(--amber)', proj:1000},
+    {label:'FEB 2026 CLOSED',                  val:552,   target:3000, color:'var(--muted)', proj:500},
     {label:'REVENUE SETTLED',                  val:25325, target:100000, color:'var(--green)', isDollar:true},
   ];
 }
