@@ -1053,8 +1053,8 @@ function renderDevices(devData, sourceLabel) {
       <div class="dev-stats">
         <div class="dstat"><div class="dstat-v" style="color:${col}">${fmtCPA(appCpa)}</div><div class="dstat-l">APP CPA</div></div>
         <div class="dstat"><div class="dstat-v" style="color:${col}">${fmtCPA(actCpa)}</div><div class="dstat-l">ACT CPA</div></div>
-        <div class="dstat"><div class="dstat-v">${apps > 0 ? apps.toLocaleString() : '—'}</div><div class="dstat-l">APPS</div></div>
-        <div class="dstat"><div class="dstat-v" style="color:var(--accent)">${acts > 0 ? acts.toLocaleString() : '—'}</div><div class="dstat-l">ACTS</div></div>
+        <div class="dstat"><div class="dstat-v">${apps > 0 ? apps.toLocaleString() : '—'}</div><div class="dstat-l">APPLICATIONS</div></div>
+        <div class="dstat"><div class="dstat-v" style="color:var(--accent)">${acts > 0 ? acts.toLocaleString() : '—'}</div><div class="dstat-l">ACTIVATIONS</div></div>
       </div>
     </div>`;
   }).join('');
@@ -1894,18 +1894,18 @@ function renderAssuranceIntelligence() {
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px">
         <div style="background:var(--surface2);border-radius:4px;padding:6px 8px">
           <div style="font-family:var(--mono);font-size:13px;color:var(--accent)">${g.assuranceActs.toLocaleString()}</div>
-          <div style="font-family:var(--mono);font-size:7px;color:var(--muted);letter-spacing:1px">BGOA ACTS</div>
+          <div style="font-family:var(--mono);font-size:7px;color:var(--muted);letter-spacing:1px">BGOA ACTIVATIONS</div>
           <div style="font-family:var(--mono);font-size:9px;color:var(--amber);margin-top:2px">${g.assuranceCPA ? fmtCPA(g.assuranceCPA)+' CPA' : '—'}</div>
         </div>
         <div style="background:var(--surface2);border-radius:4px;padding:6px 8px">
           ${g.googleActs !== null ? `
           <div style="font-family:var(--mono);font-size:13px;color:var(--accent2)">${g.googleActs.toLocaleString()}</div>
-          <div style="font-family:var(--mono);font-size:7px;color:var(--muted);letter-spacing:1px">GOOGLE ACTS</div>
+          <div style="font-family:var(--mono);font-size:7px;color:var(--muted);letter-spacing:1px">GOOGLE ACTIVATIONS</div>
           <div style="font-family:var(--mono);font-size:9px;color:var(--amber);margin-top:2px">${g.googleCPA ? fmtCPA(g.googleCPA)+' CPA' : '—'}</div>
           ` : `
-          <div style="font-family:var(--mono);font-size:13px;color:var(--muted)">N/A</div>
-          <div style="font-family:var(--mono);font-size:7px;color:var(--muted);letter-spacing:1px">GOOGLE ACTS</div>
-          <div style="font-family:var(--mono);font-size:9px;color:var(--muted);margin-top:2px">N/A</div>
+          <div style="font-family:var(--mono);font-size:13px;color:var(--muted)">0</div>
+          <div style="font-family:var(--mono);font-size:7px;color:var(--muted);letter-spacing:1px">GOOGLE ACTIVATIONS</div>
+          <div style="font-family:var(--mono);font-size:9px;color:var(--muted);margin-top:2px">Not tracked</div>
           `}
         </div>
       </div>
@@ -1941,8 +1941,8 @@ function renderAssuranceIntelligence() {
 
   // ── Projections vs Reality ──
   // Correct original projections (from "original plan/projections" tab)
-  // Dec = Soft-Launch (no target), Jan = 0 target (ramp), Feb+ = real targets
-  const ORIG_PROJ = { '2025-12':'SOFT-LAUNCH', '2026-01':0, '2026-02':500, '2026-03':1000, '2026-04':2000, '2026-05':3000, '2026-06':4000 };
+  // All projections are numeric. Dec and Jan were 0 — we beat them with 47 and 415 respectively.
+  const ORIG_PROJ = { '2025-12':0, '2026-01':0, '2026-02':500, '2026-03':1000, '2026-04':2000, '2026-05':3000, '2026-06':4000 };
 
   // Build monthly actuals: use Math.max(BGOA daily, Lifeline sheet) — always the higher confirmed number
   const allBgoaRows = RAW.bgoa.map(parseBGOARow).filter(Boolean);
@@ -1996,12 +1996,14 @@ function renderAssuranceIntelligence() {
 
   $('projVsReal').innerHTML = projDataDyn.map(p => {
     const hasProjTarget = typeof p.projected === 'number' && p.projected > 0;
-    const pct = hasProjTarget ? (p.actual / p.projected * 100) : null;
-    const beat = pct !== null && pct >= 100;
-    const pctCol = pct === null ? 'var(--muted)' : beat ? 'var(--green)' : pct >= 75 ? 'var(--amber)' : 'var(--red)';
-    const pctStr = pct !== null ? `${Math.round(pct)}%` : '—';
-    const projDisplay = p.projected === 'SOFT-LAUNCH' ? 'Soft-Launch' : (p.projected > 0 ? p.projected.toLocaleString() : '—');
-    const statusCol = p.status === 'PAID ✓' ? 'var(--green)' : p.status === 'PENDING' ? 'var(--amber)' : 'var(--accent)';
+    const projIsZero   = p.projected === 0;
+    const beatZero     = projIsZero && p.actual > 0;  // had 0 target, got > 0 = beat
+    const pct          = hasProjTarget ? (p.actual / p.projected * 100) : null;
+    const beat         = (pct !== null && pct >= 100) || beatZero;
+    const pctCol       = beat ? 'var(--green)' : pct === null ? 'var(--muted)' : pct >= 75 ? 'var(--amber)' : 'var(--red)';
+    const pctStr       = beatZero ? `+${p.actual.toLocaleString()}` : (pct !== null ? `${Math.round(pct)}%` : '—');
+    const projDisplay  = p.projected > 0 ? p.projected.toLocaleString() : '0';
+    const statusCol    = p.status === 'PAID ✓' ? 'var(--green)' : p.status === 'PENDING' ? 'var(--amber)' : 'var(--accent)';
     return `
     <div style="padding:8px 0;border-bottom:1px solid var(--border2)">
       <div style="font-family:var(--mono);font-size:9px;color:var(--accent);letter-spacing:1px;margin-bottom:6px">
@@ -2010,21 +2012,21 @@ function renderAssuranceIntelligence() {
       <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:4px">
         <div style="background:var(--surface2);border-radius:4px;padding:6px 8px">
           <div style="font-family:var(--mono);font-size:18px;font-weight:700;color:var(--accent)">${p.actual > 0 ? p.actual.toLocaleString() : '—'}</div>
-          <div style="font-family:var(--mono);font-size:7px;color:var(--muted);letter-spacing:1px;margin-top:2px">ACTUAL ACTS</div>
+          <div style="font-family:var(--mono);font-size:7px;color:var(--muted);letter-spacing:1px;margin-top:2px">ACTUAL ACTIVATIONS</div>
           <div style="font-family:var(--mono);font-size:9px;color:var(--amber);margin-top:3px">${p.spend > 0 ? fmtMoney(p.spend) : '—'}</div>
         </div>
         <div style="background:var(--surface2);border-radius:4px;padding:6px 8px">
           <div style="font-family:var(--mono);font-size:18px;font-weight:700;color:var(--muted)">${projDisplay}</div>
           <div style="font-family:var(--mono);font-size:7px;color:var(--muted);letter-spacing:1px;margin-top:2px">PROJECTED</div>
-          <div style="font-family:var(--mono);font-size:9px;color:var(--muted);margin-top:3px">${p.projected === 'SOFT-LAUNCH' ? 'No target' : hasProjTarget ? '$15 CPA target' : 'Ramp month'}</div>
+          <div style="font-family:var(--mono);font-size:9px;color:var(--muted);margin-top:3px">${hasProjTarget ? '$15 CPA target' : projIsZero ? 'No target set' : '—'}</div>
         </div>
         <div style="background:var(--surface2);border-radius:4px;padding:6px 8px">
-          <div style="font-family:var(--mono);font-size:18px;font-weight:700;color:${pctCol}">${pctStr}${beat ? ' ▲' : ''}</div>
+          <div style="font-family:var(--mono);font-size:18px;font-weight:700;color:${pctCol}">${pctStr}${beat && !beatZero ? ' ▲' : ''}</div>
           <div style="font-family:var(--mono);font-size:7px;color:var(--muted);letter-spacing:1px;margin-top:2px">VS PROJ</div>
           <div style="font-family:var(--mono);font-size:9px;color:${pctCol};margin-top:3px">${beat ? 'BEAT ✓' : hasProjTarget ? 'BELOW TARGET' : '—'}</div>
         </div>
       </div>
-      ${p.partial && p.projFull ? `<div style="font-family:var(--mono);font-size:8px;color:var(--muted);margin-top:5px">Full month projection: ~${p.projFull.toLocaleString()} acts</div>` : ''}
+      ${p.partial && p.projFull ? `<div style="font-family:var(--mono);font-size:8px;color:var(--muted);margin-top:5px">Full month projection: ~${p.projFull.toLocaleString()} activations</div>` : ''}
     </div>`;
   }).join('') + `<div style="font-family:var(--mono);font-size:8px;color:var(--muted);margin-top:8px;padding:6px;background:rgba(56,189,248,0.04);border-radius:4px;line-height:1.6">
     Original plan: $15 CPA · 1,000 acts/mo by Month 3.<br>
