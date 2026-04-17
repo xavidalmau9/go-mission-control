@@ -372,6 +372,10 @@ AWQL (Google Ads Query Language, used by Google Ads Scripts) returns numeric val
 ### Added
 - **"This Month" date range filter** — new button between "Last 30" and "Last Month". Returns MTD: 1st of current month → today.
 
+### Changed
+- **Business Trajectory panel redesigned** — removed the progress-bar column. Each row now uses clean pills: `[MONTH] [status pill] metric · value [BEAT pill]`. Status pills use the canonical terms (PROJECTED / PENDING / PAID ✓ / CURRENT MONTH) — no more "CLOSED" label. "Revenue Settled" rendered as a separate summary row at the bottom (divider + label + value). Data shape changed from `{label}` to `{month, status, metric}` for cleaner rendering. CSS uses `.traj-*` classes (old `.proj-*` removed).
+- **Projections vs Reality footer removed** — the blue "Original plan: $15 CPA · 1,000 acts/mo by Month 3 / Reality: beat projections every month / To-date: gross / net / ROI" summary block below the month cards was deleted. The settled totals calc (`totRev`, `totNet`, `totROI`) is kept in case it's needed elsewhere, but the footer itself is gone. Do not re-add it.
+
 ### CLAUDE.md updates
 - **Status labels** — now explicitly documented as the ONLY allowed terms. No more variants like "AWAITING PAYMENT", "IN PROGRESS", "CLOSED".
 - **Confirmed Paid History table** (top of file) — updated to match single source of truth: Mar 2026 = 1,404 acts / $35,100 / PENDING.
