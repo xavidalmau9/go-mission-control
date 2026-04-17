@@ -293,6 +293,7 @@ body::after{content:'';position:fixed;inset:0;background-image:linear-gradient(r
       <button class="dr-btn" data-range="last7" onclick="setDateRange('last7',this)">Last 7</button>
       <button class="dr-btn" data-range="last14" onclick="setDateRange('last14',this)">Last 14</button>
       <button class="dr-btn" data-range="last30" onclick="setDateRange('last30',this)">Last 30</button>
+      <button class="dr-btn" data-range="thismonth" onclick="setDateRange('thismonth',this)">This Month</button>
       <button class="dr-btn" data-range="lastmonth" onclick="setDateRange('lastmonth',this)">Last Month</button>
       <button class="dr-btn" data-range="custom" onclick="setDateRange('custom',this)">Custom</button>
     </div>
@@ -2282,6 +2283,10 @@ function getDateRange() {
     case 'last7':     { const d = new Date(today); d.setDate(d.getDate()-6); return { from: fmt(d), to: fmt(today) }; }
     case 'last14':    { const d = new Date(today); d.setDate(d.getDate()-13); return { from: fmt(d), to: fmt(today) }; }
     case 'last30':    { const d = new Date(today); d.setDate(d.getDate()-29); return { from: fmt(d), to: fmt(today) }; }
+    case 'thismonth': {
+      const first = new Date(today.getFullYear(), today.getMonth(), 1);
+      return { from: fmt(first), to: fmt(today) };
+    }
     case 'lastmonth': {
       const first = new Date(today.getFullYear(), today.getMonth()-1, 1);
       const last  = new Date(today.getFullYear(), today.getMonth(), 0);
