@@ -178,11 +178,7 @@ body::after{content:'';position:fixed;inset:0;background-image:linear-gradient(r
 .brief-section-title{font-family:var(--mono);font-size:8px;color:var(--accent);letter-spacing:2px;text-transform:uppercase;margin-bottom:8px}
 .brief-body{font-size:13px;color:var(--text);line-height:1.8}
 .brief-body b{color:var(--accent);font-weight:600}
-.brief-kpi-row{display:flex;gap:20px;flex-wrap:wrap;margin-top:6px}
-.bkpi{display:flex;flex-direction:column;gap:2px}
-.bkpi-val{font-family:var(--mono);font-size:16px;font-weight:700}
-.bkpi-lbl{font-family:var(--mono);font-size:8px;color:var(--muted);letter-spacing:1px}
-.bkpi-delta{font-family:var(--mono);font-size:9px;margin-top:2px}
+.brief-kpi-row{display:grid;grid-template-columns:repeat(6,1fr);gap:10px;margin-top:8px}
 .action-item{display:flex;align-items:flex-start;gap:10px;padding:6px 10px;margin:4px 0;background:var(--surface2);border-radius:5px;border-left:2px solid var(--accent)}
 .action-item.ai-good{border-left-color:var(--green)}
 .action-item.ai-warn{border-left-color:var(--amber)}
@@ -1609,35 +1605,35 @@ function renderBrief(dailyRaw, keywordsRaw, searchTermsRaw) {
       <div class="brief-section">
         <div class="brief-section-title">Yesterday at a Glance — ${yFmt}</div>
         <div class="brief-kpi-row">
-          <div class="bkpi">
-            <div class="bkpi-val" style="color:var(--amber)">${fmtCPA(yAppCPA)}</div>
-            <div class="bkpi-lbl">APP CPA</div>
-            ${cpaTrend !== null ? `<div class="bkpi-delta" style="color:${cpaTrend < 0 ? 'var(--green)' : 'var(--red)'}">${cpaTrend < 0 ? '↓' : '↑'}${Math.abs(cpaTrend).toFixed(1)}% vs prior</div>` : ''}
+          <div class="kpi c-amber">
+            <div class="kpi-lbl">APP CPA</div>
+            <div class="kpi-val" style="color:${cpaColor(yAppCPA)}">${fmtCPA(yAppCPA)}</div>
+            <div class="kpi-sub">${cpaTrend !== null ? `<span style="color:${cpaTrend < 0 ? 'var(--green)' : 'var(--red)'}">${cpaTrend < 0 ? '↓' : '↑'}${Math.abs(cpaTrend).toFixed(1)}% vs prior</span>` : '<span style="color:var(--muted)">—</span>'}</div>
           </div>
-          <div class="bkpi">
-            <div class="bkpi-val" style="color:${yActsPending ? 'var(--muted)' : yActCPA <= 10 ? 'var(--green)' : yActCPA <= 15 ? 'var(--amber)' : 'var(--red)'}">${yActsPending ? 'N/A' : fmtCPA(yActCPA)}</div>
-            <div class="bkpi-lbl">ACT CPA</div>
-            <div class="bkpi-delta" style="color:var(--muted)">${yActsPending ? 'PENDING ASSURANCE' : 'TARGET &lt;$10'}</div>
+          <div class="kpi ${yActsPending ? 'c-accent' : yActCPA <= 10 ? 'c-green' : yActCPA <= 15 ? 'c-amber' : 'c-red'}">
+            <div class="kpi-lbl">ACT CPA</div>
+            <div class="kpi-val" style="color:${yActsPending ? 'var(--muted)' : yActCPA <= 10 ? 'var(--green)' : yActCPA <= 15 ? 'var(--amber)' : 'var(--red)'}">${yActsPending ? 'N/A' : fmtCPA(yActCPA)}</div>
+            <div class="kpi-sub"><span style="color:var(--muted)">${yActsPending ? 'N/A' : 'TARGET ≤$10'}</span></div>
           </div>
-          <div class="bkpi">
-            <div class="bkpi-val" style="color:var(--green)">${fmtMoney(ySpend)}</div>
-            <div class="bkpi-lbl">SPEND</div>
-            ${spendTrend !== null ? `<div class="bkpi-delta" style="color:var(--muted)">${spendTrend >= 0 ? '+' : ''}${spendTrend.toFixed(1)}% vs prior</div>` : ''}
+          <div class="kpi c-green">
+            <div class="kpi-lbl">SPEND</div>
+            <div class="kpi-val" style="color:var(--green)">${fmtMoney(ySpend)}</div>
+            <div class="kpi-sub">${spendTrend !== null ? `<span style="color:var(--muted)">${spendTrend >= 0 ? '+' : ''}${spendTrend.toFixed(1)}% vs prior</span>` : '<span style="color:var(--muted)">—</span>'}</div>
           </div>
-          <div class="bkpi">
-            <div class="bkpi-val" style="color:var(--accent)">${Math.round(yApps).toLocaleString()}</div>
-            <div class="bkpi-lbl">APPLICATIONS</div>
-            ${appsTrend !== null ? `<div class="bkpi-delta" style="color:${appsTrend >= 0 ? 'var(--green)' : 'var(--red)'}">${appsTrend >= 0 ? '↑' : '↓'}${Math.abs(appsTrend).toFixed(1)}% vs prior</div>` : ''}
+          <div class="kpi c-accent">
+            <div class="kpi-lbl">APPLICATIONS</div>
+            <div class="kpi-val" style="color:var(--accent)">${Math.round(yApps).toLocaleString()}</div>
+            <div class="kpi-sub">${appsTrend !== null ? `<span style="color:${appsTrend >= 0 ? 'var(--green)' : 'var(--red)'}">${appsTrend >= 0 ? '↑' : '↓'}${Math.abs(appsTrend).toFixed(1)}% vs prior</span>` : '<span style="color:var(--muted)">—</span>'}</div>
           </div>
-          <div class="bkpi">
-            <div class="bkpi-val" style="color:${yActsPending ? 'var(--muted)' : 'var(--accent2)'}">${yActsPending ? 'N/A' : yActs.toLocaleString()}</div>
-            <div class="bkpi-lbl">${yActsConfirmed && !yActsPending ? 'ACTIVATIONS' : 'EST ACTIVATIONS'}</div>
-            <div class="bkpi-delta" style="color:var(--muted)">${yActsPending ? 'PENDING ASSURANCE' : yActsConfirmed ? '✓ CONFIRMED' : `@${(ACT_RATE*100).toFixed(1)}% rate`}</div>
+          <div class="kpi c-purple">
+            <div class="kpi-lbl">${yActsConfirmed && !yActsPending ? 'ACTIVATIONS' : 'ACTIVATIONS'}</div>
+            <div class="kpi-val" style="color:${yActsPending ? 'var(--muted)' : 'var(--accent2)'}">${yActsPending ? 'N/A' : yActs.toLocaleString()}</div>
+            <div class="kpi-sub"><span style="color:var(--muted)">${yActsPending ? 'N/A' : yActsConfirmed ? '✓ CONFIRMED' : `EST @${(ACT_RATE*100).toFixed(1)}%`}</span></div>
           </div>
-          <div class="bkpi">
-            <div class="bkpi-val" style="color:${yActsPending ? 'var(--muted)' : yProfit >= 0 ? 'var(--green)' : 'var(--red)'}">${yActsPending ? 'N/A' : (yProfit >= 0 ? '+' : '') + fmtMoney(yProfit)}</div>
-            <div class="bkpi-lbl">${yActsConfirmed && !yActsPending ? 'PROFIT' : 'EST PROFIT'}</div>
-            <div class="bkpi-delta" style="color:var(--muted)">${yActsPending ? 'PENDING ASSURANCE' : 'REV ' + fmtMoney(yRevenue)}</div>
+          <div class="kpi ${yActsPending ? 'c-accent' : yProfit >= 0 ? 'c-green' : 'c-red'}">
+            <div class="kpi-lbl">${yActsConfirmed && !yActsPending ? 'PROFIT' : 'EST PROFIT'}</div>
+            <div class="kpi-val" style="color:${yActsPending ? 'var(--muted)' : yProfit >= 0 ? 'var(--green)' : 'var(--red)'}">${yActsPending ? 'N/A' : (yProfit >= 0 ? '+' : '') + fmtMoney(yProfit)}</div>
+            <div class="kpi-sub"><span style="color:var(--muted)">${yActsPending ? 'N/A' : 'REV ' + fmtMoney(yRevenue)}</span></div>
           </div>
         </div>
       </div>
