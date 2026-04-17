@@ -1,6 +1,6 @@
 # Mission Control Dashboard — Claude Project Instructions
 **GO Advertising · Assurance Wireless / BGOA Partner Dashboard**
-**Last updated: April 16, 2026 (session 3)**
+**Last updated: April 16, 2026 (session 4)**
 
 > This file is read by Claude at the start of every session. Update it whenever significant decisions are made.
 
@@ -239,6 +239,8 @@ Renders monthly table, CPA trend, BGOC panel, Projections vs Reality. `ORIG_PROJ
 | T+1 subtitles verbose and confusing | "REPORTS T+1 · YESTERDAY: 0 confirmed" etc | Simplified to "N/A" for activations, revenue, act CPA on TODAY view |
 | Yesterday at a Glance ugly mini-cards | Used tiny .bkpi inline style cards instead of proper .kpi tiles | Replaced with same .kpi grid style as top KPI row (6 columns) |
 | GvA panel hardcoded monthly data | Would go stale; required manual update each month | Fully dynamic from RAW.bgoa + RAW.daily; auto-updates on every refresh |
+| GvA panel showing "Pre-script" / "Script not active" text | Raw message shown instead of clean N/A | All unavailable fields now show N/A |
+| KPI top row had 7-column grid after removing Activation Rate tile | 6 cards stretched unevenly across 7 columns | Changed to repeat(6,1fr) |
 | All states data wrong — CA showing 1 conversion | Same AWQL comma bug in `pushGeo`, `pushKeywords`, `pushSearchTerms` — `parseFloat("1,234")` = 1 | Applied `cleanNum()` to all numeric fields in all 6 script functions |
 | Remaining `parseFloat` calls in dashboard | `renderBrief`, `buildDevices`, keyword CPA list still used raw `parseFloat()` | All converted to `pn()` |
 | Activation Rate showing confirmed % for TODAY | TODAY has no confirmed activation data (T+1) — showing 55.8% implied it was real | TODAY and fallback views now show "PROJECTED" label in amber |
@@ -365,7 +367,12 @@ AWQL (Google Ads Query Language, used by Google Ads Scripts) returns numeric val
 
 ---
 
-## Pending / Known Issues (as of Apr 16, 2026)
+## Universal N/A Rule
+**Whenever a value is unavailable for any reason, always show `N/A` — never show raw technical messages like "Pre-script", "Script not active", "SEE BGOA", or similar.** This applies to all panels across the dashboard.
+
+---
+
+## Pending / Known Issues
 
 - **Budget/bid change history** — user wants to see daily change log. Requires Google Ads Script modification to write to a BudgetHistory tab. Not yet implemented.
 - **CampaignMeta tab** — not yet published. Dashboard falls back to MTD avg for live budget display.
