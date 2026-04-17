@@ -1842,6 +1842,8 @@ function renderAssuranceIntelligence() {
   const gvaData = [
     { month:'MAR 2026', assuranceActs:1188, googleActs:1493, assuranceCPA:15.16, googleCPA:14.16, paidOut:29700, status:'PENDING' },
     { month:'FEB 2026', assuranceActs:552,  googleActs:569,  assuranceCPA:14.99, googleCPA:12.02, paidOut:13800, status:'PAID ✓' },
+    { month:'JAN 2026', assuranceActs:415,  googleActs:null, assuranceCPA:null,  googleCPA:null,  paidOut:10375, status:'PAID ✓' },
+    { month:'DEC 2025', assuranceActs:46,   googleActs:null, assuranceCPA:null,  googleCPA:null,  paidOut:1150,  status:'PAID ✓' },
   ];
   $('gvaPanel').innerHTML = gvaData.map(g => `
     <div style="padding:8px 0;border-bottom:1px solid var(--border2)">
@@ -1850,17 +1852,24 @@ function renderAssuranceIntelligence() {
         <div style="background:var(--surface2);border-radius:4px;padding:6px 8px">
           <div style="font-family:var(--mono);font-size:13px;color:var(--accent)">${g.assuranceActs.toLocaleString()}</div>
           <div style="font-family:var(--mono);font-size:7px;color:var(--muted);letter-spacing:1px">BGOA ACTS</div>
-          <div style="font-family:var(--mono);font-size:9px;color:var(--amber);margin-top:2px">${fmtCPA(g.assuranceCPA)} CPA</div>
+          <div style="font-family:var(--mono);font-size:9px;color:var(--amber);margin-top:2px">${g.assuranceCPA ? fmtCPA(g.assuranceCPA)+' CPA' : fmtMoney(g.paidOut)+' REV'}</div>
         </div>
         <div style="background:var(--surface2);border-radius:4px;padding:6px 8px">
+          ${g.googleActs !== null ? `
           <div style="font-family:var(--mono);font-size:13px;color:var(--accent2)">${g.googleActs.toLocaleString()}</div>
           <div style="font-family:var(--mono);font-size:7px;color:var(--muted);letter-spacing:1px">GOOGLE ACTS</div>
           <div style="font-family:var(--mono);font-size:9px;color:var(--amber);margin-top:2px">${fmtCPA(g.googleCPA)} CPA</div>
+          ` : `
+          <div style="font-family:var(--mono);font-size:13px;color:var(--muted)">—</div>
+          <div style="font-family:var(--mono);font-size:7px;color:var(--muted);letter-spacing:1px">GOOGLE ACTS</div>
+          <div style="font-family:var(--mono);font-size:9px;color:var(--muted);margin-top:2px">Script not active</div>
+          `}
         </div>
       </div>
       <div style="font-family:var(--mono);font-size:8px;color:var(--muted);margin-top:5px">
-        Δ ${Math.abs(g.googleActs - g.assuranceActs)} acts · Google ${g.googleActs > g.assuranceActs ? 'over-reports' : 'under-reports'} by ${((Math.abs(g.googleActs-g.assuranceActs)/g.assuranceActs)*100).toFixed(1)}%
-        · Paid out: <span style="color:var(--green)">${fmtMoney(g.paidOut)}</span>
+        ${g.googleActs !== null
+          ? `Δ ${Math.abs(g.googleActs - g.assuranceActs)} acts · Google ${g.googleActs > g.assuranceActs ? 'over-reports' : 'under-reports'} by ${((Math.abs(g.googleActs-g.assuranceActs)/g.assuranceActs)*100).toFixed(1)}% · `
+          : ''}Paid out: <span style="color:var(--green)">${fmtMoney(g.paidOut)}</span>
       </div>
     </div>
   `).join('') + `<div style="font-family:var(--mono);font-size:8px;color:var(--muted);margin-top:8px;line-height:1.6;padding:6px;background:rgba(56,189,248,0.04);border-radius:4px">
