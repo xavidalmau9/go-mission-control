@@ -312,7 +312,6 @@ body::after{content:'';position:fixed;inset:0;background-image:linear-gradient(r
     <div class="kpi c-accent"><div class="kpi-lbl">Total Activations</div><div class="kpi-val" style="color:var(--accent)" id="kv-activations">—</div><div class="kpi-sub" id="ks-activations">loading...</div></div>
     <div class="kpi c-green"><div class="kpi-lbl">Total Revenue</div><div class="kpi-val" style="color:var(--green)" id="kv-revenue">—</div><div class="kpi-sub" id="ks-revenue">loading...</div></div>
     <div class="kpi c-amber"><div class="kpi-lbl">Applications</div><div class="kpi-val" style="color:var(--amber)" id="kv-apps">—</div><div class="kpi-sub" id="ks-apps">loading...</div></div>
-    <div class="kpi c-purple"><div class="kpi-lbl">Activation Rate</div><div class="kpi-val" style="color:var(--accent2)" id="kv-approval">—</div><div class="kpi-sub" id="ks-approval">loading...</div></div>
     <div class="kpi c-green"><div class="kpi-lbl">Ad Spend</div><div class="kpi-val" style="color:var(--green)" id="kv-spend">—</div><div class="kpi-sub" id="ks-spend">loading...</div></div>
     <div class="kpi c-amber"><div class="kpi-lbl">App CPA</div><div class="kpi-val" style="color:var(--amber)" id="kv-gcpa">—</div><div class="kpi-sub" id="ks-gcpa">loading...</div></div>
     <div class="kpi c-red"><div class="kpi-lbl">Activation CPA</div><div class="kpi-val" style="color:var(--red)" id="kv-acpa">—</div><div class="kpi-sub" id="ks-acpa">loading...</div></div>
@@ -2377,7 +2376,27 @@ function buildTrajectory(kpis, chartDaily) {
   const monthName = today.toLocaleDateString('en-US',{month:'short',year:'numeric'}).toUpperCase();
   const daysInMonth = new Date(today.getFullYear(), today.getMonth()+1, 0).getDate();
   const dayOfMonth  = today.getDate();
-  const projectedActs = dayOfMonth > 0 ? Math.round(kpis.activations / dayOfMonth * daysInMonth) : 0;
+
+  // MTD confirmed activations from BGOA for this calendar month
+  const aprPrefix = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}`;
+  const bgoaMTD = (RAW && RAW.bgoa) ? RAW.bgoa.map(parseBGOARow).filter(r => r && r.date.startsWith(aprPrefix)) : [];
+  const mtdConfirmedActs = bgoaMTD.reduce((s,r) => s + r.activations, 0);
+
+  // Daily pace: avg of last 7 settled days (skip last 2 days for T+1 lag)
+  const cutoff = new Date(today); cutoff.setDate(cutoff.getDate() - 2);
+  const cutoffStr = `${cutoff.getFullYear()}-${String(cutoff.getMonth()+1).padStart(2,'0')}-${String(cutoff.getDate()).padStart(2,'0')}`;
+  const lookback = new Date(cutoff); lookback.setDate(lookback.getDate() - 7);
+  const lookStr = `${lookback.getFullYear()}-${String(lookback.getMonth()+1).padStart(2,'0')}-${String(lookback.getDate()).padStart(2,'0')}`;
+  const paceRows = (RAW && RAW.bgoa) ? RAW.bgoa.map(parseBGOARow).filter(r => r && r.date >= lookStr && r.date <= cutoffStr && r.activations > 0) : [];
+  const settledDays = bgoaMTD.filter(r => r.date <= cutoffStr && r.activations > 0).length;
+  const dailyPace = paceRows.length > 0
+    ? paceRows.reduce((s,r) => s + r.activations, 0) / paceRows.length
+    : (settledDays > 0 ? mtdConfirmedActs / settledDays : ACT_RATE * (kpis.conversions / Math.max(dayOfMonth,1)));
+
+  // Full month = confirmed MTD + pace × remaining days
+  const remainingDays = daysInMonth - dayOfMonth;
+  const projectedActs = Math.round(mtdConfirmedActs + dailyPace * remainingDays);
+
   return [
     {label:`${monthName} ACTIVATIONS (PROJ)`, val:projectedActs, target:3000, color:'var(--accent)', proj:2000, isProjOnly:true},
     {label:`${monthName} SPEND (PROJ)`,        val:Math.round(kpis.spend / dayOfMonth * daysInMonth), target:40000, color:'var(--amber)', isDollar:true},
