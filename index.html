@@ -436,7 +436,7 @@ body::after{content:'';position:fixed;inset:0;background-image:linear-gradient(r
     <!-- States -->
     <div class="panel" style="display:flex;flex-direction:column">
       <div class="panel-hdr">
-        <div class="ptitle">Top States · Applications & App CPA</div>
+        <div class="ptitle">Problem States · FATAL &amp; POOR Only</div>
         <div class="pmeta" id="statePeriod">LIVE DATA</div>
       </div>
       <div id="stateList" style="flex:1;display:flex;flex-direction:column;justify-content:flex-start;gap:0;overflow-y:auto;min-height:0">
@@ -2352,10 +2352,11 @@ function buildStates(geo) {
     byState[stateKey].cost += cost;
     byState[stateKey].conv += conv;
   });
+  const tiers = getAppTiers();
   return Object.values(byState)
     .map(d => ({ code: d.label, cpa: d.conv > 0 ? d.cost/d.conv : 0, count: Math.round(d.conv), spend: d.cost }))
-    .filter(d => d.spend > 0)
-    .sort((a,b) => b.spend - a.spend)
+    .filter(d => d.spend > 0 && d.cpa > tiers.GOOD)   // FATAL or POOR only — states needing action
+    .sort((a,b) => b.cpa - a.cpa)                      // worst CPA first
     .slice(0, 20);
 }
 

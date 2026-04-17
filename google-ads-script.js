@@ -119,7 +119,8 @@ function pushGeo(ss, range) {
     'DURING ' + range
   );
 
-  // Aggregate by Date + Campaign + State (criterion ID → state name)
+  // IsTargetingLocation NOT selected — AWQL returns combined/aggregated rows
+  // matching the Google Ads UI Location Report (no targeting vs user-location split).
   var agg = {};
   var rows = report.rows();
   while (rows.hasNext()) {
