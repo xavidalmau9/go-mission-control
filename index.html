@@ -1838,13 +1838,47 @@ function renderAssuranceIntelligence() {
     });
   }
 
-  // ── Google vs Assurance panel ──
-  const gvaData = [
-    { month:'MAR 2026', assuranceActs:1404, googleActs:1493, assuranceCPA:15.04, googleCPA:14.16, paidOut:35100, status:'PENDING' },
-    { month:'FEB 2026', assuranceActs:552,  googleActs:569,  assuranceCPA:12.38, googleCPA:12.02, paidOut:13800, status:'PAID ✓' },
-    { month:'JAN 2026', assuranceActs:415,  googleActs:null, assuranceCPA:3.21,  googleCPA:null,  paidOut:10375, status:'PAID ✓' },
-    { month:'DEC 2025', assuranceActs:44,   googleActs:null, assuranceCPA:2.83,  googleCPA:null,  paidOut:1100,  status:'PAID ✓' },
-  ];
+  // ── Google vs Assurance panel — built dynamically from live data ──
+  // BGOA: group by month for Assurance confirmed activations + manually tracked spend
+  const bgoaByMonth = {};
+  RAW.bgoa.map(parseBGOARow).filter(Boolean).forEach(r => {
+    const m = r.date.substring(0, 7);
+    if (!bgoaByMonth[m]) bgoaByMonth[m] = { acts: 0, spend: 0 };
+    bgoaByMonth[m].acts  += r.activations;
+    bgoaByMonth[m].spend += r.spend;
+  });
+  // Google Ads daily: group by month for Google-reported conversions + actual spend
+  const googleByMonth = {};
+  (RAW.daily || []).forEach(r => {
+    const d = normDateStr(r.Date || '');
+    if (!d) return;
+    const m = d.substring(0, 7);
+    if (!googleByMonth[m]) googleByMonth[m] = { convs: 0, spend: 0 };
+    googleByMonth[m].convs += pn(r.Conversions);
+    googleByMonth[m].spend += pn(r.Cost);
+  });
+  const _now = new Date();
+  const _curMonth = `${_now.getFullYear()}-${String(_now.getMonth()+1).padStart(2,'0')}`;
+  // All months with BGOA data, most recent first
+  const gvaData = Object.keys(bgoaByMonth).sort().reverse()
+    .filter(mk => bgoaByMonth[mk].acts > 0 || bgoaByMonth[mk].spend > 0)
+    .map(mk => {
+      const bgoa   = bgoaByMonth[mk];
+      const google = googleByMonth[mk] || null;
+      // Always use Google Ads spend when available (more accurate); fall back to BGOA manual entry
+      const spend  = google ? google.spend : bgoa.spend;
+      const label  = new Date(mk + '-15').toLocaleDateString('en-US', { month:'short', year:'numeric' }).toUpperCase();
+      return {
+        month:         label,
+        assuranceActs: bgoa.acts,
+        googleActs:    google ? Math.round(google.convs) : null,
+        assuranceCPA:  bgoa.acts > 0 && spend > 0 ? spend / bgoa.acts : null,
+        googleCPA:     google && google.convs > 0 ? google.spend / google.convs : null,
+        paidOut:       bgoa.acts * PAYOUT,
+        status:        mk === _curMonth ? 'PENDING' : 'PAID ✓',
+        noGoogleData:  !google,
+      };
+    });
   $('gvaPanel').innerHTML = gvaData.map(g => `
     <div style="padding:8px 0;border-bottom:1px solid var(--border2)">
       <div style="font-family:var(--mono);font-size:9px;color:var(--accent);letter-spacing:1px;margin-bottom:6px">${g.month} <span style="color:${g.status.includes('PAID')?'var(--green)':'var(--amber)'};margin-left:8px">${g.status}</span></div>
@@ -1852,17 +1886,17 @@ function renderAssuranceIntelligence() {
         <div style="background:var(--surface2);border-radius:4px;padding:6px 8px">
           <div style="font-family:var(--mono);font-size:13px;color:var(--accent)">${g.assuranceActs.toLocaleString()}</div>
           <div style="font-family:var(--mono);font-size:7px;color:var(--muted);letter-spacing:1px">BGOA ACTS</div>
-          <div style="font-family:var(--mono);font-size:9px;color:var(--amber);margin-top:2px">${g.assuranceCPA ? fmtCPA(g.assuranceCPA)+' CPA' : fmtMoney(g.paidOut)+' REV'}</div>
+          <div style="font-family:var(--mono);font-size:9px;color:var(--amber);margin-top:2px">${g.assuranceCPA ? fmtCPA(g.assuranceCPA)+' CPA' : '—'}</div>
         </div>
         <div style="background:var(--surface2);border-radius:4px;padding:6px 8px">
           ${g.googleActs !== null ? `
           <div style="font-family:var(--mono);font-size:13px;color:var(--accent2)">${g.googleActs.toLocaleString()}</div>
           <div style="font-family:var(--mono);font-size:7px;color:var(--muted);letter-spacing:1px">GOOGLE ACTS</div>
-          <div style="font-family:var(--mono);font-size:9px;color:var(--amber);margin-top:2px">${fmtCPA(g.googleCPA)} CPA</div>
+          <div style="font-family:var(--mono);font-size:9px;color:var(--amber);margin-top:2px">${g.googleCPA ? fmtCPA(g.googleCPA)+' CPA' : '—'}</div>
           ` : `
           <div style="font-family:var(--mono);font-size:13px;color:var(--muted)">—</div>
           <div style="font-family:var(--mono);font-size:7px;color:var(--muted);letter-spacing:1px">GOOGLE ACTS</div>
-          <div style="font-family:var(--mono);font-size:9px;color:var(--muted);margin-top:2px">Script not active</div>
+          <div style="font-family:var(--mono);font-size:9px;color:var(--muted);margin-top:2px">Pre-script</div>
           `}
         </div>
       </div>
