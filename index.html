@@ -579,7 +579,7 @@ body::after{content:'';position:fixed;inset:0;background-image:linear-gradient(r
       </div>
 
       <!-- BGOC Meta + Top States by Volume -->
-      <div style="display:flex;flex-direction:column;gap:18px">
+      <div style="display:flex;flex-direction:column;gap:36px">
         <div>
           <div style="font-family:var(--mono);font-size:8px;color:var(--accent);letter-spacing:2px;margin-bottom:10px">META ADS (BGOC) · APRIL 2026</div>
           <div id="bgocPanel">
@@ -2059,7 +2059,7 @@ function renderAssuranceIntelligence() {
     const projDisplay  = p.projected > 0 ? p.projected.toLocaleString() : '0';
     const statusCol    = p.status === 'PAID ✓' ? 'var(--green)' : p.status === 'PENDING' ? 'var(--amber)' : 'var(--accent)';
     return `
-    <div style="padding:8px 0;border-bottom:1px solid var(--border2)">
+    <div style="padding:14px 0;border-bottom:1px solid var(--border2)">
       <div style="font-family:var(--mono);font-size:9px;color:var(--accent);letter-spacing:1px;margin-bottom:6px">
         ${p.month} <span style="color:${statusCol};margin-left:8px">${p.status}</span>
       </div>
