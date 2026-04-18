@@ -119,13 +119,11 @@ body::after{content:'';position:fixed;inset:0;background-image:linear-gradient(r
 .btm-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
 
 /* states */
-.state-row{display:flex;align-items:center;gap:7px;padding:4px 0;border-bottom:1px solid var(--border2)}
+.state-row{display:flex;align-items:center;gap:6px;padding:5px 4px;border-bottom:1px solid var(--border2)}
 .state-row:last-child{border-bottom:none}
-.s-code{font-family:var(--mono);font-size:11px;color:var(--accent);width:26px;flex-shrink:0;text-align:center}
-.s-track{flex:1;height:7px;background:rgba(255,255,255,.04);border-radius:3px}
-.s-fill{height:100%;border-radius:3px;transition:width 1s ease}
-.s-count{font-family:var(--mono);font-size:11px;color:var(--text);width:34px;text-align:right;flex-shrink:0}
-.s-status{font-family:var(--mono);font-size:8px;padding:2px 6px;border-radius:3px;flex-shrink:0;min-width:48px;text-align:center}
+.s-code{font-family:var(--mono);font-size:13px;font-weight:700;width:28px;flex-shrink:0;text-align:center}
+.s-count{font-family:var(--mono);font-size:12px;color:var(--text);width:32px;text-align:right;flex-shrink:0}
+.s-status{font-family:var(--mono);font-size:8px;padding:2px 5px;border-radius:3px;flex-shrink:0;min-width:52px;text-align:center}
 
 /* heatmap */
 .heatmap{display:grid;grid-template-columns:repeat(8,1fr);gap:5px;flex:1;align-content:stretch}
@@ -1196,7 +1194,6 @@ function renderStates(stateData, sourceLabel) {
 
   function makeRows(states) {
     if (!states || !states.length) return `<div class="no-data-state"><div class="nd-icon">🗺</div><div class="nd-title">NO DATA</div></div>`;
-    const max = Math.max(...states.map(s => s.count || 0), 1);
     return states.map(s => {
       const code  = s.code || s.state || '??';
       const count = s.count || 0;
@@ -1205,11 +1202,10 @@ function renderStates(stateData, sourceLabel) {
       const col   = cpa === 0 ? 'var(--red)' : cpaColor(cpa);
       const cpaStr = cpa === 0 ? '∞' : '$' + parseFloat(cpa).toFixed(2);
       return `<div class="state-row">
-        <div class="s-code">${code}</div>
-        <div class="s-track"><div class="s-fill" style="width:${Math.round(count/max*100)}%;background:${col}"></div></div>
+        <div class="s-code" style="color:${col}">${code}</div>
         <div class="s-count">${count}</div>
-        <div style="font-family:var(--mono);font-size:10px;color:${col};width:44px;text-align:right;flex-shrink:0">${cpaStr}</div>
-        <div class="s-status" style="background:${col}18;color:${col};min-width:64px">${label}</div>
+        <div style="font-family:var(--mono);font-size:12px;font-weight:700;color:${col};flex:1;text-align:right;padding-right:4px">${cpaStr}</div>
+        <div class="s-status" style="background:${col}18;color:${col}">${label}</div>
       </div>`;
     }).join('');
   }

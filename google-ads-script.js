@@ -115,12 +115,16 @@ function pushGeo(ss, range) {
   var report = AdsApp.report(
     'SELECT Date, CampaignName, RegionCriteriaId, Impressions, Clicks, Cost, Conversions ' +
     'FROM GEO_PERFORMANCE_REPORT ' +
-    'WHERE Impressions > 0 ' +
+    'WHERE Cost > 0 ' +
     'DURING ' + range
   );
 
   // IsTargetingLocation NOT selected — AWQL returns combined/aggregated rows
   // matching the Google Ads UI Location Report (no targeting vs user-location split).
+  // NOTE: AWQL GEO_PERFORMANCE_REPORT uses impression-based geo attribution, so
+  // conversions will be lower than the UI Location Report (which uses click-based
+  // attribution across all windows). The data is directionally correct but will
+  // not exactly match the UI — especially for large states like CA and TX.
   var agg = {};
   var rows = report.rows();
   while (rows.hasNext()) {
