@@ -2588,6 +2588,22 @@ function buildTrajectory(kpis, chartDaily) {
   ];
 }
 
+// Restore the KPI row to its original DOM structure so renderKPIs can write to kv-*/ks-* elements.
+// Must be called whenever the no-data state may have wiped kpiRow.innerHTML.
+function resetKPIRow() {
+  const row = $('kpiRow');
+  if (!row) return;
+  // Only reset if the named child elements are missing (i.e. no-data state destroyed them)
+  if ($('kv-activations')) return;
+  row.innerHTML = `
+    <div class="kpi c-accent"><div class="kpi-lbl">Total Activations</div><div class="kpi-val" style="color:var(--accent)" id="kv-activations">—</div><div class="kpi-sub" id="ks-activations">loading...</div></div>
+    <div class="kpi c-green"><div class="kpi-lbl">Total Revenue</div><div class="kpi-val" style="color:var(--green)" id="kv-revenue">—</div><div class="kpi-sub" id="ks-revenue">loading...</div></div>
+    <div class="kpi c-amber"><div class="kpi-lbl">Applications</div><div class="kpi-val" style="color:var(--amber)" id="kv-apps">—</div><div class="kpi-sub" id="ks-apps">loading...</div></div>
+    <div class="kpi c-green"><div class="kpi-lbl">Ad Spend</div><div class="kpi-val" style="color:var(--green)" id="kv-spend">—</div><div class="kpi-sub" id="ks-spend">loading...</div></div>
+    <div class="kpi c-amber"><div class="kpi-lbl">Application CPA</div><div class="kpi-val" style="color:var(--amber)" id="kv-gcpa">—</div><div class="kpi-sub" id="ks-gcpa">loading...</div></div>
+    <div class="kpi c-red"><div class="kpi-lbl">Activation CPA</div><div class="kpi-val" style="color:var(--red)" id="kv-acpa">—</div><div class="kpi-sub" id="ks-acpa">loading...</div></div>`;
+}
+
 // Apply filters and re-render all panels
 function applyFilters() {
   activeCampaign = $('campaign-select')?.value || 'all';
@@ -2595,6 +2611,10 @@ function applyFilters() {
     customFrom = $('custom-from')?.value || null;
     customTo   = $('custom-to')?.value || null;
   }
+
+  // Always restore KPI row structure first — no-data state wipes kv-*/ks-* elements and
+  // renderKPIs() silently fails if they're missing, leaving the error state stuck on screen.
+  resetKPIRow();
 
   // If no live data at all, show error state
   if (!RAW.daily.length) {
