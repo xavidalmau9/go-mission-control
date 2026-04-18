@@ -261,6 +261,8 @@ Renders monthly table, CPA trend, BGOC panel, Projections vs Reality. `ORIG_PROJ
 | Top 20 states showing NO DATA | Filter checked `d.conv` (undefined after map) instead of `d.count` | Fixed to `d.count > 0` |
 | $∞ waste states missing from Worst 20 | `cpa === 0` evaluated as `0 > tiers.GOOD` = false, dropping zero-conversion states | Filter now catches `cpa === 0 \|\| cpa > tiers.GOOD` |
 | Geo sheet conversions far lower than UI Location Report | `WHERE Impressions > 0` dropped rows with cost/convs but no geo impression; plus AWQL uses impression-based attribution vs UI click-based | Changed to `WHERE Cost > 0`; residual gap is API limitation not fixable in scripts |
+| Middle column empty space at bottom of Assurance Intelligence | Fixed gap between BGOC and Top 10 States panels left dead space | `justify-content: space-between; height: 100%` auto-fills full column height |
+| Middle column misaligned at top vs left/right columns | BGOC panel started at very top of grid row | `padding-top: 28px` on middle column container nudges content down to match |
 
 ---
 
@@ -379,6 +381,18 @@ AWQL (Google Ads Query Language, used by Google Ads Scripts) returns numeric val
   - **Right: ⚠️ WORST 20 · HIGHEST CPA** — POOR/FATAL states + $∞ waste states, sorted worst first
   - Progress bars removed — replaced with larger state code (13px bold, color-coded by tier), conversion count, CPA, and status pill
   - `buildStates()` now returns `{ best: [], worst: [] }` — `renderStates()` writes to `stateListBest` and `stateListWorst`
+
+- **Top 10 States by Applications Volume panel** — fills the empty space below the BGOC Meta panel in the middle column of Assurance Intelligence section:
+  - Shows rank (1–10), state abbreviation, volume bar, application count, CPA color-coded by tier
+  - Fully date-filter aware — updates with every date range change via `applyFilters()`
+  - Built from geo data via `buildTopStates(geo)` / `renderTopStates()` functions
+  - Called in `applyFilters()` right after `renderStates()`
+  - Container ID: `topStatesPanel` — included in no-data block list
+
+### Layout / Spacing
+- **Assurance Intelligence 3-column bottom row** — middle column uses `justify-content: space-between; height: 100%` so BGOC panel stays top and Top 10 States locks to bottom, auto-filling the full column height regardless of content in other columns
+- **Middle column top padding** — `padding-top: 28px` added so the BGOC heading and rectangle align with where content starts in the left and right columns
+- **Projections vs Reality cards** — padding increased from `8px 0` → `14px 0` per card for better vertical spacing and alignment with column 1
 
 ### Known Limitation — Geo Data vs Google Ads UI
 The Geo sheet will **never exactly match** the Google Ads UI Location Report. The AWQL `GEO_PERFORMANCE_REPORT` uses impression-based geographic attribution; the UI report uses click-based attribution across all conversion windows. Small states (NC, NE) are close; large states with national search intent (CA, TX) will always show lower conversions in the sheet. The `WHERE Cost > 0` fix closes some of the gap but not all. This is a fundamental Google Ads API limitation — not a bug to fix.
