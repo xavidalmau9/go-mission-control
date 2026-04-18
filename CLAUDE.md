@@ -1,6 +1,6 @@
 # Mission Control Dashboard — Claude Project Instructions
 **GO Advertising · Assurance Wireless / BGOA Partner Dashboard**
-**Last updated: April 17, 2026 (session 7)**
+**Last updated: April 17, 2026 (session 8)**
 
 > This file is read by Claude at the start of every session. Update it whenever significant decisions are made.
 
@@ -257,6 +257,10 @@ Renders monthly table, CPA trend, BGOC panel, Projections vs Reality. `ORIG_PROJ
 | All states data wrong — CA showing 1 conversion | Same AWQL comma bug in `pushGeo`, `pushKeywords`, `pushSearchTerms` — `parseFloat("1,234")` = 1 | Applied `cleanNum()` to all numeric fields in all 6 script functions |
 | Remaining `parseFloat` calls in dashboard | `renderBrief`, `buildDevices`, keyword CPA list still used raw `parseFloat()` | All converted to `pn()` |
 | Activation Rate showing confirmed % for TODAY | TODAY has no confirmed activation data (T+1) — showing 55.8% implied it was real | TODAY and fallback views now show "PROJECTED" label in amber |
+| Date range stuck on error after no-data | `kpiRow.innerHTML` replaced by error HTML, destroying `kv-*` elements — `renderKPIs()` silently failed | `resetKPIRow()` called at top of `applyFilters()` restores elements before rendering |
+| Top 20 states showing NO DATA | Filter checked `d.conv` (undefined after map) instead of `d.count` | Fixed to `d.count > 0` |
+| $∞ waste states missing from Worst 20 | `cpa === 0` evaluated as `0 > tiers.GOOD` = false, dropping zero-conversion states | Filter now catches `cpa === 0 \|\| cpa > tiers.GOOD` |
+| Geo sheet conversions far lower than UI Location Report | `WHERE Impressions > 0` dropped rows with cost/convs but no geo impression; plus AWQL uses impression-based attribution vs UI click-based | Changed to `WHERE Cost > 0`; residual gap is API limitation not fixable in scripts |
 
 ---
 
@@ -358,6 +362,30 @@ AWQL (Google Ads Query Language, used by Google Ads Scripts) returns numeric val
 - `Hourly`: Any hour with cost > $999 had wrong values
 
 **The fix:** `cleanNum()` in the script, `pn()` in the dashboard — both strip commas before `parseFloat`. Applied to ALL numeric fields in ALL 6 sheet functions. Do not ever use raw `parseFloat()` on AWQL data.
+
+---
+
+## Session 8 Changes (Apr 17, 2026)
+
+### Fixed
+- **Date range refresh bug** — after a "no data" error (e.g. bad custom date), switching to another date range left the error screen stuck. Root cause: the no-data block replaced `kpiRow.innerHTML` with error HTML, destroying all `kv-*`/`ks-*` elements inside it. `renderKPIs()` then silently threw null errors and never rendered. Fix: added `resetKPIRow()` — called at the top of every `applyFilters()` run, it detects when the KPI tile elements are missing and restores the original HTML structure before rendering. Zero impact on normal renders.
+- **State panel "Top 20" showing NO DATA** — `buildStates()` mapped rows to `{count}` but the filter still checked `d.conv` (undefined). Fixed: `d.conv > 0` → `d.count > 0`.
+- **$∞ waste states missing from Worst 20** — states with spend but 0 conversions had `cpa = 0`, so `cpa > tiers.GOOD` was false and they were silently dropped. Fixed: filter now catches `cpa === 0 || cpa > tiers.GOOD`. Sort pushes infinite-CPA states to the top.
+- **Geo script `WHERE Impressions > 0`** — changed to `WHERE Cost > 0` in `pushGeo()`, same fix as DailyCampaign. Rows with cost/conversions but no tracked impression were being dropped, causing states like TX and NJ to show 0 conversions in the sheet. **Requires manual paste into Google Ads Scripts and one manual Run to take effect.**
+
+### Added
+- **State Performance panel — Top 20 & Worst 20 side by side** — replaced single "Problem States · FATAL & POOR Only" panel with a two-column layout:
+  - **Left: 🏆 TOP 20 · LOWEST CPA** — all states with conversions, sorted best CPA first (no tier filter — top 20 regardless of tier)
+  - **Right: ⚠️ WORST 20 · HIGHEST CPA** — POOR/FATAL states + $∞ waste states, sorted worst first
+  - Progress bars removed — replaced with larger state code (13px bold, color-coded by tier), conversion count, CPA, and status pill
+  - `buildStates()` now returns `{ best: [], worst: [] }` — `renderStates()` writes to `stateListBest` and `stateListWorst`
+
+### Known Limitation — Geo Data vs Google Ads UI
+The Geo sheet will **never exactly match** the Google Ads UI Location Report. The AWQL `GEO_PERFORMANCE_REPORT` uses impression-based geographic attribution; the UI report uses click-based attribution across all conversion windows. Small states (NC, NE) are close; large states with national search intent (CA, TX) will always show lower conversions in the sheet. The `WHERE Cost > 0` fix closes some of the gap but not all. This is a fundamental Google Ads API limitation — not a bug to fix.
+
+### Google Ads Script — Current State
+The only change from the previous version is line 118: `WHERE Impressions > 0` → `WHERE Cost > 0` in `pushGeo`.
+All other functions unchanged. Full current script is in `/Users/305partners/assurance/google-ads-script.js`.
 
 ---
 
