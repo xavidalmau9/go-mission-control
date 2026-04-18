@@ -578,11 +578,19 @@ body::after{content:'';position:fixed;inset:0;background-image:linear-gradient(r
         </div>
       </div>
 
-      <!-- BGOC Meta -->
-      <div>
-        <div style="font-family:var(--mono);font-size:8px;color:var(--accent);letter-spacing:2px;margin-bottom:10px">META ADS (BGOC) · APRIL 2026</div>
-        <div id="bgocPanel">
-          <div class="no-data-state"><div class="nd-icon">📘</div><div class="nd-title">LOADING...</div></div>
+      <!-- BGOC Meta + Top States by Volume -->
+      <div style="display:flex;flex-direction:column;gap:18px">
+        <div>
+          <div style="font-family:var(--mono);font-size:8px;color:var(--accent);letter-spacing:2px;margin-bottom:10px">META ADS (BGOC) · APRIL 2026</div>
+          <div id="bgocPanel">
+            <div class="no-data-state"><div class="nd-icon">📘</div><div class="nd-title">LOADING...</div></div>
+          </div>
+        </div>
+        <div>
+          <div style="font-family:var(--mono);font-size:8px;color:var(--accent);letter-spacing:2px;margin-bottom:8px">TOP 10 STATES · APPLICATIONS VOLUME <span id="topStatesPeriod" style="color:var(--muted);margin-left:6px"></span></div>
+          <div id="topStatesPanel">
+            <div class="no-data-state"><div class="nd-icon">📍</div><div class="nd-title">LOADING...</div></div>
+          </div>
         </div>
       </div>
 
@@ -2560,6 +2568,65 @@ function buildStates(geo) {
   return { best, worst };
 }
 
+// Top 10 states by application volume (conversions from geo data)
+function buildTopStates(geo) {
+  if (!geo.length) return [];
+  const byState = {};
+  geo.forEach(r => {
+    const raw = (r.Region || r.RegionName || r.State || r.state || '').trim();
+    if (!raw) return;
+    const statePart = raw.replace(/,\s*(United States|USA|US)$/i, '').trim();
+    const isNumericGeo = /^\d{4,}$/.test(statePart);
+    let stateKey, stateLabel;
+    if (isNumericGeo) {
+      const zipPart = statePart.padStart(5,'0').substring(0,5);
+      const name = zipToStateName(zipPart);
+      stateKey   = name || 'Unknown';
+      stateLabel = name ? (STATE_ABBRS[name] || name.substring(0,2).toUpperCase()) : 'UNK';
+    } else {
+      stateKey   = statePart;
+      stateLabel = STATE_ABBRS[statePart] || statePart.substring(0,2).toUpperCase();
+    }
+    if (!byState[stateKey]) byState[stateKey] = { label: stateLabel, conv: 0, cost: 0 };
+    byState[stateKey].conv += pn(r.Conversions);
+    byState[stateKey].cost += pn(r.Cost);
+  });
+  return Object.values(byState)
+    .map(d => ({ code: d.label, conv: d.conv, cost: d.cost, cpa: d.conv > 0 ? d.cost/d.conv : 0 }))
+    .filter(d => d.conv > 0)
+    .sort((a,b) => b.conv - a.conv)
+    .slice(0, 10);
+}
+
+function renderTopStates(states) {
+  const el = $('topStatesPanel');
+  const periodEl = $('topStatesPeriod');
+  if (!el) return;
+  if (periodEl) {
+    const { from, to } = getDateRange();
+    periodEl.textContent = from && to ? '· ' + from.substring(5) + ' → ' + to.substring(5) : '';
+  }
+  if (!states || !states.length) {
+    el.innerHTML = `<div class="no-data-state"><div class="nd-icon">📍</div><div class="nd-title">NO GEO DATA</div></div>`;
+    return;
+  }
+  const max = states[0].conv; // already sorted desc, first = max
+  el.innerHTML = states.map((s, i) => {
+    const pct = Math.round(s.conv / max * 100);
+    const col  = cpaColor(s.cpa);
+    const rank = i + 1;
+    return `<div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid var(--border2)">
+      <div style="font-family:var(--mono);font-size:10px;color:var(--muted);width:14px;text-align:right;flex-shrink:0">${rank}</div>
+      <div style="font-family:var(--mono);font-size:13px;font-weight:700;color:var(--accent);width:28px;flex-shrink:0">${s.code}</div>
+      <div style="flex:1;height:6px;background:rgba(255,255,255,.05);border-radius:3px;overflow:hidden">
+        <div style="height:100%;width:${pct}%;background:var(--accent);border-radius:3px;opacity:0.7"></div>
+      </div>
+      <div style="font-family:var(--mono);font-size:12px;font-weight:700;color:var(--text);width:40px;text-align:right;flex-shrink:0">${Math.round(s.conv).toLocaleString()}</div>
+      <div style="font-family:var(--mono);font-size:10px;color:${col};width:42px;text-align:right;flex-shrink:0">$${s.cpa.toFixed(2)}</div>
+    </div>`;
+  }).join('') + `<div style="font-size:9px;color:var(--muted);margin-top:6px;text-align:right">Applications · Google Ads Geo data</div>`;
+}
+
 // Build hourly
 function buildHourly(hourly) {
   if (!hourly.length) return [];
@@ -2680,7 +2747,7 @@ function applyFilters() {
     $('periodBanner').textContent = `REPORT WINDOW: ${from} – ${to} · NO DATA`;
     $('chartRange').textContent = from + ' → ' + to;
     // Clear all panels cleanly
-    ['kpiRow','mainChart','devicePanel','stateListBest','stateListWorst','heatmap','intelFeed','summaryText','projectionText','trajectory','campCards'].forEach(id => {
+    ['kpiRow','mainChart','devicePanel','stateListBest','stateListWorst','heatmap','intelFeed','summaryText','projectionText','trajectory','campCards','topStatesPanel'].forEach(id => {
       const el = $(id);
       if (el) el.innerHTML = `<div class="no-data-state"><div class="nd-icon">📭</div><div class="nd-title">NO DATA FOR THIS PERIOD</div><div class="nd-sub" style="max-width:340px">${msg}</div></div>`;
     });
@@ -2713,6 +2780,7 @@ function applyFilters() {
   const devLabel = getFallbackLabel(f.devices.length ? f.devices : devices);
   try { renderDevices(buildDevices(devices), devLabel); } catch(e) { console.error('Devices',e); }
   try { renderStates(buildStates(geo), geoLabel); }      catch(e) { console.error('States',e); }
+  try { renderTopStates(buildTopStates(geo)); }          catch(e) { console.error('TopStates',e); }
   try { renderHeatmap(buildHourly(hourly)); }  catch(e) { console.error('Heatmap',e); }
   try { renderFeed(chartData); }               catch(e) { console.error('Feed',e); }
   try { renderSummary(chartData, kpis); }      catch(e) { console.error('Summary',e); }
