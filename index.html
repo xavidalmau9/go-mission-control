@@ -444,11 +444,24 @@ body::after{content:'';position:fixed;inset:0;background-image:linear-gradient(r
     <!-- States -->
     <div class="panel" style="display:flex;flex-direction:column">
       <div class="panel-hdr">
-        <div class="ptitle">Problem States · FATAL &amp; POOR Only</div>
+        <div class="ptitle">State Performance · Top 20 &amp; Worst 20</div>
         <div class="pmeta" id="statePeriod">LIVE DATA</div>
       </div>
-      <div id="stateList" style="flex:1;display:flex;flex-direction:column;justify-content:flex-start;gap:0;overflow-y:auto;min-height:0">
-        <div class="no-data-state"><div class="nd-icon">🗺</div><div class="nd-title">AWAITING LIVE DATA</div></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:0;flex:1;min-height:0;overflow:hidden">
+        <!-- Best 20 -->
+        <div style="display:flex;flex-direction:column;min-height:0;padding-right:8px">
+          <div style="font-size:9px;font-weight:700;color:var(--green);letter-spacing:.08em;padding:5px 4px 4px;border-bottom:1px solid rgba(52,211,153,0.18);margin-bottom:2px;flex-shrink:0">🏆 TOP 20 · LOWEST CPA</div>
+          <div id="stateListBest" style="flex:1;display:flex;flex-direction:column;justify-content:flex-start;gap:0;overflow-y:auto;min-height:0">
+            <div class="no-data-state"><div class="nd-icon">🗺</div><div class="nd-title">AWAITING LIVE DATA</div></div>
+          </div>
+        </div>
+        <!-- Worst 20 -->
+        <div style="display:flex;flex-direction:column;min-height:0;border-left:1px solid var(--border2);padding-left:10px">
+          <div style="font-size:9px;font-weight:700;color:var(--red);letter-spacing:.08em;padding:5px 4px 4px;border-bottom:1px solid rgba(248,113,113,0.18);margin-bottom:2px;flex-shrink:0">⚠️ WORST 20 · HIGHEST CPA</div>
+          <div id="stateListWorst" style="flex:1;display:flex;flex-direction:column;justify-content:flex-start;gap:0;overflow-y:auto;min-height:0">
+            <div class="no-data-state"><div class="nd-icon">🗺</div><div class="nd-title">AWAITING LIVE DATA</div></div>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -1170,35 +1183,41 @@ function renderFeed(daily) {
   }).join('');
 }
 
-function renderStates(states, sourceLabel) {
+function renderStates(stateData, sourceLabel) {
   const sp = $('statePeriod');
   if (sp) {
     const { from, to } = getDateRange();
     const periodStr = from && to ? from.substring(5) + ' → ' + to.substring(5) : 'LIVE DATA';
     sp.textContent = sourceLabel ? `LATEST: ${sourceLabel}` : periodStr;
   }
-  if (!states || !states.length) {
-    $('stateList').innerHTML = `<div class="no-data-state"><div class="nd-icon">🗺</div><div class="nd-title">NO GEO DATA</div><div class="nd-sub">No geo data available</div></div>`;
-    return;
+  // Support both old array format and new { best, worst } object
+  const best  = Array.isArray(stateData) ? [] : (stateData?.best  || []);
+  const worst = Array.isArray(stateData) ? stateData : (stateData?.worst || []);
+
+  function makeRows(states) {
+    if (!states || !states.length) return `<div class="no-data-state"><div class="nd-icon">🗺</div><div class="nd-title">NO DATA</div></div>`;
+    const max = Math.max(...states.map(s => s.count || 0), 1);
+    return states.map(s => {
+      const code  = s.code || s.state || '??';
+      const count = s.count || 0;
+      const cpa   = s.cpa || 0;
+      const label = cpa === 0 ? '∞ WASTE' : cpaLabel(cpa);
+      const col   = cpa === 0 ? 'var(--red)' : cpaColor(cpa);
+      const cpaStr = cpa === 0 ? '∞' : '$' + parseFloat(cpa).toFixed(2);
+      return `<div class="state-row">
+        <div class="s-code">${code}</div>
+        <div class="s-track"><div class="s-fill" style="width:${Math.round(count/max*100)}%;background:${col}"></div></div>
+        <div class="s-count">${count}</div>
+        <div style="font-family:var(--mono);font-size:10px;color:${col};width:44px;text-align:right;flex-shrink:0">${cpaStr}</div>
+        <div class="s-status" style="background:${col}18;color:${col};min-width:64px">${label}</div>
+      </div>`;
+    }).join('');
   }
-  const max = Math.max(...states.map(s => s.conv || s.count || 0));
-  const getStatus = (cpa) => {
-    if (!cpa) return {label:'—',col:'var(--muted)'};
-    return { label: cpaLabel(cpa), col: cpaColor(cpa) };
-  };
-  $('stateList').innerHTML = states.map(s => {
-    const code = s.code || s.state || '??';
-    const count = s.count || s.conv || 0;
-    const cpa = s.cpa || 0;
-    const {label,col} = getStatus(cpa);
-    return `<div class="state-row">
-      <div class="s-code">${code}</div>
-      <div class="s-track"><div class="s-fill" style="width:${Math.round(count/max*100)}%;background:${col}"></div></div>
-      <div class="s-count">${count}</div>
-      <div style="font-family:var(--mono);font-size:10px;color:${col};width:44px;text-align:right;flex-shrink:0">${cpa ? '$'+parseFloat(cpa).toFixed(2) : '—'}</div>
-      <div class="s-status" style="background:${col}18;color:${col};min-width:64px">${label}</div>
-    </div>`;
-  }).join('');
+
+  const bestEl  = $('stateListBest');
+  const worstEl = $('stateListWorst');
+  if (bestEl)  bestEl.innerHTML  = makeRows(best);
+  if (worstEl) worstEl.innerHTML = makeRows(worst);
 }
 
 function renderHeatmap(hours) {
@@ -2499,7 +2518,7 @@ function buildDevices(devices) {
 // Build geo rows — aggregate by STATE so we see state-level performance.
 // All Maryland zip codes roll up into one "Maryland" row.
 function buildStates(geo) {
-  if (!geo.length) return [];
+  if (!geo.length) return { best: [], worst: [] };
   const byState = {};
   geo.forEach(r => {
     const raw = (r.Region || r.RegionName || r.State || r.state || '').trim();
@@ -2524,12 +2543,25 @@ function buildStates(geo) {
     byState[stateKey].cost += cost;
     byState[stateKey].conv += conv;
   });
+  const rows = Object.values(byState)
+    .map(d => ({ code: d.label, cpa: d.conv > 0 ? d.cost/d.conv : 0, count: Math.round(d.conv), spend: d.cost }));
   const tiers = getAppTiers();
-  return Object.values(byState)
-    .map(d => ({ code: d.label, cpa: d.conv > 0 ? d.cost/d.conv : 0, count: Math.round(d.conv), spend: d.cost }))
-    .filter(d => d.spend > 0 && d.cpa > tiers.GOOD)   // FATAL or POOR only — states needing action
-    .sort((a,b) => b.cpa - a.cpa)                      // worst CPA first
+  // Top 20 best: states with conversions, sorted by lowest (best) CPA
+  const best = rows
+    .filter(d => d.spend > 0 && d.count > 0 && d.cpa > 0)
+    .sort((a,b) => a.cpa - b.cpa)
     .slice(0, 20);
+  // Worst 20: states with spend but POOR/FATAL CPA, OR zero conversions ($∞ waste)
+  // Sort: infinite CPA (no conversions) first, then by highest CPA descending
+  const worst = rows
+    .filter(d => d.spend > 0 && (d.cpa === 0 || d.cpa > tiers.GOOD))
+    .sort((a,b) => {
+      const va = a.cpa === 0 ? Infinity : a.cpa;
+      const vb = b.cpa === 0 ? Infinity : b.cpa;
+      return vb - va;
+    })
+    .slice(0, 20);
+  return { best, worst };
 }
 
 // Build hourly
@@ -2652,7 +2684,7 @@ function applyFilters() {
     $('periodBanner').textContent = `REPORT WINDOW: ${from} – ${to} · NO DATA`;
     $('chartRange').textContent = from + ' → ' + to;
     // Clear all panels cleanly
-    ['kpiRow','mainChart','devicePanel','stateList','heatmap','intelFeed','summaryText','projectionText','trajectory','campCards'].forEach(id => {
+    ['kpiRow','mainChart','devicePanel','stateListBest','stateListWorst','heatmap','intelFeed','summaryText','projectionText','trajectory','campCards'].forEach(id => {
       const el = $(id);
       if (el) el.innerHTML = `<div class="no-data-state"><div class="nd-icon">📭</div><div class="nd-title">NO DATA FOR THIS PERIOD</div><div class="nd-sub" style="max-width:340px">${msg}</div></div>`;
     });
@@ -2684,7 +2716,7 @@ function applyFilters() {
   const geoLabel = getFallbackLabel(f.geo.length ? f.geo : geo);
   const devLabel = getFallbackLabel(f.devices.length ? f.devices : devices);
   try { renderDevices(buildDevices(devices), devLabel); } catch(e) { console.error('Devices',e); }
-  try { renderStates(buildStates(geo), geoLabel); }       catch(e) { console.error('States',e); }
+  try { renderStates(buildStates(geo), geoLabel); }      catch(e) { console.error('States',e); }
   try { renderHeatmap(buildHourly(hourly)); }  catch(e) { console.error('Heatmap',e); }
   try { renderFeed(chartData); }               catch(e) { console.error('Feed',e); }
   try { renderSummary(chartData, kpis); }      catch(e) { console.error('Summary',e); }
