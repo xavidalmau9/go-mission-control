@@ -1,6 +1,6 @@
 # Mission Control Dashboard — Claude Project Instructions
 **GO Advertising · Assurance Wireless / BGOA Partner Dashboard**
-**Last updated: April 17, 2026 (session 8)**
+**Last updated: April 20, 2026 (session 9)**
 
 > This file is read by Claude at the start of every session. Update it whenever significant decisions are made.
 
@@ -45,10 +45,11 @@ Logic: `Math.max(confirmedApps, googleApps)` — never hardcode one source.
 FANTASTIC : ≤ $10.00 per activation
 EXCELLENT : ≤ $12.50 per activation
 GOOD      : ≤ $15.00 per activation
-POOR      : > $15.00 per activation
-FATAL     : > $25.00 per activation (costs more than we earn)
+POOR      : > $15.00 per activation   (anything above $15 is POOR — there is no FATAL tier)
 ```
 App CPA thresholds are DERIVED: App CPA tier = Act CPA tier × activation_rate (never hardcoded)
+
+**There are exactly 4 tiers. FATAL was removed in session 9. Never add it back unless explicitly instructed.**
 
 ### Active Campaigns (as of Apr 2026)
 4 enabled Google Search campaigns:
@@ -263,6 +264,8 @@ Renders monthly table, CPA trend, BGOC panel, Projections vs Reality. `ORIG_PROJ
 | Geo sheet conversions far lower than UI Location Report | `WHERE Impressions > 0` dropped rows with cost/convs but no geo impression; plus AWQL uses impression-based attribution vs UI click-based | Changed to `WHERE Cost > 0`; residual gap is API limitation not fixable in scripts |
 | Middle column empty space at bottom of Assurance Intelligence | Fixed gap between BGOC and Top 10 States panels left dead space | `justify-content: space-between; height: 100%` auto-fills full column height |
 | Middle column misaligned at top vs left/right columns | BGOC panel started at very top of grid row | `padding-top: 28px` on middle column container nudges content down to match |
+| FATAL tier confusing / unnecessary | 5-tier system had FATAL (>$25) but that's just "very POOR" — redundant and confusing | Removed FATAL entirely; 4 tiers now: FANTASTIC/EXCELLENT/GOOD/POOR |
+| ∞ shown for zero-conversion states | States with $0 conversions showed `∞` CPA — meaningless | Now shows `$XX.XX / 0 conv` with POOR label so actual waste is visible |
 
 ---
 
@@ -378,7 +381,7 @@ AWQL (Google Ads Query Language, used by Google Ads Scripts) returns numeric val
 ### Added
 - **State Performance panel — Top 20 & Worst 20 side by side** — replaced single "Problem States · FATAL & POOR Only" panel with a two-column layout:
   - **Left: 🏆 TOP 20 · LOWEST CPA** — all states with conversions, sorted best CPA first (no tier filter — top 20 regardless of tier)
-  - **Right: ⚠️ WORST 20 · HIGHEST CPA** — POOR/FATAL states + $∞ waste states, sorted worst first
+  - **Right: ⚠️ WORST 20 · HIGHEST CPA** — POOR states + $∞ waste states (0-conversion states), sorted worst first
   - Progress bars removed — replaced with larger state code (13px bold, color-coded by tier), conversion count, CPA, and status pill
   - `buildStates()` now returns `{ best: [], worst: [] }` — `renderStates()` writes to `stateListBest` and `stateListWorst`
 
@@ -498,7 +501,31 @@ We have **beaten every month with a real target**.
 ## CPA Target (permanent, hardcoded business rule)
 - **Target Activation CPA: $15.00** — this never changes unless explicitly instructed
 - This applies to ALL months including Soft-Launch and ramp months
-- The CPA tiers (FANTASTIC ≤$10, EXCELLENT ≤$12.50, GOOD ≤$15, POOR >$15, FATAL >$25) are derived from this
+- The CPA tiers (FANTASTIC ≤$10, EXCELLENT ≤$12.50, GOOD ≤$15, POOR >$15) are derived from this — 4 tiers only, no FATAL
+
+---
+
+## Session 9 Changes (Apr 20, 2026)
+
+### Changed
+
+- **FATAL tier removed — 4 tiers only** — User explicitly requested removing FATAL. The system now uses exactly 4 tiers: FANTASTIC / EXCELLENT / GOOD / POOR. Anything > $15 activation CPA is POOR. There is no fifth tier.
+  - `ACT_TIERS` — removed `POOR: 25.00` threshold and FATAL comment. Now only 3 threshold values in the object; anything exceeding GOOD is implicitly POOR.
+  - `getAppTiers()` — removed FATAL property from returned object
+  - `cpaColor()` / `cpaLabel()` — removed FATAL branches; final `else` returns red / `'POOR'`
+  - `actCpaColor()` / `actCpaLabel()` — same
+  - Keywords `getAction()` — `t2.FATAL` → `t2.GOOD * 2`
+  - Search terms `getAction()` — `t3.FATAL` → `t3.GOOD * 2`
+  - `briefMeta` static HTML legend — `>$25 FATAL` → `>$15 POOR`
+  - Grade function — removed F grade; D is now worst: `cpa<=t.FANTASTIC?'A':cpa<=t.EXCELLENT?'B':cpa<=t.GOOD?'C':'D'`
+  - Console.log — removed FATAL reference
+  - Comment — "POOR/FATAL CPA" → "POOR CPA"
+
+- **∞ (infinity) replaced with actual spend numbers in Worst 20 States panel** — States with spend > 0 but 0 conversions previously showed `∞` as the CPA and `∞ WASTE` as the label. Both were meaningless and confusing. Now shows `$XX.XX / 0 conv` (actual spend to two decimal places, e.g. `$47.23 / 0 conv`) with `POOR` as the tier label. Tier color is red (`var(--red)`) matching POOR. The states still sort to the top of the Worst 20 list since their effective CPA is treated as Infinity for sort purposes.
+
+### What NOT to Do (additions)
+- **Never add a FATAL tier back** — it was explicitly removed. 4 tiers only.
+- **Never show ∞ for any CPA** — always show the actual spend with `/ 0 conv` suffix for zero-conversion states.
 
 ---
 
