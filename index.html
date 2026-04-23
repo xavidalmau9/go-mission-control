@@ -1764,13 +1764,13 @@ function renderDeviceCPAChart(data, periodLabel) {
           borderWidth: 2, pointRadius: 2, tension: 0.3, spanGaps: true, fill: false,
         },
         {
-          label: `$${t.FANTASTIC} Target`,
+          label: `$${t.FANTASTIC.toFixed(2)} Target`,
           data: data.dates.map(() => t.FANTASTIC),
           borderColor: 'rgba(52,211,153,0.5)',
           borderWidth: 1, borderDash: [4,4], pointRadius: 0, fill: false,
         },
         {
-          label: `$${t.GOOD} Good`,
+          label: `$${t.GOOD.toFixed(2)} Good`,
           data: data.dates.map(() => t.GOOD),
           borderColor: 'rgba(248,113,113,0.35)',
           borderWidth: 1, borderDash: [2,4], pointRadius: 0, fill: false,
@@ -1793,7 +1793,13 @@ function renderDeviceCPAChart(data, periodLabel) {
           titleColor: '#38bdf8', bodyColor: '#94a3b8',
           titleFont: { family: 'Space Mono', size: 9 }, bodyFont: { family: 'Space Mono', size: 9 },
           callbacks: {
-            label: ctx => ctx.parsed.y !== null ? `${ctx.dataset.label}: $${ctx.parsed.y.toFixed(2)}` : null,
+            label: ctx => {
+              if (ctx.parsed.y === null || ctx.parsed.y === undefined) return null;
+              const name = ctx.dataset.label || '';
+              // Reference lines already have $ in the label — just show label as-is
+              if (name.includes('Target') || name.includes('Good')) return name;
+              return `${name}: $${ctx.parsed.y.toFixed(2)}`;
+            }
           }
         }
       },
