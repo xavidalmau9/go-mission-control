@@ -389,6 +389,15 @@ body::after{content:'';position:fixed;inset:0;background-image:linear-gradient(r
     </div>
   </div>
 
+  <!-- Device CPA Trend Chart -->
+  <div class="panel fade" style="animation-delay:.25s;margin-bottom:14px">
+    <div class="panel-hdr">
+      <div class="ptitle">Application CPA by Device · Daily Trend</div>
+      <div class="pmeta" id="deviceChartRange">CAMPAIGN FILTERED · GOOGLE ADS DEVICES</div>
+    </div>
+    <div style="position:relative;height:220px"><canvas id="deviceCPAChart"></canvas></div>
+  </div>
+
   <!-- Bottom Grid -->
   <div class="btm-grid fade" style="animation-delay:.3s;margin-bottom:14px">
 
@@ -1684,6 +1693,124 @@ function parseBGOARow(r) {
 }
 
 let cpaTrendChartInstance = null;
+let deviceCPAChartInstance = null;
+
+// Build per-day App CPA by device from the filtered devices dataset
+function buildDeviceTrend(devices, campaign) {
+  if (!devices || !devices.length) return null;
+  const byDateDevice = {};
+  devices.forEach(r => {
+    if (campaign && campaign !== 'all' && r.CampaignName !== campaign) return;
+    const d = normDateStr(r.Date || r.date || '');
+    if (!d) return;
+    const dev = (r.Device || r.DeviceType || r['Device Type'] || r['Device type'] || r.device || '').toLowerCase();
+    let key;
+    if (dev.includes('mobile'))                         key = 'mobile';
+    else if (dev.includes('computer') || dev.includes('desktop')) key = 'desktop';
+    else if (dev.includes('tablet'))                    key = 'tablet';
+    else return;
+    if (!byDateDevice[d]) byDateDevice[d] = {};
+    if (!byDateDevice[d][key]) byDateDevice[d][key] = { cost: 0, conv: 0 };
+    byDateDevice[d][key].cost += pn(r.Cost);
+    byDateDevice[d][key].conv += pn(r.Conversions);
+  });
+  const dates = Object.keys(byDateDevice).sort();
+  if (!dates.length) return null;
+  const cpa = (d, dev) => {
+    const v = byDateDevice[d]?.[dev];
+    return v && v.conv > 0 ? +(v.cost / v.conv).toFixed(2) : null;
+  };
+  return {
+    dates,
+    mobile:  dates.map(d => cpa(d, 'mobile')),
+    desktop: dates.map(d => cpa(d, 'desktop')),
+    tablet:  dates.map(d => cpa(d, 'tablet')),
+  };
+}
+
+function renderDeviceCPAChart(data, periodLabel) {
+  const ctx = $('deviceCPAChart')?.getContext('2d');
+  const rangeEl = $('deviceChartRange');
+  if (!ctx) return;
+  if (deviceCPAChartInstance) { deviceCPAChartInstance.destroy(); deviceCPAChartInstance = null; }
+  if (rangeEl) rangeEl.textContent = periodLabel || 'CAMPAIGN FILTERED · GOOGLE ADS DEVICES';
+  if (!data || !data.dates.length) return;
+
+  const t = getAppTiers();
+  deviceCPAChartInstance = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: data.dates.map(d => d.substring(5)),
+      datasets: [
+        {
+          label: 'Mobile',
+          data: data.mobile,
+          borderColor: 'rgba(56,189,248,0.9)',
+          backgroundColor: 'rgba(56,189,248,0.04)',
+          borderWidth: 2, pointRadius: 2, tension: 0.3, spanGaps: true, fill: false,
+        },
+        {
+          label: 'Desktop',
+          data: data.desktop,
+          borderColor: 'rgba(52,211,153,0.9)',
+          backgroundColor: 'rgba(52,211,153,0.04)',
+          borderWidth: 2, pointRadius: 2, tension: 0.3, spanGaps: true, fill: false,
+        },
+        {
+          label: 'Tablet',
+          data: data.tablet,
+          borderColor: 'rgba(129,140,248,0.9)',
+          backgroundColor: 'rgba(129,140,248,0.04)',
+          borderWidth: 2, pointRadius: 2, tension: 0.3, spanGaps: true, fill: false,
+        },
+        {
+          label: `$${t.FANTASTIC} Target`,
+          data: data.dates.map(() => t.FANTASTIC),
+          borderColor: 'rgba(52,211,153,0.5)',
+          borderWidth: 1, borderDash: [4,4], pointRadius: 0, fill: false,
+        },
+        {
+          label: `$${t.GOOD} Good`,
+          data: data.dates.map(() => t.GOOD),
+          borderColor: 'rgba(248,113,113,0.35)',
+          borderWidth: 1, borderDash: [2,4], pointRadius: 0, fill: false,
+        },
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: {
+          display: true, position: 'top', align: 'end',
+          labels: { color: '#64748b', font: { family: 'Space Mono', size: 8 }, boxWidth: 10, boxHeight: 5, padding: 10,
+            filter: item => item.text !== `$${t.FANTASTIC} Target` && item.text !== `$${t.GOOD} Good` ? true :
+              (item.text === `$${t.FANTASTIC} Target` || item.text === `$${t.GOOD} Good`)
+          }
+        },
+        tooltip: {
+          backgroundColor: '#111827', borderColor: 'rgba(56,189,248,0.3)', borderWidth: 1,
+          titleColor: '#38bdf8', bodyColor: '#94a3b8',
+          titleFont: { family: 'Space Mono', size: 9 }, bodyFont: { family: 'Space Mono', size: 9 },
+          callbacks: {
+            label: ctx => ctx.parsed.y !== null ? `${ctx.dataset.label}: $${ctx.parsed.y.toFixed(2)}` : null,
+          }
+        }
+      },
+      scales: {
+        x: {
+          grid: { color: 'rgba(255,255,255,0.02)' },
+          ticks: { color: '#475569', font: { family: 'Space Mono', size: 7 }, maxTicksLimit: 20, maxRotation: 45 }
+        },
+        y: {
+          grid: { color: 'rgba(255,255,255,0.03)' },
+          ticks: { color: '#475569', font: { family: 'Space Mono', size: 8 }, callback: v => '$' + v },
+          suggestedMin: 0, suggestedMax: 20
+        }
+      }
+    }
+  });
+}
 
 function renderAssuranceIntelligence() {
   const rows = RAW.bgoa.map(parseBGOARow).filter(Boolean).sort((a,b) => a.date.localeCompare(b.date));
@@ -2269,13 +2396,24 @@ async function retryFetch() {
 function populateCampaignDropdown() {
   const sel = $('campaign-select');
   if (!sel || !RAW.daily.length) return;
-  const camps = [...new Set(RAW.daily.map(r => r.CampaignName).filter(Boolean))].sort();
+  // Only show campaigns that have had spend in the last 30 days — filters out paused/removed campaigns
+  const cutoff = new Date(); cutoff.setDate(cutoff.getDate() - 30);
+  const cutoffStr = `${cutoff.getFullYear()}-${String(cutoff.getMonth()+1).padStart(2,'0')}-${String(cutoff.getDate()).padStart(2,'0')}`;
+  const activeCamps = [...new Set(
+    RAW.daily
+      .filter(r => normDateStr(r.Date || '') >= cutoffStr && pn(r.Cost) > 0)
+      .map(r => r.CampaignName)
+      .filter(Boolean)
+  )].sort();
+  const currentVal = sel.value; // preserve selection if already set
   sel.innerHTML = '<option value="all">All Campaigns</option>';
-  camps.forEach(c => {
+  activeCamps.forEach(c => {
     const opt = document.createElement('option');
     opt.value = c; opt.textContent = c;
     sel.appendChild(opt);
   });
+  // Restore previous selection if it's still valid
+  if (currentVal && currentVal !== 'all' && activeCamps.includes(currentVal)) sel.value = currentVal;
 }
 
 // Date range helper
@@ -2749,6 +2887,12 @@ function applyFilters() {
   const geoLabel = getFallbackLabel(f.geo.length ? f.geo : geo);
   const devLabel = getFallbackLabel(f.devices.length ? f.devices : devices);
   try { renderDevices(buildDevices(devices), devLabel); } catch(e) { console.error('Devices',e); }
+  try {
+    // Device CPA chart uses filtered device rows — responds to both date range and campaign filter
+    const devTrendData = buildDeviceTrend(f.devices.length ? f.devices : devices, activeCampaign);
+    const devChartLabel = period?.label ? `${period.label} · CAMPAIGN: ${activeCampaign === 'all' ? 'ALL' : activeCampaign.replace('Search - ','').replace(' | SS','').replace('Assurance Wireless','AW').trim()}` : 'GOOGLE ADS DEVICES';
+    renderDeviceCPAChart(devTrendData, devChartLabel);
+  } catch(e) { console.error('DeviceCPAChart',e); }
   try { renderStates(buildStates(geo), geoLabel); }      catch(e) { console.error('States',e); }
   try { renderTopStates(buildTopStates(geo)); }          catch(e) { console.error('TopStates',e); }
   try { renderHeatmap(buildHourly(hourly)); }  catch(e) { console.error('Heatmap',e); }
