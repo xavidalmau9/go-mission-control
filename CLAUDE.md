@@ -547,6 +547,8 @@ We have **beaten every month with a real target**.
 
 ### Changed
 
+- **Campaign Scorecard card label** — `G.CPA` relabeled to `App CPA` (`.cs-l` element inside each campaign card). Consistent with the KPI tile label and more descriptive than the old abbreviation.
+
 - **KPI layout redesigned — Primary + Secondary grids** — replaced single 6-column KPI grid with two stacked grids:
   - `.kpi-primary` — 4 tiles, `38px` font: Activations · Ad Spend · Applications · Activation CPA
   - `.kpi-secondary` — 2 tiles, `21px` font: Revenue · Application CPA
