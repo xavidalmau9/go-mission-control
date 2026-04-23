@@ -379,7 +379,7 @@ body::after{content:'';position:fixed;inset:0;background-image:linear-gradient(r
 
       <div class="panel" style="flex:1;display:flex;flex-direction:column">
         <div class="panel-hdr">
-          <div class="ptitle">Device Performance · Application &amp; Activation CPA</div>
+          <div class="ptitle">Device Performance · Application CPA</div>
           <div class="pmeta" id="devicePeriod">LIVE DATA</div>
         </div>
         <div id="devicePanel" style="flex:1;display:flex;flex-direction:column;justify-content:space-evenly;gap:8px">
@@ -1011,11 +1011,10 @@ function renderDevices(devData, sourceLabel) {
         <div class="dev-track"><div class="dev-fill" style="width:${pct}%;background:${col}"></div></div>
         <div class="dev-badge" style="background:var(--surface);border:1px solid ${col};color:${col}">${grade}</div>
       </div>
-      <div class="dev-stats">
-        <div class="dstat"><div class="dstat-v" style="color:${col}">${fmtCPA(appCpa)}</div><div class="dstat-l">APP CPA</div></div>
-        <div class="dstat"><div class="dstat-v" style="color:${col}">${fmtCPA(actCpa)}</div><div class="dstat-l">ACT CPA</div></div>
-        <div class="dstat"><div class="dstat-v">${apps > 0 ? apps.toLocaleString() : '—'}</div><div class="dstat-l">APPLICATIONS</div></div>
-        <div class="dstat"><div class="dstat-v" style="color:var(--accent)">${acts > 0 ? acts.toLocaleString() : '—'}</div><div class="dstat-l">ACTIVATIONS</div></div>
+      <div class="dev-stats" style="grid-template-columns:repeat(3,1fr)">
+        <div class="dstat"><div class="dstat-v" style="color:${col};font-size:16px">${fmtCPA(appCpa)}</div><div class="dstat-l">APPLICATION CPA</div></div>
+        <div class="dstat"><div class="dstat-v" style="font-size:16px">${apps > 0 ? apps.toLocaleString() : '—'}</div><div class="dstat-l">APPLICATIONS</div></div>
+        <div class="dstat"><div class="dstat-v" style="color:var(--green);font-size:16px">${devData[key+'Spend'] > 0 ? fmtMoney(devData[key+'Spend']) : '—'}</div><div class="dstat-l">SPEND</div></div>
       </div>
     </div>`;
   }).join('');
