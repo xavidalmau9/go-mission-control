@@ -1,6 +1,6 @@
 # Mission Control Dashboard — Claude Project Instructions
 **GO Advertising · Assurance Wireless / BGOA Partner Dashboard**
-**Last updated: April 20, 2026 (session 9)**
+**Last updated: April 23, 2026 (session 10)**
 
 > This file is read by Claude at the start of every session. Update it whenever significant decisions are made.
 
@@ -526,6 +526,65 @@ We have **beaten every month with a real target**.
 ### What NOT to Do (additions)
 - **Never add a FATAL tier back** — it was explicitly removed. 4 tiers only.
 - **Never show ∞ for any CPA** — always show the actual spend with `/ 0 conv` suffix for zero-conversion states.
+
+---
+
+## Session 10 Changes (Apr 23, 2026)
+
+### Added
+
+- **Application CPA by Device · Daily Trend chart** — new Chart.js multi-line chart between the main KPI grid and the bottom panels. Shows Mobile, Desktop, and Tablet Application CPA over time as separate color-coded lines. Includes two reference lines: `FANTASTIC` threshold (green dashed) and `GOOD` threshold (red dashed). Has its own independent date toggle (see below). Still responds to the campaign dropdown. Built by `buildDeviceTrend(devices, campaign)`, rendered by `renderDeviceCPAChart(trend)`. Container panel sits between the main performance grid and the Assurance Intelligence section.
+
+- **`buildDeviceTrend(devices, campaign)`** — aggregates Devices sheet rows by date and device type. Applies campaign filter when one is selected. Returns `{ dates, mobile, desktop, tablet }` where each array contains daily Application CPA values (null when no data for that day). `spanGaps: true` on the chart connects across missing days. Device key detection uses `.includes()` matching (mobile / computer|desktop / tablet).
+
+- **`renderDeviceCPAChart(trend)`** — creates/updates Chart.js instance (`deviceCPAChartInst`). Destroys previous instance on re-render. Colors: Mobile = `rgba(56,189,248,0.9)` (blue), Desktop = `rgba(52,211,153,0.9)` (green), Tablet = `rgba(129,140,248,0.9)` (purple). Reference line datasets use `pointRadius:0`, `borderDash:[5,5]`, `borderWidth:1`. Tooltip shows `${name}: $${val.toFixed(2)}` — always 2 decimal places.
+
+- **Device CPA chart independent date toggle** — the chart has its own **Last 7 | Last 30 | MTD | All Time** buttons in the panel header, completely independent of the main dashboard date filter. Defaults to **Last 30** on every load. Rationale: single-day views (Today/Yesterday) make the trend chart meaningless; the chart should always show a multi-day window regardless of what the main filter is set to.
+  - `devTrendPeriod` (module-level var, default `'30'`) — holds the active toggle selection
+  - `setDevTrend(period)` — updates `devTrendPeriod`, flips `.dtt-active` class on buttons, calls `refreshDevTrendChart()`
+  - `refreshDevTrendChart()` — computes `fromDate` from `devTrendPeriod`, filters `RAW.devices` directly, calls `buildDeviceTrend` + `renderDeviceCPAChart`. Called from `applyFilters()` instead of the old inline build — so campaign changes still re-render the chart.
+  - Button CSS: `.dtt-btn` / `.dtt-btn.dtt-active` — purple accent (`#a050ff`) to visually distinguish from the main date filter buttons (which use blue `#38bdf8`)
+
+### Changed
+
+- **KPI layout redesigned — Primary + Secondary grids** — replaced single 6-column KPI grid with two stacked grids:
+  - `.kpi-primary` — 4 tiles, `38px` font: Activations · Ad Spend · Applications · Activation CPA
+  - `.kpi-secondary` — 2 tiles, `21px` font: Revenue · Application CPA
+  - `resetKPIRow()` updated to restore both `.kpi-primary` and `.kpi-secondary` divs inside `kpiRow`
+
+- **"Yesterday at a Glance" section removed** — `renderBrief()` no longer renders the 6-card Yesterday grid. The brief section now only shows Action Items. Eliminates redundant/confusing duplicate data near the top of the dashboard.
+
+- **Keyword action badge logic overhauled — high-converter protection** — keywords that are driving significant conversions can never receive PAUSE or NEGATIVE badges:
+  - **Protection rule:** any keyword with `conv >= 5` OR `convShare >= 10%` of total conversions in the period is permanently protected
+  - Protected keywords get: `✓ SCALE UP` (FANTASTIC CPA), `✓ KEEP` (≤ GOOD CPA), `⚠ WATCH BID` (POOR CPA — warns without suggesting kill)
+  - Only zero-conversion keywords can receive `⛔ PAUSE` (cost > $50) or `⚠ LOW CONV` (cost > $20)
+  - `totalConv` calculated at render time from all keyword rows in view
+  - Same protection logic applied to Search Terms panel (`totalConvST`)
+
+- **Worst 20 States panel — cost-first display, sorted by highest spend** — replaced `$XX.XX / 0 conv` CPA format with spend-only display:
+  - Shows actual spend in amber (e.g. `$1.2k` or `$47.23`) + conversion count separately
+  - Sort changed from highest CPA → highest spend (`b.spend - a.spend`)
+  - States with 0 conversions show `0 CONV` label in red; states with conversions show count in muted
+  - Implemented via separate `makeWorstRows()` function (previously shared `makeRows()` with best panel)
+  - All zero-conversion states always show `POOR` label regardless of spend amount
+
+- **Business Trajectory projected spend fix** — `buildTrajectory()` was reading `kpis.spend` which reflects the active date filter (e.g. TODAY = ~$140 partial day). Now reads directly from `RAW.daily` filtered to the current calendar month prefix (`YYYY-MM`), then projects: `mtdSpend / dayOfMonth * daysInMonth`. Accurate regardless of which date range filter is active.
+
+- **Campaign dropdown — active campaigns only** — `populateCampaignDropdown()` now filters to campaigns with spend > 0 in the last 30 days. Paused, removed, or inactive campaigns are excluded. Cutoff date calculated with local date parts (not `toISOString()`) to avoid UTC timezone shift.
+
+- **Intel Feed — switched data source from Google Ads to BGOA spreadsheet** — `renderFeed()` now reads from `RAW.bgoa` instead of `RAW.daily`. Shows the confirmed Assurance funnel data (Date · Ad Spend · Applications · Approvals · Activations). Header row shows 7-day settled averages. Rows sorted most-recent-first, last 30 days shown. This gives a more meaningful view of the confirmed funnel rather than raw Google Ads conversions.
+
+- **Device Performance panel simplified — Applications only** — removed Activation CPA and Activations columns from device cards. Activations were projected (not confirmed) and potentially misleading. Each device card now shows 3 stats only: Application CPA · Applications · Spend. `dev-stats` grid changed from `repeat(4,1fr)` to `repeat(3,1fr)`. Panel title updated to "Application CPA by Device".
+
+- **Tooltip decimal formatting** — all dollar amounts in Chart.js tooltips capped at 2 decimal places. Reference line tooltip callbacks return the label text only (no value). Device trend chart uses `.toFixed(2)` throughout.
+
+### What NOT to Do (additions)
+- **Never suggest PAUSE or NEGATIVE for any keyword with ≥5 conversions or ≥10% conversion share** — these are business-critical keywords. Use `⚠ WATCH BID` for high-CPA protected keywords.
+- **Never read `kpis.spend` for trajectory/projection calculations** — always read from `RAW.daily` filtered to the calendar month. `kpis.spend` reflects the active date filter and will be wrong for any view other than "This Month".
+- **Never show Activation CPA or projected Activations in the Device Performance panel** — activations are estimated (not confirmed by Assurance); the panel only shows Application CPA, Applications, and Spend.
+- **Never show paused/inactive campaigns in the campaign dropdown** — filter to last-30-day spend > 0 only.
+- **Intel Feed must read from `RAW.bgoa`** — not `RAW.daily`. BGOA has the confirmed funnel (Applications → Approvals → Activations) which is what this panel is for.
+- **Never wire the Device CPA trend chart to the main date filter** — it has its own independent toggle (`devTrendPeriod`) and is refreshed via `refreshDevTrendChart()`. The main date filter (Today/Yesterday/Last 7/etc.) should never affect this chart. Always call `refreshDevTrendChart()` from `applyFilters()` — do not call `buildDeviceTrend(f.devices, ...)` directly there.
 
 ---
 
