@@ -2632,9 +2632,16 @@ function buildTrajectory(kpis, chartDaily) {
   const remainingDays = daysInMonth - dayOfMonth;
   const projectedActs = Math.round(mtdConfirmedActs + dailyPace * remainingDays);
 
+  // MTD spend always from RAW.daily for the current calendar month — never from kpis.spend
+  // (kpis.spend reflects the active date filter, e.g. "Today" gives only one day's partial spend)
+  const mtdSpend = (RAW && RAW.daily)
+    ? RAW.daily.filter(r => normDateStr(r.Date||'').startsWith(aprPrefix)).reduce((s,r) => s + pn(r.Cost), 0)
+    : 0;
+  const projSpend = mtdSpend > 0 ? Math.round(mtdSpend / dayOfMonth * daysInMonth) : 0;
+
   return [
     {month:monthName, status:'PROJECTED', metric:'Activations', val:projectedActs, color:'var(--accent)', proj:2000, isProjOnly:true},
-    {month:monthName, status:'PROJECTED', metric:'Spend',        val:Math.round(kpis.spend / dayOfMonth * daysInMonth), color:'var(--amber)', isDollar:true},
+    {month:monthName, status:'PROJECTED', metric:'Spend',        val:projSpend, color:'var(--amber)', isDollar:true},
     {month:monthName, status:'PROJECTED', metric:'Revenue',      val:Math.round(projectedActs * PAYOUT), color:'var(--green)', isDollar:true},
     {month:'MAR 2026', status:'PENDING',  metric:'Activations', val: Math.max(getLifelineActuals()['2026-03']?.acts||0, 1404), color:'var(--amber)', proj:1000},
     {month:'FEB 2026', status:'PAID ✓',   metric:'Activations', val: Math.max(getLifelineActuals()['2026-02']?.acts||0, 552),  color:'var(--green)', proj:500},
