@@ -60,8 +60,9 @@ body::after{content:'';position:fixed;inset:0;background-image:linear-gradient(r
 /* Error banner */
 #errorBanner{display:none;background:rgba(248,113,113,.1);border:1px solid rgba(248,113,113,.3);border-radius:6px;padding:10px 16px;margin-bottom:16px;font-family:var(--mono);font-size:11px;color:var(--red);letter-spacing:1px}
 
-/* ── KPI ROW ── */
-.kpi-row{display:grid;grid-template-columns:repeat(6,1fr);gap:10px;margin-bottom:14px}
+/* ── KPI ROW — 4 big primary + 2 secondary ── */
+.kpi-primary{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:10px}
+.kpi-secondary{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:14px}
 .kpi{background:var(--surface);border:1px solid var(--border2);border-radius:8px;padding:13px 14px 11px;position:relative;overflow:hidden;transition:border-color .2s,transform .15s}
 .kpi:hover{border-color:var(--border);transform:translateY(-1px)}
 .kpi::before{content:'';position:absolute;top:0;left:0;right:0;height:2px}
@@ -73,6 +74,11 @@ body::after{content:'';position:fixed;inset:0;background-image:linear-gradient(r
 .kpi-lbl{font-family:var(--mono);font-size:8px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:7px}
 .kpi-val{font-family:var(--mono);font-size:21px;font-weight:700;line-height:1;margin-bottom:5px}
 .kpi-sub{font-size:10px;color:var(--muted)}
+/* Primary tiles — bigger numbers */
+.kpi-primary .kpi{padding:22px 20px 18px}
+.kpi-primary .kpi-lbl{font-size:9px;margin-bottom:10px;letter-spacing:2.5px}
+.kpi-primary .kpi-val{font-size:38px;margin-bottom:8px}
+.kpi-primary .kpi-sub{font-size:11px}
 .up{color:var(--green)}.down{color:var(--red)}.warn{color:var(--amber)}
 
 /* ── MAIN GRID ── */
@@ -200,11 +206,13 @@ body::after{content:'';position:fixed;inset:0;background-image:linear-gradient(r
 .no-data-state .nd-sub{font-size:11px;color:var(--muted);opacity:.6;max-width:300px;line-height:1.6}
 
 /* responsive */
-.btm-grid > *, .main-grid > *, .kpi-row > * { min-width:0; }
-@media(max-width:1200px){.kpi-row{grid-template-columns:repeat(4,1fr)}.main-grid{grid-template-columns:1fr}.btm-grid{grid-template-columns:1fr 1fr}}
+.btm-grid > *, .main-grid > *, .kpi-primary > *, .kpi-secondary > * { min-width:0; }
+@media(max-width:1200px){.kpi-primary{grid-template-columns:repeat(2,1fr)}.kpi-secondary{grid-template-columns:repeat(2,1fr)}.main-grid{grid-template-columns:1fr}.btm-grid{grid-template-columns:1fr 1fr}}
 @media(max-width:700px){
   .wrap{padding:10px}
-  .kpi-row{grid-template-columns:repeat(2,1fr)}
+  .kpi-primary{grid-template-columns:repeat(2,1fr)}
+  .kpi-secondary{grid-template-columns:repeat(2,1fr)}
+  .kpi-primary .kpi-val{font-size:26px}
   .btm-grid{grid-template-columns:1fr !important}
   .main-grid{grid-template-columns:1fr !important}
   .header{flex-direction:column;gap:10px;align-items:flex-start}
@@ -313,20 +321,24 @@ body::after{content:'';position:fixed;inset:0;background-image:linear-gradient(r
     </div>
   </div>
 
-  <!-- KPI Row -->
-  <div class="kpi-row fade" style="animation-delay:.1s" id="kpiRow">
-    <div class="kpi c-accent"><div class="kpi-lbl">Total Activations</div><div class="kpi-val" style="color:var(--accent)" id="kv-activations">—</div><div class="kpi-sub" id="ks-activations">loading...</div></div>
-    <div class="kpi c-green"><div class="kpi-lbl">Total Revenue</div><div class="kpi-val" style="color:var(--green)" id="kv-revenue">—</div><div class="kpi-sub" id="ks-revenue">loading...</div></div>
-    <div class="kpi c-amber"><div class="kpi-lbl">Applications</div><div class="kpi-val" style="color:var(--amber)" id="kv-apps">—</div><div class="kpi-sub" id="ks-apps">loading...</div></div>
-    <div class="kpi c-green"><div class="kpi-lbl">Ad Spend</div><div class="kpi-val" style="color:var(--green)" id="kv-spend">—</div><div class="kpi-sub" id="ks-spend">loading...</div></div>
-    <div class="kpi c-amber"><div class="kpi-lbl">Application CPA</div><div class="kpi-val" style="color:var(--amber)" id="kv-gcpa">—</div><div class="kpi-sub" id="ks-gcpa">loading...</div></div>
-    <div class="kpi c-red"><div class="kpi-lbl">Activation CPA</div><div class="kpi-val" style="color:var(--red)" id="kv-acpa">—</div><div class="kpi-sub" id="ks-acpa">loading...</div></div>
+  <!-- KPI Row: 4 big primary + 2 secondary -->
+  <div id="kpiRow" class="fade" style="animation-delay:.1s">
+    <div class="kpi-primary">
+      <div class="kpi c-accent"><div class="kpi-lbl">Total Activations</div><div class="kpi-val" style="color:var(--accent)" id="kv-activations">—</div><div class="kpi-sub" id="ks-activations">loading...</div></div>
+      <div class="kpi c-green"><div class="kpi-lbl">Ad Spend</div><div class="kpi-val" style="color:var(--green)" id="kv-spend">—</div><div class="kpi-sub" id="ks-spend">loading...</div></div>
+      <div class="kpi c-amber"><div class="kpi-lbl">Applications</div><div class="kpi-val" style="color:var(--amber)" id="kv-apps">—</div><div class="kpi-sub" id="ks-apps">loading...</div></div>
+      <div class="kpi c-red"><div class="kpi-lbl">Activation CPA</div><div class="kpi-val" style="color:var(--red)" id="kv-acpa">—</div><div class="kpi-sub" id="ks-acpa">loading...</div></div>
+    </div>
+    <div class="kpi-secondary">
+      <div class="kpi c-green"><div class="kpi-lbl">Total Revenue</div><div class="kpi-val" style="color:var(--green)" id="kv-revenue">—</div><div class="kpi-sub" id="ks-revenue">loading...</div></div>
+      <div class="kpi c-amber"><div class="kpi-lbl">Application CPA</div><div class="kpi-val" style="color:var(--amber)" id="kv-gcpa">—</div><div class="kpi-sub" id="ks-gcpa">loading...</div></div>
+    </div>
   </div>
 
   <!-- Main Grid -->
   <div class="main-grid fade" style="animation-delay:.2s">
 
-    <!-- Left -->
+    <!-- Left: Chart + Hourly Heatmap -->
     <div style="display:flex;flex-direction:column;gap:14px">
       <div class="panel">
         <div class="panel-hdr">
@@ -338,16 +350,22 @@ body::after{content:'';position:fixed;inset:0;background-image:linear-gradient(r
 
       <div class="panel" style="flex:1;display:flex;flex-direction:column">
         <div class="panel-hdr">
-          <div class="ptitle">Device Performance · Application &amp; Activation CPA</div>
-          <div class="pmeta" id="devicePeriod">LIVE DATA</div>
+          <div class="ptitle">Hour of Day · Cost/Conv</div>
+          <div class="pmeta">GOOGLE ADS · LIVE</div>
         </div>
-        <div id="devicePanel" style="flex:1;display:flex;flex-direction:column;justify-content:space-evenly;gap:8px">
-          <div class="no-data-state"><div class="nd-icon">📡</div><div class="nd-title">AWAITING LIVE DATA</div></div>
+        <div class="heatmap" id="heatmap" style="flex:1">
+          <div class="no-data-state" style="grid-column:1/-1"><div class="nd-icon">🕐</div><div class="nd-title">AWAITING LIVE DATA</div></div>
+        </div>
+        <div class="hm-leg">
+          <div class="hm-li"><div class="hm-dot" style="background:var(--green)"></div>BEST &lt;$7</div>
+          <div class="hm-li"><div class="hm-dot" style="background:var(--amber)"></div>OK $7-10</div>
+          <div class="hm-li"><div class="hm-dot" style="background:var(--red)"></div>PAUSE $10+</div>
+          <div class="hm-li"><div class="hm-dot" style="background:var(--surface2)"></div>LOW</div>
         </div>
       </div>
     </div>
 
-    <!-- Right -->
+    <!-- Right: Campaign Scorecard + Device Performance -->
     <div style="display:flex;flex-direction:column;gap:14px">
       <div class="panel">
         <div class="panel-hdr">
@@ -361,78 +379,13 @@ body::after{content:'';position:fixed;inset:0;background-image:linear-gradient(r
 
       <div class="panel" style="flex:1;display:flex;flex-direction:column">
         <div class="panel-hdr">
-          <div class="ptitle">Daily Intel Feed</div>
-          <div class="pmeta">RECENT CHANGES</div>
+          <div class="ptitle">Device Performance · Application &amp; Activation CPA</div>
+          <div class="pmeta" id="devicePeriod">LIVE DATA</div>
         </div>
-        <div id="intelFeed" style="flex:1;display:flex;flex-direction:column;justify-content:space-evenly">
-          <div class="no-data-state"><div class="nd-icon">📰</div><div class="nd-title">AWAITING LIVE DATA</div></div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Summary + Projection Banner -->
-  <div class="panel fade" style="animation-delay:.25s;margin-bottom:14px">
-    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:0">
-
-      <!-- Report Summary -->
-      <div style="padding:0 20px 0 0;border-right:1px solid var(--border2)">
-        <div class="ptitle" style="margin-bottom:12px">Report Period Summary</div>
-        <div id="summaryText" style="font-family:var(--mono);font-size:13px;color:var(--muted);line-height:2.2;letter-spacing:.2px">
-          <span style="color:var(--muted)">Loading live data...</span>
+        <div id="devicePanel" style="flex:1;display:flex;flex-direction:column;justify-content:space-evenly;gap:8px">
+          <div class="no-data-state"><div class="nd-icon">📡</div><div class="nd-title">AWAITING LIVE DATA</div></div>
         </div>
       </div>
-
-      <!-- April Projection -->
-      <div style="padding:0 20px;border-right:1px solid var(--border2)">
-        <div class="ptitle" style="margin-bottom:12px">April Projection · Rest of Month</div>
-        <div id="projectionText" style="font-family:var(--mono);font-size:13px;color:var(--muted);line-height:2.2;letter-spacing:.2px">
-          <span style="color:var(--muted)">Loading live data...</span>
-        </div>
-      </div>
-
-      <!-- Closed Month Actuals -->
-      <div style="padding:0 0 0 20px">
-        <div class="ptitle" style="margin-bottom:12px">Closed Month Actuals · Assurance Paid</div>
-        <div style="font-family:var(--mono);font-size:13px;line-height:2.2;letter-spacing:.2px">
-          <div style="display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid var(--border2)">
-            <span style="color:var(--muted)">MAR 2026</span>
-            <span style="color:var(--amber)">PENDING</span>
-          </div>
-          <div style="display:flex;justify-content:space-between;padding:2px 0 4px;border-bottom:1px solid var(--border2)">
-            <span style="font-size:9px;color:var(--muted)">BGOA: 1,188 act · $29,700</span>
-            <span style="font-size:9px;color:var(--green)">Google proj: ~$37,068 pending</span>
-          </div>
-          <div style="display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid var(--border2)">
-            <span style="color:var(--muted)">FEB 2026</span>
-            <span style="color:var(--green)">552 act · $13,800 paid ✓</span>
-          </div>
-          <div style="display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid var(--border2)">
-            <span style="color:var(--muted)">JAN 2026</span>
-            <span style="color:var(--green)">415 act · $10,375 paid ✓</span>
-          </div>
-          <div style="display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid var(--border2)">
-            <span style="color:var(--muted)">DEC 2025</span>
-            <span style="color:var(--muted)">46 act · $1,150 paid ✓</span>
-          </div>
-          <div style="padding:5px 0 3px;margin-top:4px;border-bottom:1px solid var(--border2)">
-            <div style="display:flex;justify-content:space-between">
-              <span style="color:var(--muted)">SETTLED TO DATE</span>
-              <span style="color:var(--green)">$25,325 confirmed</span>
-            </div>
-            <div style="display:flex;justify-content:space-between;margin-top:2px">
-              <span style="color:var(--amber)">INCL. MAR PENDING</span>
-              <span style="color:var(--amber)">~$62,393 total</span>
-            </div>
-          </div>
-          <div style="font-size:9px;color:var(--muted);margin-top:6px;line-height:1.6">
-            30-day cookie window — activations backfill<br>
-            for 7-10+ days after month close.<br>
-            Mar Google proj: $37,068 · spend $21,135.51
-          </div>
-        </div>
-      </div>
-
     </div>
   </div>
 
@@ -463,20 +416,14 @@ body::after{content:'';position:fixed;inset:0;background-image:linear-gradient(r
       </div>
     </div>
 
-    <!-- Heatmap -->
+    <!-- Intel Feed -->
     <div class="panel" style="display:flex;flex-direction:column">
       <div class="panel-hdr">
-        <div class="ptitle">Hour of Day · Cost/Conv</div>
-        <div class="pmeta">GOOGLE ADS · LIVE</div>
+        <div class="ptitle">Daily Intel Feed</div>
+        <div class="pmeta">RECENT CHANGES</div>
       </div>
-      <div class="heatmap" id="heatmap" style="flex:1">
-        <div class="no-data-state" style="grid-column:1/-1"><div class="nd-icon">🕐</div><div class="nd-title">AWAITING LIVE DATA</div></div>
-      </div>
-      <div class="hm-leg">
-        <div class="hm-li"><div class="hm-dot" style="background:var(--green)"></div>BEST &lt;$7</div>
-        <div class="hm-li"><div class="hm-dot" style="background:var(--amber)"></div>OK $7-10</div>
-        <div class="hm-li"><div class="hm-dot" style="background:var(--red)"></div>PAUSE $10+</div>
-        <div class="hm-li"><div class="hm-dot" style="background:var(--surface2)"></div>LOW</div>
+      <div id="intelFeed" style="flex:1;display:flex;flex-direction:column;justify-content:space-evenly">
+        <div class="no-data-state"><div class="nd-icon">📰</div><div class="nd-title">AWAITING LIVE DATA</div></div>
       </div>
     </div>
 
@@ -540,25 +487,12 @@ body::after{content:'';position:fixed;inset:0;background-image:linear-gradient(r
       <div class="pmeta">SOURCE: ASSURANCE WIRELESS BGOA (GOOGLE) + BGOC (META) · LIVE</div>
     </div>
 
-    <!-- Top row: Monthly Actuals + Business Health -->
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">
-
-      <!-- Monthly Actuals Table -->
-      <div>
-        <div style="font-family:var(--mono);font-size:8px;color:var(--accent);letter-spacing:2px;margin-bottom:10px">MONTHLY ACTUALS · BGOA CONFIRMED</div>
-        <div id="monthlyActuals">
-          <div class="no-data-state"><div class="nd-icon">📅</div><div class="nd-title">LOADING BGOA DATA...</div></div>
-        </div>
+    <!-- Monthly Actuals (full width) -->
+    <div style="margin-bottom:14px">
+      <div style="font-family:var(--mono);font-size:8px;color:var(--accent);letter-spacing:2px;margin-bottom:10px">MONTHLY ACTUALS · BGOA CONFIRMED</div>
+      <div id="monthlyActuals">
+        <div class="no-data-state"><div class="nd-icon">📅</div><div class="nd-title">LOADING BGOA DATA...</div></div>
       </div>
-
-      <!-- Business Health KPIs -->
-      <div>
-        <div style="font-family:var(--mono);font-size:8px;color:var(--accent);letter-spacing:2px;margin-bottom:10px">CUMULATIVE BUSINESS HEALTH · ALL TIME</div>
-        <div id="businessHealth">
-          <div class="no-data-state"><div class="nd-icon">💼</div><div class="nd-title">LOADING...</div></div>
-        </div>
-      </div>
-
     </div>
 
     <!-- CPA Trend Chart (full width) -->
@@ -578,19 +512,11 @@ body::after{content:'';position:fixed;inset:0;background-image:linear-gradient(r
         </div>
       </div>
 
-      <!-- BGOC Meta + Top States by Volume -->
-      <div style="display:flex;flex-direction:column;justify-content:space-between;height:100%;padding-top:28px">
-        <div>
-          <div style="font-family:var(--mono);font-size:8px;color:var(--accent);letter-spacing:2px;margin-bottom:10px">META ADS (BGOC) · APRIL 2026</div>
-          <div id="bgocPanel">
-            <div class="no-data-state"><div class="nd-icon">📘</div><div class="nd-title">LOADING...</div></div>
-          </div>
-        </div>
-        <div>
-          <div style="font-family:var(--mono);font-size:8px;color:var(--accent);letter-spacing:2px;margin-bottom:8px">TOP 10 STATES · APPLICATIONS VOLUME <span id="topStatesPeriod" style="color:var(--muted);margin-left:6px"></span></div>
-          <div id="topStatesPanel">
-            <div class="no-data-state"><div class="nd-icon">📍</div><div class="nd-title">LOADING...</div></div>
-          </div>
+      <!-- BGOC Meta -->
+      <div style="padding-top:28px">
+        <div style="font-family:var(--mono);font-size:8px;color:var(--accent);letter-spacing:2px;margin-bottom:10px">META ADS (BGOC) · APRIL 2026</div>
+        <div id="bgocPanel">
+          <div class="no-data-state"><div class="nd-icon">📘</div><div class="nd-title">LOADING...</div></div>
         </div>
       </div>
 
@@ -1303,6 +1229,7 @@ function renderTrajectory(monthly, daily) {
 
 function renderSummary(chartDaily, kpis) {
   if (!chartDaily || !chartDaily.length) return;
+  if (!$('summaryText') && !$('projectionText')) return; // elements removed in redesign
   // Use calendar days in range, not data rows (Sundays/no-spend days still count)
   const { from, to } = getDateRange();
   const calDays = from && to ? Math.round((new Date(to) - new Date(from)) / 86400000) + 1 : chartDaily.length;
@@ -1647,42 +1574,7 @@ function renderBrief(dailyRaw, keywordsRaw, searchTermsRaw) {
   $('briefPanel').innerHTML = `
     <div class="brief-wrap">
       <div class="brief-section">
-        <div class="brief-section-title">Yesterday at a Glance — ${yFmt}</div>
-        <div class="brief-kpi-row">
-          <div class="kpi c-amber">
-            <div class="kpi-lbl">Application CPA</div>
-            <div class="kpi-val" style="color:${cpaColor(yAppCPA)}">${fmtCPA(yAppCPA)}</div>
-            <div class="kpi-sub">${cpaTrend !== null ? `<span style="color:${cpaTrend < 0 ? 'var(--green)' : 'var(--red)'}">${cpaTrend < 0 ? '↓' : '↑'}${Math.abs(cpaTrend).toFixed(1)}% vs prior</span>` : '<span style="color:var(--muted)">—</span>'}</div>
-          </div>
-          <div class="kpi ${yActsPending ? 'c-accent' : yActCPA <= 10 ? 'c-green' : yActCPA <= 15 ? 'c-amber' : 'c-red'}">
-            <div class="kpi-lbl">Activation CPA</div>
-            <div class="kpi-val" style="color:${yActsPending ? 'var(--muted)' : yActCPA <= 10 ? 'var(--green)' : yActCPA <= 15 ? 'var(--amber)' : 'var(--red)'}">${yActsPending ? 'N/A' : fmtCPA(yActCPA)}</div>
-            <div class="kpi-sub"><span style="color:var(--muted)">${yActsPending ? 'N/A' : 'TARGET ≤$10'}</span></div>
-          </div>
-          <div class="kpi c-green">
-            <div class="kpi-lbl">SPEND</div>
-            <div class="kpi-val" style="color:var(--green)">${fmtMoney(ySpend)}</div>
-            <div class="kpi-sub">${spendTrend !== null ? `<span style="color:var(--muted)">${spendTrend >= 0 ? '+' : ''}${spendTrend.toFixed(1)}% vs prior</span>` : '<span style="color:var(--muted)">—</span>'}</div>
-          </div>
-          <div class="kpi c-accent">
-            <div class="kpi-lbl">APPLICATIONS</div>
-            <div class="kpi-val" style="color:var(--accent)">${Math.round(yApps).toLocaleString()}</div>
-            <div class="kpi-sub">${appsTrend !== null ? `<span style="color:${appsTrend >= 0 ? 'var(--green)' : 'var(--red)'}">${appsTrend >= 0 ? '↑' : '↓'}${Math.abs(appsTrend).toFixed(1)}% vs prior</span>` : '<span style="color:var(--muted)">—</span>'}</div>
-          </div>
-          <div class="kpi c-purple">
-            <div class="kpi-lbl">${yActsConfirmed && !yActsPending ? 'ACTIVATIONS' : 'ACTIVATIONS'}</div>
-            <div class="kpi-val" style="color:${yActsPending ? 'var(--muted)' : 'var(--accent2)'}">${yActsPending ? 'N/A' : yActs.toLocaleString()}</div>
-            <div class="kpi-sub"><span style="color:var(--muted)">${yActsPending ? 'N/A' : yActsConfirmed ? '✓ CONFIRMED' : `EST @${(ACT_RATE*100).toFixed(1)}%`}</span></div>
-          </div>
-          <div class="kpi ${yActsPending ? 'c-accent' : yProfit >= 0 ? 'c-green' : 'c-red'}">
-            <div class="kpi-lbl">${yActsConfirmed && !yActsPending ? 'PROFIT' : 'EST PROFIT'}</div>
-            <div class="kpi-val" style="color:${yActsPending ? 'var(--muted)' : yProfit >= 0 ? 'var(--green)' : 'var(--red)'}">${yActsPending ? 'N/A' : (yProfit >= 0 ? '+' : '') + fmtMoney(yProfit)}</div>
-            <div class="kpi-sub"><span style="color:var(--muted)">${yActsPending ? 'N/A' : 'REV ' + fmtMoney(yRevenue)}</span></div>
-          </div>
-        </div>
-      </div>
-      <div class="brief-section">
-        <div class="brief-section-title">Action Items for ${today4}</div>
+        <div class="brief-section-title">Action Items for ${today4} · Yesterday: ${yFmt}</div>
         ${actions.map(a => `<div class="action-item ${a.type ? 'ai-'+a.type : ''}">
           <div class="ai-icon">${a.icon}</div>
           <div class="ai-text">${a.text}</div>
@@ -1797,7 +1689,7 @@ function renderAssuranceIntelligence() {
   const latestCPA = [...rows].reverse().find(r => r.rolling7d > 0)?.rolling7d
     || (rows[rows.length-1]?.spend > 0 && rows[rows.length-1]?.activations > 0 ? rows[rows.length-1].spend/rows[rows.length-1].activations : 0);
 
-  $('businessHealth').innerHTML = `<div class="biz-kpi">
+  if ($('businessHealth')) $('businessHealth').innerHTML = `<div class="biz-kpi">
     <div class="biz-kpi-item">
       <div class="biz-kpi-v" style="color:var(--green)">${fmtMoney(totalRevBGOA)}</div>
       <div class="biz-kpi-l">TOTAL REVENUE (BGOA)</div>
@@ -2686,12 +2578,16 @@ function resetKPIRow() {
   // Only reset if the named child elements are missing (i.e. no-data state destroyed them)
   if ($('kv-activations')) return;
   row.innerHTML = `
-    <div class="kpi c-accent"><div class="kpi-lbl">Total Activations</div><div class="kpi-val" style="color:var(--accent)" id="kv-activations">—</div><div class="kpi-sub" id="ks-activations">loading...</div></div>
-    <div class="kpi c-green"><div class="kpi-lbl">Total Revenue</div><div class="kpi-val" style="color:var(--green)" id="kv-revenue">—</div><div class="kpi-sub" id="ks-revenue">loading...</div></div>
-    <div class="kpi c-amber"><div class="kpi-lbl">Applications</div><div class="kpi-val" style="color:var(--amber)" id="kv-apps">—</div><div class="kpi-sub" id="ks-apps">loading...</div></div>
-    <div class="kpi c-green"><div class="kpi-lbl">Ad Spend</div><div class="kpi-val" style="color:var(--green)" id="kv-spend">—</div><div class="kpi-sub" id="ks-spend">loading...</div></div>
-    <div class="kpi c-amber"><div class="kpi-lbl">Application CPA</div><div class="kpi-val" style="color:var(--amber)" id="kv-gcpa">—</div><div class="kpi-sub" id="ks-gcpa">loading...</div></div>
-    <div class="kpi c-red"><div class="kpi-lbl">Activation CPA</div><div class="kpi-val" style="color:var(--red)" id="kv-acpa">—</div><div class="kpi-sub" id="ks-acpa">loading...</div></div>`;
+    <div class="kpi-primary">
+      <div class="kpi c-accent"><div class="kpi-lbl">Total Activations</div><div class="kpi-val" style="color:var(--accent)" id="kv-activations">—</div><div class="kpi-sub" id="ks-activations">loading...</div></div>
+      <div class="kpi c-green"><div class="kpi-lbl">Ad Spend</div><div class="kpi-val" style="color:var(--green)" id="kv-spend">—</div><div class="kpi-sub" id="ks-spend">loading...</div></div>
+      <div class="kpi c-amber"><div class="kpi-lbl">Applications</div><div class="kpi-val" style="color:var(--amber)" id="kv-apps">—</div><div class="kpi-sub" id="ks-apps">loading...</div></div>
+      <div class="kpi c-red"><div class="kpi-lbl">Activation CPA</div><div class="kpi-val" style="color:var(--red)" id="kv-acpa">—</div><div class="kpi-sub" id="ks-acpa">loading...</div></div>
+    </div>
+    <div class="kpi-secondary">
+      <div class="kpi c-green"><div class="kpi-lbl">Total Revenue</div><div class="kpi-val" style="color:var(--green)" id="kv-revenue">—</div><div class="kpi-sub" id="ks-revenue">loading...</div></div>
+      <div class="kpi c-amber"><div class="kpi-lbl">Application CPA</div><div class="kpi-val" style="color:var(--amber)" id="kv-gcpa">—</div><div class="kpi-sub" id="ks-gcpa">loading...</div></div>
+    </div>`;
 }
 
 // Apply filters and re-render all panels
@@ -2742,7 +2638,7 @@ function applyFilters() {
     $('periodBanner').textContent = `REPORT WINDOW: ${from} – ${to} · NO DATA`;
     $('chartRange').textContent = from + ' → ' + to;
     // Clear all panels cleanly
-    ['kpiRow','mainChart','devicePanel','stateListBest','stateListWorst','heatmap','intelFeed','summaryText','projectionText','trajectory','campCards','topStatesPanel'].forEach(id => {
+    ['kpiRow','mainChart','devicePanel','stateListBest','stateListWorst','heatmap','intelFeed','trajectory','campCards'].forEach(id => {
       const el = $(id);
       if (el) el.innerHTML = `<div class="no-data-state"><div class="nd-icon">📭</div><div class="nd-title">NO DATA FOR THIS PERIOD</div><div class="nd-sub" style="max-width:340px">${msg}</div></div>`;
     });
