@@ -1049,55 +1049,34 @@ function renderCampaigns(camps, period) {
 function renderFeed(daily) {
   const el = $('intelFeed');
   if (!el) return;
-  if (!daily || !daily.length) {
-    el.innerHTML = '<div class="no-data-state"><div class="nd-icon">📰</div><div class="nd-title">NO DATA</div></div>';
+
+  // Source: BGOA spreadsheet (ad spend BGOA sheet) — Date, Ad Spend, Applications, Approvals, Activations
+  // Falls back to a waiting state if BGOA hasn't loaded yet (Phase 2)
+  if (!RAW.bgoa || !RAW.bgoa.length) {
+    el.innerHTML = '<div class="no-data-state"><div class="nd-icon">📋</div><div class="nd-title">LOADING BGOA DATA...</div><div class="nd-sub">Arrives in Phase 2 — up to 60s after page load</div></div>';
     return;
   }
 
-  // Always show last 14 days from RAW.daily regardless of date filter — gives full trend context
-  const byDate = {};
-  RAW.daily.forEach(r => {
-    const d = normDateStr(r.Date || '');
-    if (!d) return;
-    if (!byDate[d]) byDate[d] = { spend: 0, apps: 0 };
-    byDate[d].spend += pn(r.Cost);
-    byDate[d].apps  += pn(r.Conversions);
-  });
-  // Merge BGOA confirmed activations
-  if (RAW.bgoa) {
-    RAW.bgoa.map(parseBGOARow).filter(Boolean).forEach(r => {
-      if (byDate[r.date]) byDate[r.date].acts = r.activations;
-    });
-  }
+  // Parse all BGOA rows, sort most recent first, take last 30 days
+  const rows = RAW.bgoa.map(parseBGOARow).filter(r => r && r.spend > 0)
+    .sort((a,b) => b.date.localeCompare(a.date))
+    .slice(0, 30);
 
-  const days = Object.entries(byDate)
-    .filter(([,v]) => v.spend > 0)
-    .sort((a,b) => b[0].localeCompare(a[0]))
-    .slice(0, 14)
-    .map(([date, v]) => ({
-      date,
-      spend: v.spend,
-      apps:  Math.round(v.apps),
-      acts:  v.acts !== undefined ? v.acts : null,
-      appCPA: v.apps > 0 ? v.spend / v.apps : 0,
-    }));
-
-  if (!days.length) {
-    el.innerHTML = '<div class="no-data-state"><div class="nd-icon">📰</div><div class="nd-title">NO DATA</div></div>';
+  if (!rows.length) {
+    el.innerHTML = '<div class="no-data-state"><div class="nd-icon">📋</div><div class="nd-title">NO BGOA DATA</div></div>';
     return;
   }
 
-  // Period averages (last 7 settled days = skip today)
-  const settled = days.filter((d,i) => i > 0).slice(0, 7);
-  const avgSpend = settled.length ? settled.reduce((s,d) => s + d.spend, 0) / settled.length : 0;
-  const avgApps  = settled.length ? settled.reduce((s,d) => s + d.apps,  0) / settled.length : 0;
-  const avgCPA   = avgApps > 0 ? avgSpend / avgApps : 0;
-
-  const cpaCol = cpaColor(avgCPA);
+  // 7-day averages — skip index 0 (today is partial), use next 7 settled days
+  const todayStr = new Date().toISOString().substring(0, 10);
+  const settled = rows.filter(r => r.date < todayStr).slice(0, 7);
+  const avgSpend = settled.length ? settled.reduce((s,r) => s + r.spend, 0) / settled.length : 0;
+  const avgApps  = settled.length ? settled.reduce((s,r) => s + r.applications, 0) / settled.length : 0;
+  const avgActs  = settled.length ? settled.reduce((s,r) => s + r.activations, 0) / settled.length : 0;
 
   el.innerHTML = `
     <div style="padding:0 2px 8px;border-bottom:1px solid var(--border2);margin-bottom:8px">
-      <div style="font-family:var(--mono);font-size:8px;color:var(--muted);letter-spacing:1.5px;margin-bottom:6px">7-DAY AVERAGES (SETTLED)</div>
+      <div style="font-family:var(--mono);font-size:8px;color:var(--muted);letter-spacing:1.5px;margin-bottom:6px">7-DAY AVERAGES (SETTLED) · SOURCE: BGOA</div>
       <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px">
         <div style="background:var(--surface2);border-radius:5px;padding:7px 8px;text-align:center">
           <div style="font-family:var(--mono);font-size:15px;font-weight:700;color:var(--green)">${fmtMoney(avgSpend)}</div>
@@ -1108,12 +1087,12 @@ function renderFeed(daily) {
           <div style="font-family:var(--mono);font-size:7px;color:var(--muted);margin-top:2px">APPS/DAY</div>
         </div>
         <div style="background:var(--surface2);border-radius:5px;padding:7px 8px;text-align:center">
-          <div style="font-family:var(--mono);font-size:15px;font-weight:700;color:${cpaCol}">${avgCPA > 0 ? fmtCPA(avgCPA) : '—'}</div>
-          <div style="font-family:var(--mono);font-size:7px;color:var(--muted);margin-top:2px">APP CPA</div>
+          <div style="font-family:var(--mono);font-size:15px;font-weight:700;color:var(--amber)">${avgActs.toFixed(1)}</div>
+          <div style="font-family:var(--mono);font-size:7px;color:var(--muted);margin-top:2px">ACTIVATIONS/DAY</div>
         </div>
       </div>
     </div>
-    <div style="font-family:var(--mono);font-size:8px;color:var(--muted);letter-spacing:1.5px;margin-bottom:4px;padding:0 2px">DAILY BREAKDOWN · LAST ${days.length} DAYS</div>
+    <div style="font-family:var(--mono);font-size:8px;color:var(--muted);letter-spacing:1.5px;margin-bottom:4px;padding:0 2px">DAILY BREAKDOWN · LAST ${rows.length} DAYS · BGOA CONFIRMED</div>
     <div style="overflow-y:auto;flex:1">
       <table style="width:100%;border-collapse:collapse;font-family:var(--mono);font-size:10px">
         <thead>
@@ -1121,27 +1100,24 @@ function renderFeed(daily) {
             <th style="text-align:left;padding:3px 4px;font-size:8px;color:var(--muted);letter-spacing:1px;font-weight:400">DATE</th>
             <th style="text-align:right;padding:3px 4px;font-size:8px;color:var(--muted);letter-spacing:1px;font-weight:400">SPEND</th>
             <th style="text-align:right;padding:3px 4px;font-size:8px;color:var(--muted);letter-spacing:1px;font-weight:400">APPS</th>
-            <th style="text-align:right;padding:3px 4px;font-size:8px;color:var(--muted);letter-spacing:1px;font-weight:400">APP CPA</th>
-            <th style="text-align:right;padding:3px 4px;font-size:8px;color:var(--muted);letter-spacing:1px;font-weight:400">TREND</th>
+            <th style="text-align:right;padding:3px 4px;font-size:8px;color:var(--muted);letter-spacing:1px;font-weight:400">APPROVALS</th>
+            <th style="text-align:right;padding:3px 4px;font-size:8px;color:var(--muted);letter-spacing:1px;font-weight:400">ACTIVATIONS</th>
           </tr>
         </thead>
         <tbody>
-          ${days.map((d, i) => {
-            const prev = days[i + 1];
-            const cpaDelta = prev && prev.appCPA > 0 && d.appCPA > 0 ? d.appCPA - prev.appCPA : null;
-            const isToday = i === 0;
-            const dateLabel = d.date.substring(5); // MM-DD
-            const trendHtml = cpaDelta !== null
-              ? `<span style="color:${cpaDelta < 0 ? 'var(--green)' : 'var(--red)'}">${cpaDelta < 0 ? '↓' : '↑'}${fmtCPA(Math.abs(cpaDelta))}</span>`
-              : `<span style="color:var(--muted)">—</span>`;
+          ${rows.map((r, i) => {
+            const isToday = r.date === todayStr;
             const rowStyle = isToday ? 'background:rgba(56,189,248,0.04)' : '';
-            const cpaC = cpaColor(d.appCPA);
+            const dateLabel = r.date.substring(5);
+            const actsCol = r.activations > 0 ? 'var(--amber)' : 'var(--muted)';
+            const appsCol = r.applications > 0 ? 'var(--accent)' : 'var(--muted)';
+            const approvalsCol = r.approvals > 0 ? 'var(--accent2)' : 'var(--muted)';
             return `<tr style="border-bottom:1px solid var(--border2);${rowStyle}">
-              <td style="padding:4px 4px;color:${isToday ? 'var(--accent)' : 'var(--muted)'}">${dateLabel}${isToday ? '<span style="font-size:7px;margin-left:3px;color:var(--accent)"> NOW</span>' : ''}</td>
-              <td style="text-align:right;padding:4px 4px;color:var(--green)">${fmtMoney(d.spend)}</td>
-              <td style="text-align:right;padding:4px 4px;color:var(--accent)">${d.apps}</td>
-              <td style="text-align:right;padding:4px 4px;color:${cpaC}">${d.appCPA > 0 ? fmtCPA(d.appCPA) : '—'}</td>
-              <td style="text-align:right;padding:4px 4px">${trendHtml}</td>
+              <td style="padding:4px 4px;color:${isToday ? 'var(--accent)' : 'var(--muted)'}">${dateLabel}${isToday ? '<span style="font-size:7px;margin-left:3px;color:var(--accent)">NOW</span>' : ''}</td>
+              <td style="text-align:right;padding:4px 4px;color:var(--green)">${fmtMoney(r.spend)}</td>
+              <td style="text-align:right;padding:4px 4px;color:${appsCol}">${r.applications > 0 ? r.applications : '—'}</td>
+              <td style="text-align:right;padding:4px 4px;color:${approvalsCol}">${r.approvals > 0 ? r.approvals : '—'}</td>
+              <td style="text-align:right;padding:4px 4px;color:${actsCol}">${r.activations > 0 ? r.activations : '—'}</td>
             </tr>`;
           }).join('')}
         </tbody>
