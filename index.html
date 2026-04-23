@@ -395,7 +395,7 @@ body::after{content:'';position:fixed;inset:0;background-image:linear-gradient(r
     <!-- States -->
     <div class="panel" style="display:flex;flex-direction:column">
       <div class="panel-hdr">
-        <div class="ptitle">State Performance · Top 20 &amp; Worst 20</div>
+        <div class="ptitle">State Performance · Top 20 by CPA &amp; Worst 20 by Cost</div>
         <div class="pmeta" id="statePeriod">LIVE DATA</div>
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:0;flex:1;min-height:0;overflow:hidden">
@@ -408,7 +408,7 @@ body::after{content:'';position:fixed;inset:0;background-image:linear-gradient(r
         </div>
         <!-- Worst 20 -->
         <div style="display:flex;flex-direction:column;min-height:0;border-left:1px solid var(--border2);padding-left:10px">
-          <div style="font-size:9px;font-weight:700;color:var(--red);letter-spacing:.08em;padding:5px 4px 4px;border-bottom:1px solid rgba(248,113,113,0.18);margin-bottom:2px;flex-shrink:0">⚠️ WORST 20 · HIGHEST CPA</div>
+          <div style="font-size:9px;font-weight:700;color:var(--red);letter-spacing:.08em;padding:5px 4px 4px;border-bottom:1px solid rgba(248,113,113,0.18);margin-bottom:2px;flex-shrink:0">⚠️ WORST 20 · HIGHEST COST</div>
           <div id="stateListWorst" style="flex:1;display:flex;flex-direction:column;justify-content:flex-start;gap:0;overflow-y:auto;min-height:0">
             <div class="no-data-state"><div class="nd-icon">🗺</div><div class="nd-title">AWAITING LIVE DATA</div></div>
           </div>
@@ -1038,76 +1038,106 @@ function renderCampaigns(camps, period) {
 }
 
 function renderFeed(daily) {
+  const el = $('intelFeed');
+  if (!el) return;
   if (!daily || !daily.length) {
-    $('intelFeed').innerHTML = '<div class="no-data-state"><div class="nd-icon">📰</div><div class="nd-title">NO FEED DATA</div></div>';
+    el.innerHTML = '<div class="no-data-state"><div class="nd-icon">📰</div><div class="nd-title">NO DATA</div></div>';
     return;
   }
-  // Build per-day totals AND per-campaign-per-day from RAW.daily
-  // normDateStr ensures M/D/YYYY and YYYY-MM-DD dates group into the same key
+
+  // Always show last 14 days from RAW.daily regardless of date filter — gives full trend context
   const byDate = {};
   RAW.daily.forEach(r => {
     const d = normDateStr(r.Date || '');
     if (!d) return;
-    if (!byDate[d]) byDate[d] = { spend: 0, apps: 0, camps: {} };
-    const cost = pn(r.Cost);
-    const conv = pn(r.Conversions);
-    byDate[d].spend += cost;
-    byDate[d].apps  += conv;
-    const cn = (r.CampaignName || '').replace('Assurance Wireless','AW').replace('Search - ','').replace(' | SS','').replace('| SS','').trim();
-    if (cn) {
-      if (!byDate[d].camps[cn]) byDate[d].camps[cn] = { spend: 0, conv: 0 };
-      byDate[d].camps[cn].spend += cost;
-      byDate[d].camps[cn].conv  += conv;
-    }
+    if (!byDate[d]) byDate[d] = { spend: 0, apps: 0 };
+    byDate[d].spend += pn(r.Cost);
+    byDate[d].apps  += pn(r.Conversions);
   });
+  // Merge BGOA confirmed activations
+  if (RAW.bgoa) {
+    RAW.bgoa.map(parseBGOARow).filter(Boolean).forEach(r => {
+      if (byDate[r.date]) byDate[r.date].acts = r.activations;
+    });
+  }
 
-  const sorted = [...daily].sort((a,b) => b.date.localeCompare(a.date)).slice(0, 7);
-  $('intelFeed').innerHTML = sorted.map((d, i) => {
-    const prev = sorted[i + 1];
-    const appCPA = d.spend > 0 && d.apps > 0 ? d.spend / d.apps : 0;
-    const cpaCol = cpaColor(appCPA);
-    // d.activations is already BGOA-confirmed (or estimated for days without BGOA data)
-    const acts = d.activations || 0;
-    const actCPA = acts > 0 && d.spend > 0 ? d.spend / acts : 0;
+  const days = Object.entries(byDate)
+    .filter(([,v]) => v.spend > 0)
+    .sort((a,b) => b[0].localeCompare(a[0]))
+    .slice(0, 14)
+    .map(([date, v]) => ({
+      date,
+      spend: v.spend,
+      apps:  Math.round(v.apps),
+      acts:  v.acts !== undefined ? v.acts : null,
+      appCPA: v.apps > 0 ? v.spend / v.apps : 0,
+    }));
 
-    // Day-over-day deltas
-    let deltaHtml = '';
-    if (prev && prev.spend > 0) {
-      const spendDelta = ((d.spend - prev.spend) / prev.spend * 100).toFixed(0);
-      const appsDelta  = prev.apps > 0 ? ((d.apps  - prev.apps)  / prev.apps  * 100).toFixed(0) : null;
-      const cpaDelta   = prev.spend > 0 && prev.apps > 0 ? (appCPA - prev.spend/prev.apps) : null;
-      const sdCol = d.spend > prev.spend ? 'var(--amber)' : 'var(--green)';
-      const adCol = d.apps  > prev.apps  ? 'var(--green)' : 'var(--red)';
-      const cCol  = cpaDelta !== null ? (cpaDelta > 0 ? 'var(--red)' : 'var(--green)') : 'var(--muted)';
-      deltaHtml = `<div style="font-size:9px;color:var(--muted);margin-top:3px;display:flex;gap:10px;flex-wrap:wrap">` +
-        `<span style="color:${sdCol}">spend ${spendDelta > 0 ? '+' : ''}${spendDelta}%</span>` +
-        (appsDelta !== null ? `<span style="color:${adCol}">apps ${appsDelta > 0 ? '+' : ''}${appsDelta}%</span>` : '') +
-        (cpaDelta !== null ? `<span style="color:${cCol}">CPA ${cpaDelta > 0 ? '↑' : '↓'}${fmtCPA(Math.abs(cpaDelta))}</span>` : '') +
-        `</div>`;
-    }
+  if (!days.length) {
+    el.innerHTML = '<div class="no-data-state"><div class="nd-icon">📰</div><div class="nd-title">NO DATA</div></div>';
+    return;
+  }
 
-    // Campaign breakdown (top 3 by spend)
-    const raw = byDate[d.date.replace('-','').replace('-','') + '-' + d.date.substring(5)] ||
-                byDate[Object.keys(byDate).find(k => k.endsWith(d.date.substring(5)) || k === d.date) || ''] ||
-                byDate[d.date] || { camps: {} };
-    const campLines = Object.entries(raw.camps || {})
-      .sort((a,b) => b[1].spend - a[1].spend).slice(0, 3)
-      .map(([name, c]) => {
-        const ccpa = c.conv > 0 ? c.spend/c.conv : 0;
-        const cc = cpaColor(ccpa);
-        return `<span style="color:var(--muted)">${name}</span> <span style="color:${cc}">${fmtCPA(ccpa)}</span> <span style="color:var(--muted);font-size:8px">${fmtMoney(c.spend)}</span>`;
-      }).join('<span style="color:var(--border);padding:0 4px">|</span>');
+  // Period averages (last 7 settled days = skip today)
+  const settled = days.filter((d,i) => i > 0).slice(0, 7);
+  const avgSpend = settled.length ? settled.reduce((s,d) => s + d.spend, 0) / settled.length : 0;
+  const avgApps  = settled.length ? settled.reduce((s,d) => s + d.apps,  0) / settled.length : 0;
+  const avgCPA   = avgApps > 0 ? avgSpend / avgApps : 0;
 
-    const isToday = i === 0;
-    return `<div class="feed-item" style="border-left:2px solid ${cpaCol};padding-left:8px">
-      <div style="display:flex;align-items:baseline;gap:8px;margin-bottom:2px">
-        <div class="feed-date" style="color:${cpaCol}">${d.date}${isToday ? ' <span style="color:var(--muted);font-size:8px">TODAY</span>' : ''}</div>
-        <div style="font-family:var(--mono);font-size:9px;color:var(--muted)">${Math.round(d.apps)} apps · ${acts} acts · ${fmtMoney(d.spend)} · CPA <span style="color:${cpaCol}">${appCPA > 0 ? fmtCPA(appCPA) : '—'}</span> · ActCPA <span style="color:${actCPA <= 10 ? 'var(--green)' : actCPA <= 15 ? 'var(--amber)' : 'var(--red)'}">${actCPA > 0 ? fmtCPA(actCPA) : '—'}</span></div>
+  const cpaCol = cpaColor(avgCPA);
+
+  el.innerHTML = `
+    <div style="padding:0 2px 8px;border-bottom:1px solid var(--border2);margin-bottom:8px">
+      <div style="font-family:var(--mono);font-size:8px;color:var(--muted);letter-spacing:1.5px;margin-bottom:6px">7-DAY AVERAGES (SETTLED)</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px">
+        <div style="background:var(--surface2);border-radius:5px;padding:7px 8px;text-align:center">
+          <div style="font-family:var(--mono);font-size:15px;font-weight:700;color:var(--green)">${fmtMoney(avgSpend)}</div>
+          <div style="font-family:var(--mono);font-size:7px;color:var(--muted);margin-top:2px">SPEND/DAY</div>
+        </div>
+        <div style="background:var(--surface2);border-radius:5px;padding:7px 8px;text-align:center">
+          <div style="font-family:var(--mono);font-size:15px;font-weight:700;color:var(--accent)">${avgApps.toFixed(1)}</div>
+          <div style="font-family:var(--mono);font-size:7px;color:var(--muted);margin-top:2px">APPS/DAY</div>
+        </div>
+        <div style="background:var(--surface2);border-radius:5px;padding:7px 8px;text-align:center">
+          <div style="font-family:var(--mono);font-size:15px;font-weight:700;color:${cpaCol}">${avgCPA > 0 ? fmtCPA(avgCPA) : '—'}</div>
+          <div style="font-family:var(--mono);font-size:7px;color:var(--muted);margin-top:2px">APP CPA</div>
+        </div>
       </div>
-      ${deltaHtml}
-      ${campLines ? `<div style="font-family:var(--mono);font-size:9px;margin-top:4px;line-height:1.8">${campLines}</div>` : ''}
+    </div>
+    <div style="font-family:var(--mono);font-size:8px;color:var(--muted);letter-spacing:1.5px;margin-bottom:4px;padding:0 2px">DAILY BREAKDOWN · LAST ${days.length} DAYS</div>
+    <div style="overflow-y:auto;flex:1">
+      <table style="width:100%;border-collapse:collapse;font-family:var(--mono);font-size:10px">
+        <thead>
+          <tr style="border-bottom:1px solid var(--border)">
+            <th style="text-align:left;padding:3px 4px;font-size:8px;color:var(--muted);letter-spacing:1px;font-weight:400">DATE</th>
+            <th style="text-align:right;padding:3px 4px;font-size:8px;color:var(--muted);letter-spacing:1px;font-weight:400">SPEND</th>
+            <th style="text-align:right;padding:3px 4px;font-size:8px;color:var(--muted);letter-spacing:1px;font-weight:400">APPS</th>
+            <th style="text-align:right;padding:3px 4px;font-size:8px;color:var(--muted);letter-spacing:1px;font-weight:400">APP CPA</th>
+            <th style="text-align:right;padding:3px 4px;font-size:8px;color:var(--muted);letter-spacing:1px;font-weight:400">TREND</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${days.map((d, i) => {
+            const prev = days[i + 1];
+            const cpaDelta = prev && prev.appCPA > 0 && d.appCPA > 0 ? d.appCPA - prev.appCPA : null;
+            const isToday = i === 0;
+            const dateLabel = d.date.substring(5); // MM-DD
+            const trendHtml = cpaDelta !== null
+              ? `<span style="color:${cpaDelta < 0 ? 'var(--green)' : 'var(--red)'}">${cpaDelta < 0 ? '↓' : '↑'}${fmtCPA(Math.abs(cpaDelta))}</span>`
+              : `<span style="color:var(--muted)">—</span>`;
+            const rowStyle = isToday ? 'background:rgba(56,189,248,0.04)' : '';
+            const cpaC = cpaColor(d.appCPA);
+            return `<tr style="border-bottom:1px solid var(--border2);${rowStyle}">
+              <td style="padding:4px 4px;color:${isToday ? 'var(--accent)' : 'var(--muted)'}">${dateLabel}${isToday ? '<span style="font-size:7px;margin-left:3px;color:var(--accent)"> NOW</span>' : ''}</td>
+              <td style="text-align:right;padding:4px 4px;color:var(--green)">${fmtMoney(d.spend)}</td>
+              <td style="text-align:right;padding:4px 4px;color:var(--accent)">${d.apps}</td>
+              <td style="text-align:right;padding:4px 4px;color:${cpaC}">${d.appCPA > 0 ? fmtCPA(d.appCPA) : '—'}</td>
+              <td style="text-align:right;padding:4px 4px">${trendHtml}</td>
+            </tr>`;
+          }).join('')}
+        </tbody>
+      </table>
     </div>`;
-  }).join('');
 }
 
 function renderStates(stateData, sourceLabel) {
@@ -1121,28 +1151,47 @@ function renderStates(stateData, sourceLabel) {
   const best  = Array.isArray(stateData) ? [] : (stateData?.best  || []);
   const worst = Array.isArray(stateData) ? stateData : (stateData?.worst || []);
 
-  function makeRows(states) {
+  // Best panel: show CPA (that's the metric to optimize toward)
+  function makeBestRows(states) {
     if (!states || !states.length) return `<div class="no-data-state"><div class="nd-icon">🗺</div><div class="nd-title">NO DATA</div></div>`;
     return states.map(s => {
       const code  = s.code || s.state || '??';
       const count = s.count || 0;
       const cpa   = s.cpa || 0;
-      const label = cpa === 0 ? 'POOR' : cpaLabel(cpa);
-      const col   = cpa === 0 ? 'var(--red)' : cpaColor(cpa);
-      const cpaStr = cpa === 0 ? '$' + parseFloat(s.spend || 0).toFixed(2) + ' / 0 conv' : '$' + parseFloat(cpa).toFixed(2);
+      const label = cpaLabel(cpa);
+      const col   = cpaColor(cpa);
       return `<div class="state-row">
         <div class="s-code" style="color:${col}">${code}</div>
         <div class="s-count">${count}</div>
-        <div style="font-family:var(--mono);font-size:12px;font-weight:700;color:${col};flex:1;text-align:right;padding-right:4px">${cpaStr}</div>
+        <div style="font-family:var(--mono);font-size:12px;font-weight:700;color:${col};flex:1;text-align:right;padding-right:4px">$${parseFloat(cpa).toFixed(2)}</div>
         <div class="s-status" style="background:${col}18;color:${col}">${label}</div>
+      </div>`;
+    }).join('');
+  }
+
+  // Worst panel: show cost spent + conv count — user wants to see the waste clearly
+  function makeWorstRows(states) {
+    if (!states || !states.length) return `<div class="no-data-state"><div class="nd-icon">🗺</div><div class="nd-title">NO DATA</div></div>`;
+    return states.map(s => {
+      const code  = s.code || s.state || '??';
+      const count = s.count || 0;
+      const spend = s.spend || 0;
+      const col   = 'var(--red)';
+      const spendStr = spend >= 1000 ? '$' + (spend/1000).toFixed(1) + 'k' : '$' + spend.toFixed(2);
+      const convLabel = count === 0 ? '<span style="color:var(--red);font-size:9px">0 CONV</span>' : `<span style="color:var(--muted);font-size:9px">${count} conv</span>`;
+      return `<div class="state-row">
+        <div class="s-code" style="color:${col}">${code}</div>
+        <div style="font-family:var(--mono);font-size:12px;font-weight:700;color:var(--amber);min-width:52px;text-align:right">${spendStr}</div>
+        <div style="flex:1;text-align:right;padding-right:4px">${convLabel}</div>
+        <div class="s-status" style="background:rgba(248,113,113,0.1);color:var(--red)">POOR</div>
       </div>`;
     }).join('');
   }
 
   const bestEl  = $('stateListBest');
   const worstEl = $('stateListWorst');
-  if (bestEl)  bestEl.innerHTML  = makeRows(best);
-  if (worstEl) worstEl.innerHTML = makeRows(worst);
+  if (bestEl)  bestEl.innerHTML  = makeBestRows(best);
+  if (worstEl) worstEl.innerHTML = makeWorstRows(worst);
 }
 
 function renderHeatmap(hours) {
@@ -1316,14 +1365,28 @@ function renderKeywords(keywords, campaign) {
     .sort((a,b) => b.cost - a.cost)
     .slice(0, 30);
 
+  // Find total conversions across ALL keywords to calculate share
+  const totalConv = rows.reduce((s, r) => s + r.conv, 0);
+
   function getAction(r) {
-    if (r.cost > 50 && r.conv === 0) return ['badge-neg', '⛔ NEGATIVE'];
+    // ── RULE 1: High converters are PROTECTED — never pause/negative regardless of CPA ──
+    // A keyword driving 10%+ of all conversions is a core revenue driver. Touch the bid, not the keyword.
+    const convShare = totalConv > 0 ? r.conv / totalConv : 0;
+    if (r.conv >= 5 || convShare >= 0.10) {
+      const t2 = getAppTiers();
+      if (r.cpa > 0 && r.cpa <= t2.FANTASTIC) return ['badge-scale', '✓ SCALE UP'];
+      if (r.cpa > 0 && r.cpa <= t2.GOOD)      return ['badge-keep',  '✓ KEEP'];
+      // High CPA but lots of conversions — watch the bid, don't kill it
+      return ['badge-pause', '⚠ WATCH BID'];
+    }
+    // ── RULE 2: Zero conversions with real spend → pause ──
+    if (r.conv === 0 && r.cost > 50) return ['badge-neg',   '⛔ PAUSE'];
+    if (r.conv === 0 && r.cost > 20) return ['badge-pause', '⚠ LOW CONV'];
+    // ── RULE 3: Some conversions but expensive ──
     const t2 = getAppTiers();
-    if (r.cpa > t2.GOOD * 2)  return ['badge-neg',   '⛔ PAUSE'];  // >2× target = pause
-    if (r.cpa > t2.GOOD)      return ['badge-pause', '⚠ LOWER BID'];
-    if (r.cpa > 0 && r.cpa <= t2.FANTASTIC) return ['badge-scale', '✓ SCALE UP'];
-    if (r.cpa > 0 && r.cpa <= t2.GOOD)      return ['badge-keep',  '✓ KEEP'];
-    if (r.impressions > 500 && r.clicks < 10) return ['badge-watch', '👁 LOW CTR'];
+    if (r.conv >= 2 && r.cpa <= t2.FANTASTIC) return ['badge-scale', '✓ SCALE UP'];
+    if (r.conv >= 2 && r.cpa <= t2.GOOD)      return ['badge-keep',  '✓ KEEP'];
+    if (r.conv >= 1) return ['badge-watch', '— MONITOR'];
     return ['badge-watch', '— MONITOR'];
   }
 
@@ -1382,14 +1445,27 @@ function renderSearchTerms(searchTerms, campaign) {
     .sort((a,b) => b.cost - a.cost)
     .slice(0, 30);
 
+  // Find total conversions across ALL search terms to calculate share
+  const totalConvST = rows.reduce((s, r) => s + r.conv, 0);
+
   function getAction(r) {
-    if (r.cost > 30 && r.conv === 0) return ['badge-neg', '⛔ ADD NEGATIVE'];
+    // ── RULE 1: High converters are PROTECTED — never add as negative ──
+    const convShare = totalConvST > 0 ? r.conv / totalConvST : 0;
+    if (r.conv >= 3 || convShare >= 0.10) {
+      const t3 = getAppTiers();
+      if (r.cpa > 0 && r.cpa <= t3.FANTASTIC) return ['badge-exact', '✓ ADD AS EXACT'];
+      if (r.cpa > 0 && r.cpa <= t3.GOOD)      return ['badge-keep',  '✓ KEEP'];
+      // Good volume but expensive — monitor bid, never kill
+      return ['badge-pause', '⚠ WATCH BID'];
+    }
+    // ── RULE 2: Zero conversions with real spend → add negative ──
+    if (r.conv === 0 && r.cost > 30) return ['badge-neg', '⛔ ADD NEGATIVE'];
+    if (r.conv === 0 && r.cost > 15) return ['badge-pause', '⚠ LOW CONV'];
+    // ── RULE 3: Some conversions ──
     const t3 = getAppTiers();
-    if (r.cpa > t3.GOOD * 2)  return ['badge-neg',   '⛔ ADD NEGATIVE'];  // >2× target
-    if (r.cpa > t3.GOOD)      return ['badge-pause', '⚠ MONITOR'];
-    if (r.cpa > 0 && r.cpa <= t3.FANTASTIC && r.conv >= 2) return ['badge-exact', '✓ ADD AS EXACT'];
-    if (r.cpa > 0 && r.cpa <= t3.GOOD)      return ['badge-keep',  '✓ KEEP'];
-    if (r.impressions > 200 && r.conv === 0 && r.cost > 10) return ['badge-neg', '⛔ ADD NEGATIVE'];
+    if (r.conv >= 2 && r.cpa <= t3.FANTASTIC) return ['badge-exact', '✓ ADD AS EXACT'];
+    if (r.conv >= 1 && r.cpa <= t3.GOOD)      return ['badge-keep',  '✓ KEEP'];
+    if (r.conv >= 1) return ['badge-watch', '— MONITOR'];
     return ['badge-watch', '— MONITOR'];
   }
 
@@ -2443,14 +2519,10 @@ function buildStates(geo) {
     .sort((a,b) => a.cpa - b.cpa)
     .slice(0, 20);
   // Worst 20: states with spend but POOR CPA (>$15 act equiv), OR zero conversions
-  // Sort: infinite CPA (no conversions) first, then by highest CPA descending
+  // Sort: highest COST on top — biggest money wasters first
   const worst = rows
     .filter(d => d.spend > 0 && (d.cpa === 0 || d.cpa > tiers.GOOD))
-    .sort((a,b) => {
-      const va = a.cpa === 0 ? Infinity : a.cpa;
-      const vb = b.cpa === 0 ? Infinity : b.cpa;
-      return vb - va;
-    })
+    .sort((a,b) => b.spend - a.spend)
     .slice(0, 20);
   return { best, worst };
 }
