@@ -258,6 +258,9 @@ body::after{content:'';position:fixed;inset:0;background-image:linear-gradient(r
 .dr-btn{background:rgba(255,255,255,0.05);color:#94a3b8;border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:6px 12px;font-size:11px;font-family:inherit;cursor:pointer;transition:all .2s;text-transform:uppercase;letter-spacing:.5px;}
 .dr-btn:hover{background:rgba(56,189,248,0.15);color:#38bdf8;border-color:rgba(56,189,248,0.3);}
 .dr-btn.active{background:rgba(56,189,248,0.2);color:#38bdf8;border-color:rgba(56,189,248,0.5);}
+.dtt-btn{background:rgba(255,255,255,0.04);color:#64748b;border:1px solid rgba(255,255,255,0.08);border-radius:6px;padding:3px 9px;font-size:10px;font-family:inherit;cursor:pointer;transition:all .15s;text-transform:uppercase;letter-spacing:.4px;}
+.dtt-btn:hover{background:rgba(160,80,255,0.15);color:#a050ff;border-color:rgba(160,80,255,0.3);}
+.dtt-btn.dtt-active{background:rgba(160,80,255,0.18);color:#a050ff;border-color:rgba(160,80,255,0.5);}
 </style>
 </head>
 <body>
@@ -393,7 +396,15 @@ body::after{content:'';position:fixed;inset:0;background-image:linear-gradient(r
   <div class="panel fade" style="animation-delay:.25s;margin-bottom:14px">
     <div class="panel-hdr">
       <div class="ptitle">Application CPA by Device · Daily Trend</div>
-      <div class="pmeta" id="deviceChartRange">CAMPAIGN FILTERED · GOOGLE ADS DEVICES</div>
+      <div style="display:flex;align-items:center;gap:10px">
+        <div style="display:flex;gap:4px" id="devTrendToggle">
+          <button onclick="setDevTrend('7')"   id="dtt-7"   class="dtt-btn">Last 7</button>
+          <button onclick="setDevTrend('30')"  id="dtt-30"  class="dtt-btn dtt-active">Last 30</button>
+          <button onclick="setDevTrend('mtd')" id="dtt-mtd" class="dtt-btn">MTD</button>
+          <button onclick="setDevTrend('all')" id="dtt-all" class="dtt-btn">All Time</button>
+        </div>
+        <div class="pmeta" id="deviceChartRange" style="white-space:nowrap">CAMPAIGN: ALL</div>
+      </div>
     </div>
     <div style="position:relative;height:220px"><canvas id="deviceCPAChart"></canvas></div>
   </div>
@@ -1793,6 +1804,56 @@ function renderDeviceCPAChart(data, periodLabel) {
   });
 }
 
+// ── Device CPA Chart independent date toggle ─────────────────────────────────
+let devTrendPeriod = '30'; // default Last 30
+
+function setDevTrend(period) {
+  devTrendPeriod = period;
+  // Update button active state
+  document.querySelectorAll('.dtt-btn').forEach(b => b.classList.remove('dtt-active'));
+  const btn = $('dtt-' + period);
+  if (btn) btn.classList.add('dtt-active');
+  refreshDevTrendChart();
+}
+
+function refreshDevTrendChart() {
+  if (!RAW.devices || !RAW.devices.length) return;
+  const today = new Date();
+  const localToday = today.getFullYear() + '-' +
+    String(today.getMonth()+1).padStart(2,'0') + '-' +
+    String(today.getDate()).padStart(2,'0');
+
+  let fromDate = null;
+  let label = '';
+  if (devTrendPeriod === '7') {
+    const d = new Date(today); d.setDate(d.getDate() - 6);
+    fromDate = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+    label = 'LAST 7 DAYS';
+  } else if (devTrendPeriod === '30') {
+    const d = new Date(today); d.setDate(d.getDate() - 29);
+    fromDate = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+    label = 'LAST 30 DAYS';
+  } else if (devTrendPeriod === 'mtd') {
+    fromDate = localToday.substring(0,7) + '-01';
+    label = 'MONTH TO DATE';
+  } else {
+    fromDate = null; // All Time — no filter
+    label = 'ALL TIME';
+  }
+
+  const filtered = fromDate
+    ? RAW.devices.filter(r => { const d = normDateStr(r.Date || r.date || ''); return d >= fromDate && d <= localToday; })
+    : RAW.devices;
+
+  const campLabel = activeCampaign === 'all' ? 'ALL' :
+    activeCampaign.replace('Search - ','').replace(' | SS','').replace('Assurance Wireless','AW').trim();
+  const rangeEl = $('deviceChartRange');
+  if (rangeEl) rangeEl.textContent = label + ' · CAMPAIGN: ' + campLabel;
+
+  const trend = buildDeviceTrend(filtered, activeCampaign);
+  renderDeviceCPAChart(trend, label + ' · CAMPAIGN: ' + campLabel);
+}
+
 function renderAssuranceIntelligence() {
   const rows = RAW.bgoa.map(parseBGOARow).filter(Boolean).sort((a,b) => a.date.localeCompare(b.date));
   if (!rows.length) return;
@@ -2869,10 +2930,9 @@ function applyFilters() {
   const devLabel = getFallbackLabel(f.devices.length ? f.devices : devices);
   try { renderDevices(buildDevices(devices), devLabel); } catch(e) { console.error('Devices',e); }
   try {
-    // Device CPA chart uses filtered device rows — responds to both date range and campaign filter
-    const devTrendData = buildDeviceTrend(f.devices.length ? f.devices : devices, activeCampaign);
-    const devChartLabel = period?.label ? `${period.label} · CAMPAIGN: ${activeCampaign === 'all' ? 'ALL' : activeCampaign.replace('Search - ','').replace(' | SS','').replace('Assurance Wireless','AW').trim()}` : 'GOOGLE ADS DEVICES';
-    renderDeviceCPAChart(devTrendData, devChartLabel);
+    // Device CPA trend chart has its own independent date range (default Last 30)
+    // It ignores the main date filter and uses devTrendPeriod instead
+    refreshDevTrendChart();
   } catch(e) { console.error('DeviceCPAChart',e); }
   try { renderStates(buildStates(geo), geoLabel); }      catch(e) { console.error('States',e); }
   try { renderTopStates(buildTopStates(geo)); }          catch(e) { console.error('TopStates',e); }
