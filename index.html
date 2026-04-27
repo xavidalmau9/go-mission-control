@@ -1870,9 +1870,9 @@ function renderAssuranceIntelligence() {
     byMonth[m].revenue     += r.revenue;
   });
   // Confirmed paid amounts (from Assurance payment history)
-  // March 2026 is NOT included — still PENDING until actually paid (per month status rule)
-  const confirmedPaid = { '2025-12': 1150, '2026-01': 10375, '2026-02': 13800 };
-  const confirmedActs = { '2025-12': 46,   '2026-01': 415,   '2026-02': 552,   '2026-03': 1404 };
+  // March 2026 paid — 1,861 activations confirmed (higher than expected)
+  const confirmedPaid = { '2025-12': 1150, '2026-01': 10375, '2026-02': 13800, '2026-03': 46525 };
+  const confirmedActs = { '2025-12': 46,   '2026-01': 415,   '2026-02': 552,   '2026-03': 1861 };
   const monthNames = { '2025-12':'DEC 2025','2026-01':'JAN 2026','2026-02':'FEB 2026','2026-03':'MAR 2026','2026-04':'APR 2026' };
 
   $('monthlyActuals').innerHTML = `<table class="intel-table">
@@ -1924,7 +1924,7 @@ function renderAssuranceIntelligence() {
   // ── Business Health KPIs ──
   const totalSpend      = rows.reduce((s,r) => s+r.spend, 0);
   const totalActs       = Object.values(confirmedActs).reduce((s,v)=>s+v, 0) + (byMonth['2026-04']?.activations||0);
-  const totalRevConfirm = 1150+10375+13800; // confirmed paid (Mar still PENDING — not yet received)
+  const totalRevConfirm = 1150+10375+13800+46525; // confirmed paid through March 2026
   const totalRevBGOA    = rows.reduce((s,r)=>s+r.revenue, 0);
   const netToDate       = totalRevBGOA - totalSpend;
   const roi             = totalSpend > 0 ? (netToDate/totalSpend*100) : 0;
@@ -2061,8 +2061,8 @@ function renderAssuranceIntelligence() {
       // Always use Google Ads spend when available; fall back to Lifeline, then BGOA manual
       const spend   = google ? google.spend : (lifeline?.spend || bgoa.spend);
       const label   = new Date(mk + '-15').toLocaleDateString('en-US', { month:'short', year:'numeric' }).toUpperCase();
-      // Status: current month = CURRENT MONTH, prior month = PENDING, older = PAID ✓
-      const status  = mk === _curMonth ? 'CURRENT MONTH' : mk === _prevMonth ? 'PENDING' : 'PAID ✓';
+      // Status: April 2026 = PENDING (activation lag — month closing out), older confirmed = PAID ✓
+      const status  = mk === '2026-04' ? 'PENDING' : confirmedPaid[mk] ? 'PAID ✓' : mk === _curMonth ? 'CURRENT MONTH' : mk === _prevMonth ? 'PENDING' : 'PAID ✓';
       return {
         month:         label,
         assuranceActs: bestActs,
@@ -2176,7 +2176,7 @@ function renderAssuranceIntelligence() {
     const isCurrent = mk === _curMonth;
     const label = new Date(mk+'-15').toLocaleDateString('en-US',{month:'short',year:'numeric'}).toUpperCase();
     const proj = ORIG_PROJ[mk];
-    const status = mk === _curMonth ? 'CURRENT MONTH' : mk === _prevMonth ? 'PENDING' : 'PAID ✓';
+    const status = mk === '2026-04' ? 'PENDING' : confirmedPaid && confirmedPaid[mk] ? 'PAID ✓' : mk === _curMonth ? 'CURRENT MONTH' : mk === _prevMonth ? 'PENDING' : 'PAID ✓';
     return { month:label, projected:proj, actual:d.acts, spend:d.spend, partial:isCurrent, projFull: isCurrent ? aprProjFull : null, status, mk };
   });
 
@@ -2823,7 +2823,7 @@ function buildTrajectory(kpis, chartDaily) {
     {month:monthName, status:'PROJECTED', metric:'Activations', val:projectedActs, color:'var(--accent)', proj:2000, isProjOnly:true},
     {month:monthName, status:'PROJECTED', metric:'Spend',        val:projSpend, color:'var(--amber)', isDollar:true},
     {month:monthName, status:'PROJECTED', metric:'Revenue',      val:Math.round(projectedActs * PAYOUT), color:'var(--green)', isDollar:true},
-    {month:'MAR 2026', status:'PENDING',  metric:'Activations', val: Math.max(getLifelineActuals()['2026-03']?.acts||0, 1404), color:'var(--amber)', proj:1000},
+    {month:'MAR 2026', status:'PAID ✓',   metric:'Activations', val: Math.max(getLifelineActuals()['2026-03']?.acts||0, 1861), color:'var(--green)', proj:1000},
     {month:'FEB 2026', status:'PAID ✓',   metric:'Activations', val: Math.max(getLifelineActuals()['2026-02']?.acts||0, 552),  color:'var(--green)', proj:500},
     {isSummary:true,  summaryLabel:'REVENUE SETTLED', val:(Math.max(getLifelineActuals()['2025-12']?.acts||0,44)+Math.max(getLifelineActuals()['2026-01']?.acts||0,415)+Math.max(getLifelineActuals()['2026-02']?.acts||0,552))*PAYOUT, color:'var(--green)', isDollar:true},
   ];
