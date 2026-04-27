@@ -1873,6 +1873,8 @@ function renderAssuranceIntelligence() {
   // March 2026 paid — 1,861 activations confirmed (higher than expected)
   const confirmedPaid = { '2025-12': 1150, '2026-01': 10375, '2026-02': 13800, '2026-03': 46525 };
   const confirmedActs = { '2025-12': 46,   '2026-01': 415,   '2026-02': 552,   '2026-03': 1861 };
+  // Final locked CPAs for closed/paid months — use these, never recalculate from live data
+  const confirmedCPA  = { '2025-12': 2.83, '2026-01': 3.21,  '2026-02': 12.38, '2026-03': 11.35 };
   const monthNames = { '2025-12':'DEC 2025','2026-01':'JAN 2026','2026-02':'FEB 2026','2026-03':'MAR 2026','2026-04':'APR 2026' };
 
   $('monthlyActuals').innerHTML = `<table class="intel-table">
@@ -1880,7 +1882,7 @@ function renderAssuranceIntelligence() {
       <th>Month</th><th class="num">Spend</th><th class="num">Applications</th><th class="num">Activations</th><th class="num">Act CPA</th><th class="num">Revenue</th><th class="num">Status</th>
     </tr></thead>
     <tbody>${Object.entries(byMonth).sort((a,b)=>a[0].localeCompare(b[0])).map(([m, d]) => {
-      const actCPA = d.activations > 0 ? d.spend/d.activations : 0;
+      const actCPA = confirmedCPA[m] || (d.activations > 0 ? d.spend/d.activations : 0);
       const cpaCol = actCPA <= 10 ? 'var(--green)' : actCPA <= 15 ? 'var(--amber)' : 'var(--red)';
       const paid = confirmedPaid[m];
       const paidActs = confirmedActs[m];
@@ -2067,7 +2069,7 @@ function renderAssuranceIntelligence() {
         month:         label,
         assuranceActs: bestActs,
         googleActs:    google ? Math.round(google.convs) : null,
-        assuranceCPA:  bestActs > 0 && spend > 0 ? spend / bestActs : null,
+        assuranceCPA:  confirmedCPA[mk] || (bestActs > 0 && spend > 0 ? spend / bestActs : null),
         googleCPA:     google && google.convs > 0 ? google.spend / google.convs : null,
         paidOut:       bestActs * PAYOUT,
         status,
@@ -2177,7 +2179,9 @@ function renderAssuranceIntelligence() {
     const label = new Date(mk+'-15').toLocaleDateString('en-US',{month:'short',year:'numeric'}).toUpperCase();
     const proj = ORIG_PROJ[mk];
     const status = mk === '2026-04' ? 'PENDING' : confirmedPaid && confirmedPaid[mk] ? 'PAID ✓' : mk === _curMonth ? 'CURRENT MONTH' : mk === _prevMonth ? 'PENDING' : 'PAID ✓';
-    return { month:label, projected:proj, actual:d.acts, spend:d.spend, partial:isCurrent, projFull: isCurrent ? aprProjFull : null, status, mk };
+    const finalActs  = confirmedActs[mk] || d.acts;
+    const finalCPA   = confirmedCPA[mk]  || (finalActs > 0 && d.spend > 0 ? d.spend / finalActs : null);
+    return { month:label, projected:proj, actual:finalActs, spend:d.spend, cpa:finalCPA, partial:isCurrent, projFull: isCurrent ? aprProjFull : null, status, mk };
   });
 
   $('projVsReal').innerHTML = projDataDyn.map(p => {
@@ -2199,7 +2203,7 @@ function renderAssuranceIntelligence() {
         <div style="background:var(--surface2);border-radius:4px;padding:6px 8px">
           <div style="font-family:var(--mono);font-size:18px;font-weight:700;color:var(--accent)">${p.actual > 0 ? p.actual.toLocaleString() : '—'}</div>
           <div style="font-family:var(--mono);font-size:7px;color:var(--muted);letter-spacing:1px;margin-top:2px">ACTUAL ACTIVATIONS</div>
-          <div style="font-family:var(--mono);font-size:9px;color:var(--amber);margin-top:3px">${p.spend > 0 ? fmtMoney(p.spend) : '—'}</div>
+          <div style="font-family:var(--mono);font-size:9px;color:var(--amber);margin-top:3px">${p.spend > 0 ? fmtMoney(p.spend) : '—'}${p.cpa ? ` · <span style="color:${actCpaColor(p.cpa)}">${fmtCPA(p.cpa)} CPA</span>` : ''}</div>
         </div>
         <div style="background:var(--surface2);border-radius:4px;padding:6px 8px">
           <div style="font-family:var(--mono);font-size:18px;font-weight:700;color:var(--muted)">${projDisplay}</div>
