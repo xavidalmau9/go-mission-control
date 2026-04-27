@@ -2088,18 +2088,18 @@ function renderAssuranceIntelligence() {
         <div style="background:var(--surface2);border-radius:4px;padding:6px 8px">
           ${g.googleActs !== null ? `
           <div style="font-family:var(--mono);font-size:13px;color:var(--accent2)">${g.googleActs.toLocaleString()}</div>
-          <div style="font-family:var(--mono);font-size:7px;color:var(--muted);letter-spacing:1px">GOOGLE ACTIVATIONS</div>
+          <div style="font-family:var(--mono);font-size:7px;color:var(--muted);letter-spacing:1px">GOOGLE CONVERSIONS</div>
           <div style="font-family:var(--mono);font-size:9px;color:var(--amber);margin-top:2px">${g.googleCPA ? fmtCPA(g.googleCPA)+' CPA' : '—'}</div>
           ` : `
           <div style="font-family:var(--mono);font-size:13px;color:var(--muted)">0</div>
-          <div style="font-family:var(--mono);font-size:7px;color:var(--muted);letter-spacing:1px">GOOGLE ACTIVATIONS</div>
+          <div style="font-family:var(--mono);font-size:7px;color:var(--muted);letter-spacing:1px">GOOGLE CONVERSIONS</div>
           <div style="font-family:var(--mono);font-size:9px;color:var(--muted);margin-top:2px">Not tracked</div>
           `}
         </div>
       </div>
       <div style="font-family:var(--mono);font-size:8px;color:var(--muted);margin-top:5px">
         ${g.googleActs !== null
-          ? `Δ ${Math.abs(g.googleActs - g.assuranceActs)} acts · Google ${g.googleActs > g.assuranceActs ? 'over-reports' : 'under-reports'} by ${((Math.abs(g.googleActs-g.assuranceActs)/g.assuranceActs)*100).toFixed(1)}% · `
+          ? `Δ ${Math.abs(g.googleActs - g.assuranceActs)} · Google conversions ${g.googleActs > g.assuranceActs ? 'over-report' : 'under-report'} vs BGOA activations by ${((Math.abs(g.googleActs-g.assuranceActs)/g.assuranceActs)*100).toFixed(1)}% · `
           : ''}Paid out: <span style="color:var(--green)">${fmtMoney(g.paidOut)}</span>
       </div>
     </div>
