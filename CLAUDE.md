@@ -74,10 +74,10 @@ App CPA thresholds are DERIVED: App CPA tier = Act CPA tier × activation_rate (
 | Dec 2025 | 46 | $1,150 | PAID ✓ |
 | Jan 2026 | 415 | $10,375 | PAID ✓ |
 | Feb 2026 | 552 | $13,800 | PAID ✓ |
-| Mar 2026 | 1,404 | $35,100 | **PENDING** (not yet received) |
-| Apr 2026 | in progress | — | **CURRENT MONTH** |
+| Mar 2026 | 1,861 | $46,525 | **PAID ✓** |
+| Apr 2026 | 2,007+ (MTD) | — | **PENDING** (activation lag) |
 
-**Settled to date = $25,325** (Dec + Jan + Feb only — Mar is NOT yet paid).
+**Settled to date = $71,850** (Dec + Jan + Feb + Mar paid).
 
 ---
 
@@ -451,10 +451,8 @@ These are the official numbers. Always use `Math.max(BGOA daily, Lifeline)` — 
 | Dec 2025 | 44 | $1,100 | PAID |
 | Jan 2026 | 415 | $10,375 | PAID |
 | Feb 2026 | 552 | $13,800 | PAID |
-| Mar 2026 | 1,404 | $35,100 | PENDING |
-| Apr 2026 | 1,042+ (MTD) | — | CURRENT MONTH |
-
-Mar 2026 shows 1,404 because activations lag — final paid count will be higher.
+| Mar 2026 | 1,861 | $46,525 | PAID ✓ |
+| Apr 2026 | 2,007+ (MTD) | — | PENDING (activation lag) |
 
 ## Original Projections (correct values — do not change)
 | Month | Projection |
