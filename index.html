@@ -2829,7 +2829,7 @@ function buildTrajectory(kpis, chartDaily) {
     {month:monthName, status:'PROJECTED', metric:'Revenue',      val:Math.round(projectedActs * PAYOUT), color:'var(--green)', isDollar:true},
     {month:'MAR 2026', status:'PAID ✓',   metric:'Activations', val: Math.max(getLifelineActuals()['2026-03']?.acts||0, 1861), color:'var(--green)', proj:1000},
     {month:'FEB 2026', status:'PAID ✓',   metric:'Activations', val: Math.max(getLifelineActuals()['2026-02']?.acts||0, 552),  color:'var(--green)', proj:500},
-    {isSummary:true,  summaryLabel:'REVENUE SETTLED', val:(Math.max(getLifelineActuals()['2025-12']?.acts||0,44)+Math.max(getLifelineActuals()['2026-01']?.acts||0,415)+Math.max(getLifelineActuals()['2026-02']?.acts||0,552))*PAYOUT, color:'var(--green)', isDollar:true},
+    {isSummary:true,  summaryLabel:'REVENUE SETTLED', val:(Math.max(getLifelineActuals()['2025-12']?.acts||0,44)+Math.max(getLifelineActuals()['2026-01']?.acts||0,415)+Math.max(getLifelineActuals()['2026-02']?.acts||0,552)+Math.max(getLifelineActuals()['2026-03']?.acts||0,1861))*PAYOUT, color:'var(--green)', isDollar:true},
   ];
 }
 
