@@ -2264,12 +2264,14 @@ function getLifelineActuals() {
     'February':'2026-02', 'March':'2026-03', 'April':'2026-04', 'May':'2026-05', 'June':'2026-06' };
   const colToMonth = {};
   rows[monthIdx].forEach((v, i) => { const mk = MONTH_KEYS[v.trim()]; if (mk) colToMonth[i] = mk; });
-  // Find Activations, Gross (revenue), Ad Spend rows
-  let actsIdx = -1, grossIdx = -1, spendIdx = -1;
-  for (let i = monthIdx + 1; i < Math.min(monthIdx + 8, rows.length); i++) {
+  // Find Activations, Gross (revenue), Ad Spend rows, and PAID/PENDING status row
+  let actsIdx = -1, grossIdx = -1, spendIdx = -1, paidIdx = -1;
+  for (let i = monthIdx + 1; i < rows.length; i++) {
     if (rows[i].some(v => v.trim() === 'Activations') && actsIdx < 0) actsIdx = i;
     if (rows[i].some(v => v.trim() === 'Gross') && grossIdx < 0) grossIdx = i;
     if (rows[i].some(v => v.trim() === 'Ad Spend') && spendIdx < 0) spendIdx = i;
+    // Row 29: contains PAID / PENDING per month
+    if (rows[i].some(v => /^PAID$|^PENDING$/.test(v.trim())) && paidIdx < 0) paidIdx = i;
   }
   // Extract by column
   const clean = v => parseFloat((v||'').replace(/[$,%\s]/g,'').replace(/,/g,'')) || 0;
@@ -2280,6 +2282,7 @@ function getLifelineActuals() {
       acts:  actsIdx  >= 0 ? clean(rows[actsIdx][c])  : 0,
       gross: grossIdx >= 0 ? clean(rows[grossIdx][c]) : 0,
       spend: spendIdx >= 0 ? clean(rows[spendIdx][c]) : 0,
+      paid:  paidIdx  >= 0 ? (rows[paidIdx][c]||'').trim() === 'PAID' : false,
     };
   });
   return result;
@@ -2829,7 +2832,7 @@ function buildTrajectory(kpis, chartDaily) {
     {month:monthName, status:'PROJECTED', metric:'Revenue',      val:Math.round(projectedActs * PAYOUT), color:'var(--green)', isDollar:true},
     {month:'MAR 2026', status:'PAID ✓',   metric:'Activations', val: Math.max(getLifelineActuals()['2026-03']?.acts||0, 1861), color:'var(--green)', proj:1000},
     {month:'FEB 2026', status:'PAID ✓',   metric:'Activations', val: Math.max(getLifelineActuals()['2026-02']?.acts||0, 552),  color:'var(--green)', proj:500},
-    {isSummary:true,  summaryLabel:'REVENUE SETTLED', val:(Math.max(getLifelineActuals()['2025-12']?.acts||0,44)+Math.max(getLifelineActuals()['2026-01']?.acts||0,415)+Math.max(getLifelineActuals()['2026-02']?.acts||0,552)+Math.max(getLifelineActuals()['2026-03']?.acts||0,1861))*PAYOUT, color:'var(--green)', isDollar:true},
+    {isSummary:true,  summaryLabel:'REVENUE SETTLED', val:Object.values(getLifelineActuals()).filter(m=>m.paid).reduce((s,m)=>s+m.gross,0), color:'var(--green)', isDollar:true},
   ];
 }
 

@@ -77,7 +77,20 @@ App CPA thresholds are DERIVED: App CPA tier = Act CPA tier × activation_rate (
 | Mar 2026 | 1,861 | $46,525 | **PAID ✓** |
 | Apr 2026 | 2,007+ (MTD) | — | **PENDING** (activation lag) |
 
-**Settled to date = $71,850** (Dec + Jan + Feb + Mar paid).
+**Settled to date = $71,800** (Dec + Jan + Feb + Mar paid).
+
+### Revenue Settled — Source of Truth (CRITICAL — never hardcode again)
+
+**REVENUE SETTLED reads directly from the Lifeline spreadsheet row 29 (PAID/PENDING per month).**
+
+- Spreadsheet: `1JQWn6RHVuOVZWPnVgxFRXBFGka6ae7qYQ6Jik74t60Q` GID `849051862`
+- Row 21 = month headers (December '25, January, February, March, April…)
+- Row 24 = Gross revenue per month
+- Row 29 = Payment status per month: `PAID` or `PENDING`
+- `getLifelineActuals()` now returns `{ acts, gross, spend, paid }` per month
+- REVENUE SETTLED = `Object.values(actuals).filter(m=>m.paid).reduce((s,m)=>s+m.gross,0)`
+- **When a new month is marked PAID in the spreadsheet, the dashboard updates automatically — no code change needed.**
+- **Never hardcode month revenue or payment status in the dashboard code.** Always read from `getLifelineActuals()`.
 
 ---
 
@@ -319,6 +332,7 @@ A `US_STATE_CRITERIA` lookup table in the script converts these to state names (
 - **Never use `parseFloat()` on any Google Ads CSV field** — always use `pn(r.Cost)`, `pn(r.Conversions)`, `pn(r.Clicks)`, `pn(r.Impressions)`. AWQL adds comma separators to numbers ≥ 1000 and `parseFloat("1,234")` = 1. This affected DailyCampaign, Devices, Hourly, Geo, Keywords, SearchTerms — every sheet. The `pn()` helper strips commas before parsing.
 - **Never use `parseFloat()` in the Google Ads script either** — always use `cleanNum()` for the same reason
 - **Never render `googleCPA` in the App CPA tile** — `googleCPA` = spend/conversions; App CPA tile must use `appCPA` = spend/applications
+- **Never call Google-tracked numbers "activations"** — Google only tracks conversions (= applications). Always label them "Google Conversions". Only BGOA/Assurance confirmed data can be called "Activations".
 - **Never show Activation Rate without a PROJECTED label for TODAY or fallback views** — only show `✓ REAL` when confirmed period data from BGOA exists
 - **Never use BGOA Ad Spend as the spend source** — always use Google DailyCampaign for spend
 - **Never use only one source for applications** — always `Math.max(confirmedApps, googleApps)`
