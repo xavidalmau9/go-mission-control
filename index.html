@@ -617,7 +617,9 @@ body::after{content:'';position:fixed;inset:0;background-image:linear-gradient(r
       <!-- Daily Chart -->
       <div class="panel" style="background:var(--surface);border:1px solid var(--border2);border-radius:8px;padding:18px 20px">
         <div class="section-title" style="font-family:var(--mono);font-size:9px;color:var(--muted);letter-spacing:2px;margin-bottom:16px">DAILY PERFORMANCE <span style="color:#34d399">· GO BROADBAND</span></div>
-        <canvas id="gbDailyChart" height="120"></canvas>
+        <div style="height:200px;position:relative">
+          <canvas id="gbDailyChart"></canvas>
+        </div>
       </div>
 
       <!-- Campaign Scorecard -->
