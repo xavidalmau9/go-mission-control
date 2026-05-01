@@ -686,6 +686,64 @@ body::after{content:'';position:fixed;inset:0;background-image:linear-gradient(r
       </div>
     </div>
 
+    <!-- GA4 Website Analytics Panel -->
+    <div style="margin-bottom:12px">
+      <div style="font-family:var(--mono);font-size:9px;color:var(--muted);letter-spacing:2px;margin-bottom:10px;display:flex;align-items:center;gap:8px">
+        <span>🌐 WEBSITE ANALYTICS <span style="color:#34d399">· GOBROADBAND.IO</span></span>
+        <span id="ga4UpdatedAt" style="margin-left:auto;font-size:8px;opacity:.4"></span>
+      </div>
+
+      <!-- GA4 primary KPIs -->
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:10px">
+        <div class="kpi" style="position:relative;overflow:hidden;border-left:3px solid #34d399">
+          <div class="kpi-lbl">Active Now</div>
+          <div class="kpi-val" id="ga4-active" style="font-size:32px">—</div>
+          <div class="kpi-sub" style="color:#34d399">realtime users</div>
+        </div>
+        <div class="kpi" style="position:relative;overflow:hidden;border-left:3px solid #6ee7b7">
+          <div class="kpi-lbl">Sessions</div>
+          <div class="kpi-val" id="ga4-sessions" style="font-size:32px">—</div>
+          <div class="kpi-sub" id="ga4s-sessions">period total</div>
+        </div>
+        <div class="kpi" style="position:relative;overflow:hidden;border-left:3px solid #a78bfa">
+          <div class="kpi-lbl">Engagement Rate</div>
+          <div class="kpi-val" id="ga4-engagement" style="font-size:32px">—</div>
+          <div class="kpi-sub">% engaged sessions</div>
+        </div>
+      </div>
+
+      <!-- GA4 secondary KPIs -->
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:12px">
+        <div class="kpi" style="position:relative;overflow:hidden">
+          <div class="kpi-lbl">Users</div>
+          <div class="kpi-val" id="ga4-users" style="font-size:22px">—</div>
+          <div class="kpi-sub" id="ga4s-users">total visitors</div>
+        </div>
+        <div class="kpi" style="position:relative;overflow:hidden">
+          <div class="kpi-lbl">Avg Duration</div>
+          <div class="kpi-val" id="ga4-duration" style="font-size:22px">—</div>
+          <div class="kpi-sub">per session</div>
+        </div>
+        <div class="kpi" style="position:relative;overflow:hidden">
+          <div class="kpi-lbl">New Users</div>
+          <div class="kpi-val" id="ga4-newusers" style="font-size:22px">—</div>
+          <div class="kpi-sub" id="ga4s-newusers">first visit</div>
+        </div>
+      </div>
+
+      <!-- Traffic Sources + Top Pages -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div style="background:var(--surface);border:1px solid var(--border2);border-radius:8px;padding:18px 20px">
+          <div style="font-family:var(--mono);font-size:9px;color:var(--muted);letter-spacing:2px;margin-bottom:14px">TRAFFIC SOURCES</div>
+          <div id="ga4SourcesList"><div style="font-family:var(--mono);font-size:10px;color:var(--muted);text-align:center;padding:24px 0">Awaiting data...</div></div>
+        </div>
+        <div style="background:var(--surface);border:1px solid var(--border2);border-radius:8px;padding:18px 20px">
+          <div style="font-family:var(--mono);font-size:9px;color:var(--muted);letter-spacing:2px;margin-bottom:14px">TOP PAGES</div>
+          <div id="ga4PagesList"><div style="font-family:var(--mono);font-size:10px;color:var(--muted);text-align:center;padding:24px 0">Awaiting data...</div></div>
+        </div>
+      </div>
+    </div>
+
     <!-- GB no-data -->
     <div id="gbNoData" style="display:none;text-align:center;padding:60px 20px;font-family:var(--mono);font-size:11px;color:var(--muted);letter-spacing:2px">
       NO DATA YET · CAMPAIGNS LAUNCHING SOON<br>
@@ -3154,7 +3212,7 @@ const GB_CPA_TIERS = { FANTASTIC: 5, EXCELLENT: 7.50, GOOD: 10 };
 // >$10/call = POOR.
 
 // ── GB RAW DATA ──
-const GB_RAW = { daily:[], devices:[], geo:[], hourly:[], keywords:[], searchTerms:[] };
+const GB_RAW = { daily:[], devices:[], geo:[], hourly:[], keywords:[], searchTerms:[], ga4Daily:[], ga4Sources:[], ga4Pages:[], ga4Realtime:[] };
 let gbDateRange = '30';  // default
 let gbActiveCampaign = 'all';
 let gbChartInst = null;
@@ -3199,8 +3257,8 @@ async function gbFetchAndRender() {
     return;
   }
   try {
-    const sheets = ['DailyCampaign','Devices','Geo','Hourly','Keywords','SearchTerms'];
-    const keys   = ['daily','devices','geo','hourly','keywords','searchTerms'];
+    const sheets = ['DailyCampaign','Devices','Geo','Hourly','Keywords','SearchTerms','GA4Daily','GA4Sources','GA4Pages','GA4Realtime'];
+    const keys   = ['daily','devices','geo','hourly','keywords','searchTerms','ga4Daily','ga4Sources','ga4Pages','ga4Realtime'];
     const results = await Promise.all(sheets.map(s => fetch(gbSheetUrl(s)).then(r=>r.text()).catch(()=>'')));
     results.forEach((txt, i) => {
       GB_RAW[keys[i]] = txt ? parseCSV(txt) : [];
@@ -3273,6 +3331,27 @@ function gbApplyFilters() {
   gbRenderStates(geo);
   gbRenderHourly(hourly);
   gbRenderDevices(devices);
+
+  // GA4 — date-filtered daily/sources/pages, realtime always live
+  const ga4Daily = GB_RAW.ga4Daily.filter(r => {
+    const d = normDateStr(r.Date || '');
+    if (d && d < from) return false;
+    if (d && d > to)   return false;
+    return true;
+  });
+  const ga4Sources = GB_RAW.ga4Sources.filter(r => {
+    const d = normDateStr(r.Date || '');
+    if (d && d < from) return false;
+    if (d && d > to)   return false;
+    return true;
+  });
+  const ga4Pages = GB_RAW.ga4Pages.filter(r => {
+    const d = normDateStr(r.Date || '');
+    if (d && d < from) return false;
+    if (d && d > to)   return false;
+    return true;
+  });
+  gbRenderGA4(ga4Daily, ga4Sources, ga4Pages, GB_RAW.ga4Realtime);
 }
 
 // ── GB KPIs ──
@@ -3571,6 +3650,118 @@ function gbRenderDevices(devices) {
       </div>
     </div>`;
   }).join('');
+}
+
+// ── GB GA4 WEBSITE ANALYTICS ──
+function gbRenderGA4(daily, sources, pages, realtime) {
+  const $v = id => document.getElementById(id);
+
+  // Realtime — row with Screen === 'TOTAL' holds the active user count
+  const rtRow = (realtime || []).find(r => (r.Screen || '') === 'TOTAL');
+  const activeNow = rtRow ? pn(rtRow.ActiveUsers || 0) : null;
+  if ($v('ga4-active')) $v('ga4-active').textContent = activeNow !== null ? activeNow : '—';
+  if ($v('ga4UpdatedAt') && rtRow && rtRow.UpdatedAt) {
+    try {
+      const d = new Date(rtRow.UpdatedAt);
+      $v('ga4UpdatedAt').textContent = 'Updated ' + d.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+    } catch(e) {}
+  }
+
+  // Daily aggregates
+  let sessions=0, engaged=0, users=0, newUsers=0, durSum=0, durRows=0;
+  daily.forEach(r => {
+    sessions  += pn(r.Sessions  || 0);
+    engaged   += pn(r.EngagedSessions || 0);
+    users     += pn(r.Users     || 0);
+    newUsers  += pn(r.NewUsers  || 0);
+    const dur  = pn(r.AvgSessionDuration || 0);
+    if (dur > 0) { durSum += dur; durRows++; }
+  });
+  const engRate = sessions > 0 ? (engaged / sessions * 100) : 0;
+  const avgDur  = durRows  > 0 ? durSum / durRows : 0;
+
+  if ($v('ga4-sessions'))   $v('ga4-sessions').textContent   = sessions ? sessions.toLocaleString() : '—';
+  if ($v('ga4-engagement')) $v('ga4-engagement').textContent = sessions ? engRate.toFixed(1) + '%'  : '—';
+  if ($v('ga4-users'))      $v('ga4-users').textContent      = users    ? users.toLocaleString()    : '—';
+  if ($v('ga4-newusers'))   $v('ga4-newusers').textContent   = newUsers ? newUsers.toLocaleString() : '—';
+  if ($v('ga4-duration'))   $v('ga4-duration').textContent   = avgDur   ? gbFmtDur(avgDur)          : '—';
+  if ($v('ga4s-sessions'))  $v('ga4s-sessions').textContent  = sessions ? 'total sessions'          : 'no data yet';
+  if ($v('ga4s-users'))     $v('ga4s-users').textContent     = users && newUsers
+    ? Math.round(newUsers/users*100) + '% new'
+    : 'total visitors';
+
+  // Traffic sources bar chart
+  const srcAgg = {};
+  sources.forEach(r => {
+    const ch = r.Channel || 'Unknown';
+    srcAgg[ch] = (srcAgg[ch] || 0) + pn(r.Sessions || 0);
+  });
+  const srcTotal  = Object.values(srcAgg).reduce((a,b)=>a+b,0);
+  const srcSorted = Object.entries(srcAgg).sort((a,b)=>b[1]-a[1]);
+  const srcEl = $v('ga4SourcesList');
+  if (srcEl) {
+    if (!srcSorted.length) {
+      srcEl.innerHTML = '<div style="font-family:var(--mono);font-size:10px;color:var(--muted);text-align:center;padding:24px 0">No data yet — script runs hourly</div>';
+    } else {
+      const CH_COLOR = {
+        'Paid Search':'#38bdf8','Organic Search':'#34d399','Direct':'#a78bfa',
+        'Referral':'#f59e0b','Organic Social':'#f472b6','Email':'#6ee7b7',
+        'Paid Social':'#fb7185','Unassigned':'#6b7280','(Other)':'#6b7280'
+      };
+      srcEl.innerHTML = srcSorted.map(([ch, cnt]) => {
+        const pct   = srcTotal > 0 ? (cnt / srcTotal * 100) : 0;
+        const color = CH_COLOR[ch] || '#6b7280';
+        return `<div style="margin-bottom:10px">
+          <div style="display:flex;justify-content:space-between;align-items:baseline;font-family:var(--mono);font-size:10px;margin-bottom:5px">
+            <span style="color:${color};letter-spacing:.5px">${ch}</span>
+            <span style="color:var(--text)">${cnt.toLocaleString()} <span style="color:var(--muted);font-size:9px">${pct.toFixed(1)}%</span></span>
+          </div>
+          <div style="height:4px;background:var(--border2);border-radius:2px">
+            <div style="height:4px;background:${color};border-radius:2px;width:${Math.min(pct,100).toFixed(1)}%;transition:width .4s"></div>
+          </div>
+        </div>`;
+      }).join('');
+    }
+  }
+
+  // Top pages
+  const pageAgg = {};
+  pages.forEach(r => {
+    const path = r.PagePath || '/';
+    if (!pageAgg[path]) pageAgg[path] = { sessions:0, engaged:0 };
+    pageAgg[path].sessions += pn(r.Sessions || 0);
+    pageAgg[path].engaged  += pn(r.EngagedSessions || 0);
+  });
+  const pageSorted = Object.entries(pageAgg).sort((a,b)=>b[1].sessions-a[1].sessions).slice(0,6);
+  const pageMax    = pageSorted.length ? pageSorted[0][1].sessions : 1;
+  const pageEl = $v('ga4PagesList');
+  if (pageEl) {
+    if (!pageSorted.length) {
+      pageEl.innerHTML = '<div style="font-family:var(--mono);font-size:10px;color:var(--muted);text-align:center;padding:24px 0">No data yet — script runs hourly</div>';
+    } else {
+      pageEl.innerHTML = pageSorted.map(([path, d]) => {
+        const engPct = d.sessions > 0 ? (d.engaged / d.sessions * 100).toFixed(0) : 0;
+        const barPct = pageMax   > 0 ? (d.sessions / pageMax * 100).toFixed(1) : 0;
+        const label  = path === '/' ? '/ (home)' : (path.length > 26 ? path.slice(0,26)+'…' : path);
+        return `<div style="margin-bottom:10px">
+          <div style="display:flex;justify-content:space-between;align-items:baseline;font-family:var(--mono);font-size:10px;margin-bottom:5px">
+            <span style="color:#34d399">${label}</span>
+            <span style="color:var(--text)">${d.sessions.toLocaleString()} <span style="color:var(--muted);font-size:9px">${engPct}% eng</span></span>
+          </div>
+          <div style="height:3px;background:var(--border2);border-radius:2px">
+            <div style="height:3px;background:#34d399;border-radius:2px;width:${barPct}%;transition:width .4s"></div>
+          </div>
+        </div>`;
+      }).join('');
+    }
+  }
+}
+
+function gbFmtDur(secs) {
+  secs = Math.round(secs);
+  const m = Math.floor(secs / 60);
+  const s = secs % 60;
+  return m > 0 ? m + 'm ' + s + 's' : s + 's';
 }
 
 // ── MAIN INIT ── //
