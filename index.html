@@ -1483,7 +1483,7 @@ function renderSummary(chartDaily, kpis) {
   const avgApps  = kpis.conversions / days;
   const avgActs  = kpis.activations / days;
   const estMonthlyRev = kpis.revenue; // BGOA confirmed where available
-  $('summaryText').innerHTML =
+  if ($('summaryText')) $('summaryText').innerHTML =
     `<span style="color:var(--accent)">Period days:</span> ${days} days<br>` +
     `<span style="color:var(--accent)">Total spend:</span> ${fmtMoney(kpis.spend)}<br>` +
     `<span style="color:var(--accent)">Daily avg spend:</span> ${fmtMoney(avgSpend)}/day<br>` +
@@ -1522,7 +1522,7 @@ function renderSummary(chartDaily, kpis) {
   const projActCPA     = projTotalActs > 0 ? projTotalSpend / projTotalActs : 0;
   const actRatePct     = (ACT_RATE * 100).toFixed(1);
 
-  $('projectionText').innerHTML =
+  if ($('projectionText')) $('projectionText').innerHTML =
     `<span style="color:var(--accent)">MTD confirmed activations:</span> <span style="color:var(--green)">${mtdActs.toLocaleString()}</span> confirmed<br>` +
     `<span style="color:var(--accent)">Daily pace (7d avg):</span> ~${dailyActPace.toFixed(1)} acts/day<br>` +
     `<span style="color:var(--accent)">Remaining days:</span> ${remainDays}<br>` +
