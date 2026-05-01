@@ -1455,7 +1455,7 @@ function renderTrajectory(monthly, daily) {
   const bgoaRows = RAW.bgoa.map(parseBGOARow).filter(Boolean).sort((a,b)=>a.date.localeCompare(b.date)).slice(-14);
   if (bgoaRows.length > 0) {
     const maxA = Math.max(...bgoaRows.map(r => r.activations), 1);
-    $('weekSpark').innerHTML = bgoaRows.map(r => {
+    if ($('weekSpark')) $('weekSpark').innerHTML = bgoaRows.map(r => {
       const h = r.activations > 0 ? Math.max(6, Math.round((r.activations / maxA) * 56)) : 4;
       const col = r.activations >= 60 ? 'var(--green)' : r.activations >= 30 ? 'var(--accent)' : r.activations > 0 ? 'var(--amber)' : 'rgba(255,255,255,0.05)';
       return `<div class="spark-bar" title="${r.date}: ${r.activations} confirmed activations" style="height:${h}px;background:${col}"></div>`;
@@ -1464,7 +1464,7 @@ function renderTrajectory(monthly, daily) {
     // Fallback to estimated if no BGOA data
     const last14 = [...daily].sort((a,b) => a.date.localeCompare(b.date)).slice(-14);
     const maxA = Math.max(...last14.map(d => d.activations), 1);
-    $('weekSpark').innerHTML = last14.map(d => {
+    if ($('weekSpark')) $('weekSpark').innerHTML = last14.map(d => {
       const h = d.activations > 0 ? Math.max(6, Math.round((d.activations / maxA) * 56)) : 4;
       const col = d.activations > 60 ? 'var(--green)' : d.activations > 30 ? 'var(--accent)' : d.activations > 0 ? 'var(--amber)' : 'rgba(255,255,255,0.05)';
       return `<div class="spark-bar" title="${d.date}: ~${d.activations} est. activations" style="height:${h}px;background:${col}"></div>`;
