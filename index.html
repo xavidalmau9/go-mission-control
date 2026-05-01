@@ -261,6 +261,18 @@ body::after{content:'';position:fixed;inset:0;background-image:linear-gradient(r
 .dtt-btn{background:rgba(255,255,255,0.04);color:#64748b;border:1px solid rgba(255,255,255,0.08);border-radius:6px;padding:3px 9px;font-size:10px;font-family:inherit;cursor:pointer;transition:all .15s;text-transform:uppercase;letter-spacing:.4px;}
 .dtt-btn:hover{background:rgba(160,80,255,0.15);color:#a050ff;border-color:rgba(160,80,255,0.3);}
 .dtt-btn.dtt-active{background:rgba(160,80,255,0.18);color:#a050ff;border-color:rgba(160,80,255,0.5);}
+
+/* ── PROJECT TAB SWITCHER ── */
+.proj-tabs{display:flex;gap:0;margin-bottom:18px;border-bottom:1px solid var(--border);padding-bottom:0}
+.proj-tab{font-family:var(--mono);font-size:10px;letter-spacing:2px;color:var(--muted);padding:8px 20px;cursor:pointer;border-bottom:2px solid transparent;transition:all .2s;background:none;border-top:none;border-left:none;border-right:none;text-transform:uppercase;white-space:nowrap}
+.proj-tab:hover{color:var(--text)}
+.proj-tab.active{color:var(--accent);border-bottom-color:var(--accent)}
+.proj-tab.gobb-tab.active{color:#34d399;border-bottom-color:#34d399}
+/* Go Broadband accent overrides */
+#gobbSection{--gb-accent:#34d399;--gb-accent2:#6ee7b7}
+#gobbSection .kpi.c-accent::before{background:var(--gb-accent)}
+#gobbSection .section-title span{color:var(--gb-accent)}
+.gobb-pill{display:inline-block;background:rgba(52,211,153,0.12);color:#34d399;border:1px solid rgba(52,211,153,0.3);border-radius:4px;font-family:var(--mono);font-size:8px;letter-spacing:1px;padding:2px 6px;margin-left:8px;vertical-align:middle}
 </style>
 </head>
 <body>
@@ -289,6 +301,15 @@ body::after{content:'';position:fixed;inset:0;background-image:linear-gradient(r
       <div class="data-source">LAST PUSH: <span id="lastPush">—</span></div>
     </div>
   </div>
+
+  <!-- Project Tab Switcher -->
+  <div class="proj-tabs">
+    <button class="proj-tab active" id="tabAssurance" onclick="switchProject('assurance')">🛡 Assurance Wireless</button>
+    <button class="proj-tab gobb-tab" id="tabGoBB" onclick="switchProject('gobb')">📡 Go Broadband</button>
+  </div>
+
+  <!-- ══════════════════ ASSURANCE WIRELESS SECTION ══════════════════ -->
+  <div id="assuranceSection">
 
   <!-- Error -->
   <div id="errorBanner" style="display:flex;align-items:center;justify-content:space-between;gap:12px">
@@ -550,6 +571,128 @@ body::after{content:'';position:fixed;inset:0;background-image:linear-gradient(r
 
     </div>
   </div>
+
+  </div><!-- /assuranceSection -->
+
+  <!-- ══════════════════ GO BROADBAND SECTION ══════════════════ -->
+  <div id="gobbSection" style="display:none">
+
+    <!-- GB Filter Bar -->
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap;">
+      <select id="gb-campaign-select" onchange="gbApplyFilters()" style="background:#0c1120;color:#e2e8f0;border:1px solid rgba(52,211,153,0.3);border-radius:8px;padding:7px 12px;font-family:inherit;font-size:12px;cursor:pointer;min-width:200px;">
+        <option value="all">All Campaigns</option>
+        <option value="GoBB | Buy Now | Search">Buy Now</option>
+        <option value="GoBB | Price-Flex | Search">Price-Flex</option>
+        <option value="GoBB | Compare | Search">Compare</option>
+      </select>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;">
+        <button class="dr-btn" onclick="gbSetRange('today')">Today</button>
+        <button class="dr-btn" onclick="gbSetRange('yesterday')">Yesterday</button>
+        <button class="dr-btn" onclick="gbSetRange('7')">Last 7</button>
+        <button class="dr-btn active" id="gbBtn30" onclick="gbSetRange('30')">Last 30</button>
+        <button class="dr-btn" onclick="gbSetRange('mtd')">This Month</button>
+        <button class="dr-btn" onclick="gbSetRange('lastmonth')">Last Month</button>
+      </div>
+      <div style="font-family:var(--mono);font-size:9px;color:var(--muted);letter-spacing:1px;margin-left:auto" id="gbPeriodBanner">—</div>
+    </div>
+
+    <!-- GB KPI Row -->
+    <div class="kpi-primary" id="gbKpiRow">
+      <div class="kpi c-green" id="gbk-calls"><div class="kpi-lbl">Calls (≥60s)</div><div class="kpi-val" id="gbv-calls">—</div><div class="kpi-sub" id="gbs-calls">Confirmed conversions</div></div>
+      <div class="kpi c-accent" id="gbk-spend"><div class="kpi-lbl">Ad Spend</div><div class="kpi-val" id="gbv-spend">—</div><div class="kpi-sub" id="gbs-spend">Google Ads</div></div>
+      <div class="kpi c-amber" id="gbk-cpa"><div class="kpi-lbl">Cost per Call</div><div class="kpi-val" id="gbv-cpa">—</div><div class="kpi-sub" id="gbs-cpa">Spend ÷ calls</div></div>
+      <div class="kpi c-purple" id="gbk-clicks"><div class="kpi-lbl">Clicks</div><div class="kpi-val" id="gbv-clicks">—</div><div class="kpi-sub" id="gbs-clicks">—</div></div>
+    </div>
+    <div class="kpi-secondary">
+      <div class="kpi c-accent" id="gbk-ctr"><div class="kpi-lbl">CTR</div><div class="kpi-val" id="gbv-ctr">—</div><div class="kpi-sub" id="gbs-ctr">Click-through rate</div></div>
+      <div class="kpi c-purple" id="gbk-cpc"><div class="kpi-lbl">Avg CPC</div><div class="kpi-val" id="gbv-cpc">—</div><div class="kpi-sub" id="gbs-cpc">Cost per click</div></div>
+    </div>
+
+    <!-- GB Main Chart + Campaign Scorecard -->
+    <div style="display:grid;grid-template-columns:1fr 340px;gap:12px;margin-bottom:12px">
+
+      <!-- Daily Chart -->
+      <div class="panel" style="background:var(--surface);border:1px solid var(--border2);border-radius:8px;padding:18px 20px">
+        <div class="section-title" style="font-family:var(--mono);font-size:9px;color:var(--muted);letter-spacing:2px;margin-bottom:16px">DAILY PERFORMANCE <span style="color:#34d399">· GO BROADBAND</span></div>
+        <canvas id="gbDailyChart" height="120"></canvas>
+      </div>
+
+      <!-- Campaign Scorecard -->
+      <div class="panel" style="background:var(--surface);border:1px solid var(--border2);border-radius:8px;padding:18px 20px">
+        <div class="section-title" style="font-family:var(--mono);font-size:9px;color:var(--muted);letter-spacing:2px;margin-bottom:14px">CAMPAIGN SCORECARD</div>
+        <div id="gbCampaignScorecard" style="display:flex;flex-direction:column;gap:10px">
+          <div style="font-family:var(--mono);font-size:10px;color:var(--muted);text-align:center;padding:30px 0">Script not yet configured —<br>data loads after first run</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- GB Keywords + Search Terms -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
+      <div class="panel" style="background:var(--surface);border:1px solid var(--border2);border-radius:8px;padding:18px 20px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+          <div style="font-family:var(--mono);font-size:9px;color:var(--muted);letter-spacing:2px">KEYWORDS <span style="color:#34d399">· TOP BY SPEND</span></div>
+          <div style="font-family:var(--mono);font-size:9px;color:var(--muted)" id="gbKwCount">—</div>
+        </div>
+        <div id="gbKeywordList" style="max-height:320px;overflow-y:auto;display:flex;flex-direction:column;gap:6px">
+          <div style="font-family:var(--mono);font-size:10px;color:var(--muted);text-align:center;padding:20px 0">Awaiting data...</div>
+        </div>
+      </div>
+      <div class="panel" style="background:var(--surface);border:1px solid var(--border2);border-radius:8px;padding:18px 20px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+          <div style="font-family:var(--mono);font-size:9px;color:var(--muted);letter-spacing:2px">SEARCH TERMS <span style="color:#34d399">· TOP BY SPEND</span></div>
+          <div style="font-family:var(--mono);font-size:9px;color:var(--muted)" id="gbStCount">—</div>
+        </div>
+        <div id="gbSearchTermList" style="max-height:320px;overflow-y:auto;display:flex;flex-direction:column;gap:6px">
+          <div style="font-family:var(--mono);font-size:10px;color:var(--muted);text-align:center;padding:20px 0">Awaiting data...</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- GB States + Hourly -->
+    <div style="display:grid;grid-template-columns:1fr 380px;gap:12px;margin-bottom:12px">
+
+      <!-- States -->
+      <div class="panel" style="background:var(--surface);border:1px solid var(--border2);border-radius:8px;padding:18px 20px">
+        <div style="font-family:var(--mono);font-size:9px;color:var(--muted);letter-spacing:2px;margin-bottom:14px">STATE PERFORMANCE <span style="color:#34d399">· CALLS & SPEND</span></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+          <div>
+            <div style="font-family:var(--mono);font-size:8px;color:#34d399;letter-spacing:1px;margin-bottom:10px">🏆 TOP · LOWEST CPA</div>
+            <div id="gbStateBest" style="display:flex;flex-direction:column;gap:5px">
+              <div style="font-family:var(--mono);font-size:10px;color:var(--muted);text-align:center;padding:20px 0">Awaiting data...</div>
+            </div>
+          </div>
+          <div>
+            <div style="font-family:var(--mono);font-size:8px;color:var(--red);letter-spacing:1px;margin-bottom:10px">⚠ WORST · HIGHEST SPEND/0 CALLS</div>
+            <div id="gbStateWorst" style="display:flex;flex-direction:column;gap:5px">
+              <div style="font-family:var(--mono);font-size:10px;color:var(--muted);text-align:center;padding:20px 0">Awaiting data...</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Hourly Heatmap -->
+      <div class="panel" style="background:var(--surface);border:1px solid var(--border2);border-radius:8px;padding:18px 20px">
+        <div style="font-family:var(--mono);font-size:9px;color:var(--muted);letter-spacing:2px;margin-bottom:14px">HOURLY CALL VOLUME <span style="color:#34d399">· 24H PATTERN</span></div>
+        <div id="gbHourlyHeatmap" style="display:grid;grid-template-columns:repeat(6,1fr);gap:4px"></div>
+        <div style="font-family:var(--mono);font-size:8px;color:var(--muted);margin-top:10px;text-align:center">Best call windows by hour of day</div>
+      </div>
+    </div>
+
+    <!-- GB Device Panel -->
+    <div class="panel" style="background:var(--surface);border:1px solid var(--border2);border-radius:8px;padding:18px 20px;margin-bottom:12px">
+      <div style="font-family:var(--mono);font-size:9px;color:var(--muted);letter-spacing:2px;margin-bottom:14px">DEVICE PERFORMANCE <span style="color:#34d399">· APPLICATION CPA BY DEVICE</span></div>
+      <div id="gbDeviceCards" style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px">
+        <div style="font-family:var(--mono);font-size:10px;color:var(--muted);text-align:center;padding:20px 0;grid-column:1/-1">Awaiting data...</div>
+      </div>
+    </div>
+
+    <!-- GB no-data -->
+    <div id="gbNoData" style="display:none;text-align:center;padding:60px 20px;font-family:var(--mono);font-size:11px;color:var(--muted);letter-spacing:2px">
+      NO DATA YET · CAMPAIGNS LAUNCHING SOON<br>
+      <span style="font-size:9px;display:block;margin-top:8px">Script must be installed in Google Ads account 889-993-5007 and run at least once</span>
+    </div>
+
+  </div><!-- /gobbSection -->
 
 </div><!-- /wrap -->
 
@@ -2991,6 +3134,435 @@ function setDateRange(range, btn) {
   const cr = $('custom-range');
   if (cr) cr.style.display = range === 'custom' ? 'flex' : 'none';
   if (range !== 'custom') applyFilters();
+}
+
+// ════════════════════════════════════════════════════════════
+// GO BROADBAND — INDEPENDENT DASHBOARD
+// Account: 889-993-5007 · goadvertising8@gmail.com
+// Conversion: phone calls ≥ 60 seconds
+// ════════════════════════════════════════════════════════════
+
+// ── GB CONFIG ──
+// Paste spreadsheet ID here after first script run
+const GOBB_SHEET_ID = '';  // e.g. '1AbCdEfG...'
+
+const GB_CAMPAIGNS = ['GoBB | Buy Now | Search','GoBB | Price-Flex | Search','GoBB | Compare | Search'];
+
+// Initial CPA tiers — adjust once baseline data established
+// Based on avg RPO ~$80 (blended primary/other providers)
+const GB_CPA_TIERS = { FANTASTIC: 30, EXCELLENT: 50, GOOD: 75 };
+// >$75/call = POOR. Source: see payout table in project notes.
+
+// ── GB RAW DATA ──
+const GB_RAW = { daily:[], devices:[], geo:[], hourly:[], keywords:[], searchTerms:[] };
+let gbDateRange = '30';  // default
+let gbActiveCampaign = 'all';
+let gbChartInst = null;
+let gbDataLoaded = false;
+
+// ── TAB SWITCHER ──
+function switchProject(proj) {
+  const assuranceSection = document.getElementById('assuranceSection');
+  const gobbSection      = document.getElementById('gobbSection');
+  const tabA  = document.getElementById('tabAssurance');
+  const tabGB = document.getElementById('tabGoBB');
+
+  if (proj === 'assurance') {
+    assuranceSection.style.display = '';
+    gobbSection.style.display = 'none';
+    tabA.classList.add('active');
+    tabGB.classList.remove('active');
+  } else {
+    assuranceSection.style.display = 'none';
+    gobbSection.style.display = '';
+    tabA.classList.remove('active');
+    tabGB.classList.add('active');
+    // Lazy-load GB data on first tab visit
+    if (!gbDataLoaded) gbFetchAndRender();
+  }
+}
+
+// ── GB SHEET URL BUILDER ──
+function gbSheetUrl(sheetName) {
+  if (!GOBB_SHEET_ID) return '';
+  return `https://docs.google.com/spreadsheets/d/${GOBB_SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(sheetName)}`;
+}
+
+// ── GB FETCH ──
+async function gbFetchAndRender() {
+  if (!GOBB_SHEET_ID) {
+    document.getElementById('gbNoData').style.display = 'block';
+    document.getElementById('gbNoData').innerHTML =
+      '⚠ SCRIPT NOT CONFIGURED YET<br>' +
+      '<span style="font-size:9px;display:block;margin-top:8px">' +
+      'Install go-broadband-ads-script.js in Google Ads account 889-993-5007 → run once → paste spreadsheet ID into GOBB_SHEET_ID in dashboard code</span>';
+    return;
+  }
+  try {
+    const sheets = ['DailyCampaign','Devices','Geo','Hourly','Keywords','SearchTerms'];
+    const keys   = ['daily','devices','geo','hourly','keywords','searchTerms'];
+    const results = await Promise.all(sheets.map(s => fetch(gbSheetUrl(s)).then(r=>r.text()).catch(()=>'')));
+    results.forEach((txt, i) => {
+      GB_RAW[keys[i]] = txt ? parseCSV(txt) : [];
+    });
+    gbDataLoaded = true;
+    gbApplyFilters();
+  } catch(e) {
+    console.error('[GoBB] Fetch failed:', e);
+  }
+}
+
+// ── GB DATE RANGE ──
+function gbSetRange(range) {
+  gbDateRange = range;
+  document.querySelectorAll('#gobbSection .dr-btn').forEach(b => b.classList.remove('active'));
+  event.target.classList.add('active');
+  gbApplyFilters();
+}
+
+function gbGetDates() {
+  const today = new Date();
+  const pad = n => String(n).padStart(2,'0');
+  const fmt = d => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+  const toDate = fmt(today);
+  let fromDate;
+  if (gbDateRange === 'today') {
+    fromDate = toDate;
+  } else if (gbDateRange === 'yesterday') {
+    const y = new Date(today); y.setDate(y.getDate()-1); fromDate = fmt(y);
+  } else if (gbDateRange === 'mtd') {
+    fromDate = `${today.getFullYear()}-${pad(today.getMonth()+1)}-01`;
+  } else if (gbDateRange === 'lastmonth') {
+    const lm = new Date(today.getFullYear(), today.getMonth()-1, 1);
+    const lme = new Date(today.getFullYear(), today.getMonth(), 0);
+    return { from: fmt(lm), to: fmt(lme) };
+  } else {
+    const days = parseInt(gbDateRange) || 30;
+    const d = new Date(today); d.setDate(d.getDate() - days + 1);
+    fromDate = fmt(d);
+  }
+  return { from: fromDate, to: toDate };
+}
+
+// ── GB FILTER + APPLY ──
+function gbApplyFilters() {
+  gbActiveCampaign = document.getElementById('gb-campaign-select')?.value || 'all';
+  const { from, to } = gbGetDates();
+  document.getElementById('gbPeriodBanner').textContent = `${from} → ${to}`;
+
+  const filterRow = r => {
+    const d = normDateStr(r.Date || r.date || '');
+    if (d && d < from) return false;
+    if (d && d > to)   return false;
+    if (gbActiveCampaign !== 'all' && (r.CampaignName||r.campaignName||'') !== gbActiveCampaign) return false;
+    return true;
+  };
+
+  const daily   = GB_RAW.daily.filter(filterRow);
+  const devices = GB_RAW.devices.filter(filterRow);
+  const geo     = GB_RAW.geo.filter(filterRow);
+  const hourly  = GB_RAW.hourly.filter(filterRow);
+  const keywords    = GB_RAW.keywords.filter(filterRow);
+  const searchTerms = GB_RAW.searchTerms.filter(filterRow);
+
+  gbRenderKPIs(daily);
+  gbRenderChart(daily);
+  gbRenderCampaignScorecard(daily);
+  gbRenderKeywords(keywords);
+  gbRenderSearchTerms(searchTerms);
+  gbRenderStates(geo);
+  gbRenderHourly(hourly);
+  gbRenderDevices(devices);
+}
+
+// ── GB KPIs ──
+function gbRenderKPIs(daily) {
+  let spend=0, clicks=0, impressions=0, calls=0;
+  daily.forEach(r => {
+    spend       += pn(r.Cost);
+    clicks      += pn(r.Clicks);
+    impressions += pn(r.Impressions);
+    calls       += pn(r.Conversions);
+  });
+  const cpa = calls > 0 ? spend/calls : 0;
+  const ctr = impressions > 0 ? (clicks/impressions*100) : 0;
+  const cpc = clicks > 0 ? spend/clicks : 0;
+
+  const $v = id => document.getElementById(id);
+  $v('gbv-calls').textContent  = calls.toLocaleString();
+  $v('gbv-spend').textContent  = '$' + spend.toFixed(2);
+  $v('gbv-cpa').textContent    = calls > 0 ? '$' + cpa.toFixed(2) : '—';
+  $v('gbv-clicks').textContent = clicks.toLocaleString();
+  $v('gbv-ctr').textContent    = impressions > 0 ? ctr.toFixed(2)+'%' : '—';
+  $v('gbv-cpc').textContent    = clicks > 0 ? '$' + cpc.toFixed(2) : '—';
+
+  $v('gbs-calls').textContent  = calls === 0 ? 'No calls yet' : calls + ' qualified calls';
+  $v('gbs-spend').textContent  = daily.length + ' day(s) with spend';
+  $v('gbs-cpa').textContent    = cpa > 0 ? gbCpaLabel(cpa) + ' · ' + gbCpaColor(cpa).label : '—';
+  $v('gbs-clicks').textContent = impressions > 0 ? impressions.toLocaleString() + ' impressions' : '—';
+}
+
+// ── GB CPA TIER HELPERS ──
+function gbCpaColor(cpa) {
+  if (cpa === 0)                         return { color:'var(--muted)', label:'NO CALLS' };
+  if (cpa <= GB_CPA_TIERS.FANTASTIC)     return { color:'var(--green)', label:'FANTASTIC' };
+  if (cpa <= GB_CPA_TIERS.EXCELLENT)     return { color:'var(--accent)', label:'EXCELLENT' };
+  if (cpa <= GB_CPA_TIERS.GOOD)          return { color:'var(--amber)', label:'GOOD' };
+  return { color:'var(--red)', label:'POOR' };
+}
+function gbCpaLabel(cpa) {
+  return gbCpaColor(cpa).label;
+}
+
+// ── GB DAILY CHART ──
+function gbRenderChart(daily) {
+  // Aggregate by date
+  const byDate = {};
+  daily.forEach(r => {
+    const d = normDateStr(r.Date || '');
+    if (!d) return;
+    if (!byDate[d]) byDate[d] = { spend:0, calls:0, clicks:0 };
+    byDate[d].spend  += pn(r.Cost);
+    byDate[d].calls  += pn(r.Conversions);
+    byDate[d].clicks += pn(r.Clicks);
+  });
+  const dates  = Object.keys(byDate).sort();
+  const spends = dates.map(d => byDate[d].spend);
+  const calls  = dates.map(d => byDate[d].calls);
+  const labels = dates.map(d => d.slice(5)); // MM-DD
+
+  const ctx = document.getElementById('gbDailyChart')?.getContext('2d');
+  if (!ctx) return;
+  if (gbChartInst) { gbChartInst.destroy(); gbChartInst = null; }
+
+  gbChartInst = new Chart(ctx, {
+    data: {
+      labels,
+      datasets: [
+        { type:'bar',  label:'Spend ($)',  data:spends, backgroundColor:'rgba(56,189,248,0.35)', borderColor:'rgba(56,189,248,0.7)', borderWidth:1, yAxisID:'ySpend' },
+        { type:'line', label:'Calls',      data:calls,  borderColor:'#34d399', backgroundColor:'rgba(52,211,153,0.1)', borderWidth:2, pointRadius:3, pointBackgroundColor:'#34d399', yAxisID:'yCalls', tension:0.3, fill:true }
+      ]
+    },
+    options: {
+      responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{ labels:{ color:'#64748b', font:{ family:'Space Mono', size:9 } } } },
+      scales: {
+        x:{ ticks:{ color:'#64748b', font:{ family:'Space Mono', size:8 } }, grid:{ color:'rgba(255,255,255,0.04)' } },
+        ySpend:{ position:'left',  ticks:{ color:'#38bdf8', font:{ family:'Space Mono', size:8 }, callback:v=>'$'+v.toFixed(0) }, grid:{ color:'rgba(255,255,255,0.04)' } },
+        yCalls:{ position:'right', ticks:{ color:'#34d399', font:{ family:'Space Mono', size:8 } }, grid:{ display:false } }
+      }
+    }
+  });
+}
+
+// ── GB CAMPAIGN SCORECARD ──
+function gbRenderCampaignScorecard(daily) {
+  const byC = {};
+  daily.forEach(r => {
+    const c = r.CampaignName || '';
+    if (!c) return;
+    if (!byC[c]) byC[c] = { spend:0, calls:0, clicks:0, impressions:0 };
+    byC[c].spend       += pn(r.Cost);
+    byC[c].calls       += pn(r.Conversions);
+    byC[c].clicks      += pn(r.Clicks);
+    byC[c].impressions += pn(r.Impressions);
+  });
+
+  // Ensure all 3 campaigns appear even if no data yet
+  GB_CAMPAIGNS.forEach(c => { if (!byC[c]) byC[c] = { spend:0, calls:0, clicks:0, impressions:0 }; });
+
+  const el = document.getElementById('gbCampaignScorecard');
+  const shortName = c => c.replace('GoBB | ','').replace(' | Search','');
+
+  el.innerHTML = Object.entries(byC).map(([c, d]) => {
+    const cpa  = d.calls > 0 ? d.spend/d.calls : 0;
+    const ctr  = d.impressions > 0 ? (d.clicks/d.impressions*100) : 0;
+    const { color, label } = gbCpaColor(cpa);
+    return `<div style="background:var(--surface2);border:1px solid var(--border2);border-radius:6px;padding:10px 12px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+        <div style="font-family:var(--mono);font-size:9px;color:var(--text);letter-spacing:1px">${shortName(c)}</div>
+        <div style="font-family:var(--mono);font-size:8px;color:${color};letter-spacing:1px">${cpa>0?label:'—'}</div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px">
+        <div style="text-align:center"><div style="font-family:var(--mono);font-size:14px;font-weight:700;color:var(--accent)">$${d.spend.toFixed(0)}</div><div style="font-family:var(--mono);font-size:7px;color:var(--muted)">SPEND</div></div>
+        <div style="text-align:center"><div style="font-family:var(--mono);font-size:14px;font-weight:700;color:#34d399">${d.calls}</div><div style="font-family:var(--mono);font-size:7px;color:var(--muted)">CALLS</div></div>
+        <div style="text-align:center"><div style="font-family:var(--mono);font-size:14px;font-weight:700;color:${cpa>0?color:'var(--muted)'}">$${cpa>0?cpa.toFixed(0):'—'}</div><div style="font-family:var(--mono);font-size:7px;color:var(--muted)">COST/CALL</div></div>
+      </div>
+      ${d.clicks>0?`<div style="margin-top:6px;font-family:var(--mono);font-size:8px;color:var(--muted)">${d.clicks} clicks · ${ctr.toFixed(1)}% CTR</div>`:''}
+    </div>`;
+  }).join('');
+}
+
+// ── GB KEYWORDS ──
+function gbRenderKeywords(keywords) {
+  const byKw = {};
+  keywords.forEach(r => {
+    const k = (r.Keyword || r.Criteria || '').trim();
+    if (!k) return;
+    if (!byKw[k]) byKw[k] = { spend:0, calls:0, clicks:0, impressions:0, match:r.MatchType||r.KeywordMatchType||'' };
+    byKw[k].spend       += pn(r.Cost);
+    byKw[k].calls       += pn(r.Conversions);
+    byKw[k].clicks      += pn(r.Clicks);
+    byKw[k].impressions += pn(r.Impressions);
+  });
+  const sorted = Object.entries(byKw).sort((a,b) => b[1].spend - a[1].spend).slice(0,25);
+  const el = document.getElementById('gbKeywordList');
+  document.getElementById('gbKwCount').textContent = sorted.length + ' keywords';
+  if (!sorted.length) { el.innerHTML = '<div style="font-family:var(--mono);font-size:10px;color:var(--muted);text-align:center;padding:20px 0">Awaiting data...</div>'; return; }
+
+  el.innerHTML = sorted.map(([kw, d]) => {
+    const cpa = d.calls > 0 ? d.spend/d.calls : 0;
+    const { color } = gbCpaColor(cpa);
+    return `<div style="display:flex;align-items:center;justify-content:space-between;padding:5px 8px;background:var(--surface2);border-radius:4px;gap:8px">
+      <div style="font-size:11px;color:var(--text);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${kw} <span style="font-family:var(--mono);font-size:8px;color:var(--muted)">${d.match}</span></div>
+      <div style="display:flex;gap:10px;flex-shrink:0;font-family:var(--mono);font-size:10px">
+        <span style="color:var(--accent)">$${d.spend.toFixed(0)}</span>
+        <span style="color:#34d399">${d.calls}c</span>
+        <span style="color:${cpa>0?color:'var(--muted)'}">${cpa>0?'$'+cpa.toFixed(0):'—'}</span>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ── GB SEARCH TERMS ──
+function gbRenderSearchTerms(searchTerms) {
+  const byST = {};
+  searchTerms.forEach(r => {
+    const k = (r.SearchTerm || r.Query || '').trim();
+    if (!k) return;
+    if (!byST[k]) byST[k] = { spend:0, calls:0, clicks:0 };
+    byST[k].spend  += pn(r.Cost);
+    byST[k].calls  += pn(r.Conversions);
+    byST[k].clicks += pn(r.Clicks);
+  });
+  const sorted = Object.entries(byST).sort((a,b) => b[1].spend - a[1].spend).slice(0,25);
+  const el = document.getElementById('gbSearchTermList');
+  document.getElementById('gbStCount').textContent = sorted.length + ' terms';
+  if (!sorted.length) { el.innerHTML = '<div style="font-family:var(--mono);font-size:10px;color:var(--muted);text-align:center;padding:20px 0">Awaiting data...</div>'; return; }
+
+  el.innerHTML = sorted.map(([term, d]) => {
+    const cpa = d.calls > 0 ? d.spend/d.calls : 0;
+    const { color } = gbCpaColor(cpa);
+    return `<div style="display:flex;align-items:center;justify-content:space-between;padding:5px 8px;background:var(--surface2);border-radius:4px;gap:8px">
+      <div style="font-size:11px;color:var(--text);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${term}</div>
+      <div style="display:flex;gap:10px;flex-shrink:0;font-family:var(--mono);font-size:10px">
+        <span style="color:var(--accent)">$${d.spend.toFixed(0)}</span>
+        <span style="color:#34d399">${d.calls}c</span>
+        <span style="color:${cpa>0?color:'var(--muted)'}">${cpa>0?'$'+cpa.toFixed(0):'—'}</span>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ── GB STATES ──
+function gbRenderStates(geo) {
+  const STATE_ABBRS = {
+    'Alabama':'AL','Alaska':'AK','Arizona':'AZ','Arkansas':'AR','California':'CA',
+    'Colorado':'CO','Connecticut':'CT','Delaware':'DE','Florida':'FL','Georgia':'GA',
+    'Hawaii':'HI','Idaho':'ID','Illinois':'IL','Indiana':'IN','Iowa':'IA','Kansas':'KS',
+    'Kentucky':'KY','Louisiana':'LA','Maine':'ME','Maryland':'MD','Massachusetts':'MA',
+    'Michigan':'MI','Minnesota':'MN','Mississippi':'MS','Missouri':'MO','Montana':'MT',
+    'Nebraska':'NE','Nevada':'NV','New Hampshire':'NH','New Jersey':'NJ','New Mexico':'NM',
+    'New York':'NY','North Carolina':'NC','North Dakota':'ND','Ohio':'OH','Oklahoma':'OK',
+    'Oregon':'OR','Pennsylvania':'PA','Rhode Island':'RI','South Carolina':'SC',
+    'South Dakota':'SD','Tennessee':'TN','Texas':'TX','Utah':'UT','Vermont':'VT',
+    'Virginia':'VA','Washington':'WA','West Virginia':'WV','Wisconsin':'WI','Wyoming':'WY',
+    'Washington DC':'DC','Puerto Rico':'PR'
+  };
+  const byState = {};
+  geo.forEach(r => {
+    const raw = (r.Region || '').replace(/, United States/,'').trim();
+    const abbr = STATE_ABBRS[raw] || raw.substring(0,2).toUpperCase();
+    if (!abbr || abbr.length > 3) return;
+    if (!byState[abbr]) byState[abbr] = { spend:0, calls:0 };
+    byState[abbr].spend += pn(r.Cost);
+    byState[abbr].calls += pn(r.Conversions);
+  });
+
+  const states = Object.entries(byState).map(([abbr,d]) => ({
+    abbr, ...d, cpa: d.calls > 0 ? d.spend/d.calls : (d.spend > 0 ? Infinity : 0)
+  })).filter(d => d.spend > 0);
+
+  const best  = [...states].filter(d=>d.calls>0).sort((a,b)=>a.cpa-b.cpa).slice(0,10);
+  const worst = [...states].sort((a,b)=>b.spend-a.spend).filter(d=>d.cpa===Infinity||d.cpa>GB_CPA_TIERS.GOOD).slice(0,10);
+
+  const makeRow = (d, showCpa) => {
+    const { color, label } = gbCpaColor(d.cpa);
+    return `<div style="display:flex;align-items:center;gap:8px;padding:4px 6px;background:var(--surface2);border-radius:4px">
+      <div style="font-family:var(--mono);font-size:13px;font-weight:700;color:${color};width:28px">${d.abbr}</div>
+      <div style="flex:1;font-family:var(--mono);font-size:9px;color:var(--muted)">${d.calls}c · $${d.spend.toFixed(0)}</div>
+      <div style="font-family:var(--mono);font-size:9px;color:${color}">${showCpa&&d.calls>0?'$'+d.cpa.toFixed(0):d.cpa===Infinity?'0c':''}</div>
+    </div>`;
+  };
+
+  const bestEl  = document.getElementById('gbStateBest');
+  const worstEl = document.getElementById('gbStateWorst');
+  bestEl.innerHTML  = best.length  ? best.map(d=>makeRow(d,true)).join('')  : '<div style="font-family:var(--mono);font-size:10px;color:var(--muted);text-align:center;padding:10px">No calls yet</div>';
+  worstEl.innerHTML = worst.length ? worst.map(d=>makeRow(d,false)).join('') : '<div style="font-family:var(--mono);font-size:10px;color:var(--muted);text-align:center;padding:10px">No waste states</div>';
+}
+
+// ── GB HOURLY HEATMAP ──
+function gbRenderHourly(hourly) {
+  const byHour = {};
+  for (let h=0;h<24;h++) byHour[h]={calls:0,spend:0};
+  hourly.forEach(r => {
+    const h = parseInt(r.HourOfDay)||0;
+    byHour[h].calls += pn(r.Conversions);
+    byHour[h].spend += pn(r.Cost);
+  });
+  const maxCalls = Math.max(...Object.values(byHour).map(h=>h.calls), 1);
+  const fmt12 = h => h===0?'12A':h<12?h+'A':h===12?'12P':(h-12)+'P';
+
+  const el = document.getElementById('gbHourlyHeatmap');
+  el.innerHTML = Array.from({length:24},(_,h)=>{
+    const d = byHour[h];
+    const intensity = d.calls/maxCalls;
+    const bg = d.calls > 0
+      ? `rgba(52,211,153,${0.08+intensity*0.7})`
+      : 'rgba(255,255,255,0.03)';
+    return `<div title="Hour ${h}: ${d.calls} calls, $${d.spend.toFixed(2)}" style="background:${bg};border-radius:3px;padding:5px 2px;text-align:center;cursor:default">
+      <div style="font-family:var(--mono);font-size:8px;color:${d.calls>0?'#34d399':'var(--muted)'};">${d.calls>0?d.calls:'·'}</div>
+      <div style="font-family:var(--mono);font-size:7px;color:var(--muted);margin-top:2px">${fmt12(h)}</div>
+    </div>`;
+  }).join('');
+}
+
+// ── GB DEVICES ──
+function gbRenderDevices(devices) {
+  const byDev = {};
+  devices.forEach(r => {
+    let k = (r.Device||'').toLowerCase();
+    k = k.includes('mobile')?'Mobile':k.includes('computer')?'Desktop':k.includes('tablet')?'Tablet':'Other';
+    if (k==='Other') return;
+    if (!byDev[k]) byDev[k]={spend:0,calls:0,clicks:0,impressions:0};
+    byDev[k].spend       += pn(r.Cost);
+    byDev[k].calls       += pn(r.Conversions);
+    byDev[k].clicks      += pn(r.Clicks);
+    byDev[k].impressions += pn(r.Impressions);
+  });
+
+  const icons = {Mobile:'📱',Desktop:'🖥',Tablet:'📲'};
+  const colors = {Mobile:'rgba(56,189,248,0.9)',Desktop:'rgba(52,211,153,0.9)',Tablet:'rgba(129,140,248,0.9)'};
+  const el = document.getElementById('gbDeviceCards');
+  const devs = ['Mobile','Desktop','Tablet'];
+
+  el.innerHTML = devs.map(dev => {
+    const d = byDev[dev] || {spend:0,calls:0,clicks:0,impressions:0};
+    const cpa = d.calls>0?d.spend/d.calls:0;
+    const { color } = gbCpaColor(cpa);
+    return `<div style="background:var(--surface2);border:1px solid var(--border2);border-radius:6px;padding:14px">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
+        <span style="font-size:18px">${icons[dev]}</span>
+        <div style="font-family:var(--mono);font-size:10px;color:var(--text);letter-spacing:1px">${dev.toUpperCase()}</div>
+        ${cpa>0?`<div style="margin-left:auto;background:var(--surface);border:1px solid ${color};border-radius:3px;padding:2px 6px;font-family:var(--mono);font-size:8px;color:${color}">${gbCpaLabel(cpa)}</div>`:''}
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">
+        <div style="text-align:center"><div style="font-family:var(--mono);font-size:16px;font-weight:700;color:${cpa>0?color:'var(--muted)'}">${cpa>0?'$'+cpa.toFixed(0):'—'}</div><div style="font-family:var(--mono);font-size:7px;color:var(--muted)">COST/CALL</div></div>
+        <div style="text-align:center"><div style="font-family:var(--mono);font-size:16px;font-weight:700;color:#34d399">${d.calls}</div><div style="font-family:var(--mono);font-size:7px;color:var(--muted)">CALLS</div></div>
+        <div style="text-align:center"><div style="font-family:var(--mono);font-size:16px;font-weight:700;color:var(--accent)">$${d.spend.toFixed(0)}</div><div style="font-family:var(--mono);font-size:7px;color:var(--muted)">SPEND</div></div>
+      </div>
+    </div>`;
+  }).join('');
 }
 
 // ── MAIN INIT ── //
