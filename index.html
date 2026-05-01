@@ -596,16 +596,16 @@ body::after{content:'';position:fixed;inset:0;background-image:linear-gradient(r
       <div style="font-family:var(--mono);font-size:9px;color:var(--muted);letter-spacing:1px;margin-left:auto" id="gbPeriodBanner">—</div>
     </div>
 
-    <!-- GB KPI Row -->
+    <!-- GB KPI Row — early-stage priority: CPC + CTR front and center -->
     <div class="kpi-primary" id="gbKpiRow">
-      <div class="kpi c-green" id="gbk-calls"><div class="kpi-lbl">Calls (≥60s)</div><div class="kpi-val" id="gbv-calls">—</div><div class="kpi-sub" id="gbs-calls">Confirmed conversions</div></div>
       <div class="kpi c-accent" id="gbk-spend"><div class="kpi-lbl">Ad Spend</div><div class="kpi-val" id="gbv-spend">—</div><div class="kpi-sub" id="gbs-spend">Google Ads</div></div>
-      <div class="kpi c-amber" id="gbk-cpa"><div class="kpi-lbl">Cost per Call</div><div class="kpi-val" id="gbv-cpa">—</div><div class="kpi-sub" id="gbs-cpa">Spend ÷ calls</div></div>
       <div class="kpi c-purple" id="gbk-clicks"><div class="kpi-lbl">Clicks</div><div class="kpi-val" id="gbv-clicks">—</div><div class="kpi-sub" id="gbs-clicks">—</div></div>
+      <div class="kpi c-amber" id="gbk-cpc"><div class="kpi-lbl">Avg CPC</div><div class="kpi-val" id="gbv-cpc">—</div><div class="kpi-sub" id="gbs-cpc">Cost per click</div></div>
+      <div class="kpi c-green" id="gbk-ctr"><div class="kpi-lbl">CTR</div><div class="kpi-val" id="gbv-ctr">—</div><div class="kpi-sub" id="gbs-ctr">Click-through rate</div></div>
     </div>
     <div class="kpi-secondary">
-      <div class="kpi c-accent" id="gbk-ctr"><div class="kpi-lbl">CTR</div><div class="kpi-val" id="gbv-ctr">—</div><div class="kpi-sub" id="gbs-ctr">Click-through rate</div></div>
-      <div class="kpi c-purple" id="gbk-cpc"><div class="kpi-lbl">Avg CPC</div><div class="kpi-val" id="gbv-cpc">—</div><div class="kpi-sub" id="gbs-cpc">Cost per click</div></div>
+      <div class="kpi c-green" id="gbk-calls"><div class="kpi-lbl">Calls (≥60s)</div><div class="kpi-val" id="gbv-calls">—</div><div class="kpi-sub" id="gbs-calls">Confirmed conversions</div></div>
+      <div class="kpi c-amber" id="gbk-cpa"><div class="kpi-lbl">Cost per Call</div><div class="kpi-val" id="gbv-cpa">—</div><div class="kpi-sub" id="gbs-cpa">Spend ÷ calls</div></div>
     </div>
 
     <!-- GB Main Chart + Campaign Scorecard -->
@@ -3377,18 +3377,26 @@ function gbRenderCampaignScorecard(daily) {
   el.innerHTML = Object.entries(byC).map(([c, d]) => {
     const cpa  = d.calls > 0 ? d.spend/d.calls : 0;
     const ctr  = d.impressions > 0 ? (d.clicks/d.impressions*100) : 0;
+    const cpc  = d.clicks > 0 ? d.spend/d.clicks : 0;
     const { color, label } = gbCpaColor(cpa);
+    // CTR quality signal
+    const ctrColor = ctr >= 10 ? 'var(--green)' : ctr >= 5 ? 'var(--accent)' : ctr > 0 ? 'var(--amber)' : 'var(--muted)';
+    const ctrLabel = ctr >= 10 ? 'STRONG' : ctr >= 5 ? 'GOOD' : ctr > 0 ? 'LOW' : '';
     return `<div style="background:var(--surface2);border:1px solid var(--border2);border-radius:6px;padding:10px 12px">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
         <div style="font-family:var(--mono);font-size:9px;color:var(--text);letter-spacing:1px">${shortName(c)}</div>
-        <div style="font-family:var(--mono);font-size:8px;color:${color};letter-spacing:1px">${cpa>0?label:'—'}</div>
+        <div style="font-family:var(--mono);font-size:8px;color:var(--muted)">$${d.spend.toFixed(2)} spent</div>
       </div>
-      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px">
-        <div style="text-align:center"><div style="font-family:var(--mono);font-size:14px;font-weight:700;color:var(--accent)">$${d.spend.toFixed(0)}</div><div style="font-family:var(--mono);font-size:7px;color:var(--muted)">SPEND</div></div>
-        <div style="text-align:center"><div style="font-family:var(--mono);font-size:14px;font-weight:700;color:#34d399">${d.calls}</div><div style="font-family:var(--mono);font-size:7px;color:var(--muted)">CALLS</div></div>
-        <div style="text-align:center"><div style="font-family:var(--mono);font-size:14px;font-weight:700;color:${cpa>0?color:'var(--muted)'}">$${cpa>0?cpa.toFixed(0):'—'}</div><div style="font-family:var(--mono);font-size:7px;color:var(--muted)">COST/CALL</div></div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:8px">
+        <div style="text-align:center"><div style="font-family:var(--mono);font-size:13px;font-weight:700;color:var(--accent)">${d.clicks}</div><div style="font-family:var(--mono);font-size:7px;color:var(--muted)">CLICKS</div></div>
+        <div style="text-align:center"><div style="font-family:var(--mono);font-size:13px;font-weight:700;color:${ctrColor}">${ctr>0?ctr.toFixed(1)+'%':'—'}</div><div style="font-family:var(--mono);font-size:7px;color:var(--muted)">CTR</div></div>
+        <div style="text-align:center"><div style="font-family:var(--mono);font-size:13px;font-weight:700;color:var(--amber)">${cpc>0?'$'+cpc.toFixed(2):'—'}</div><div style="font-family:var(--mono);font-size:7px;color:var(--muted)">AVG CPC</div></div>
+        <div style="text-align:center"><div style="font-family:var(--mono);font-size:13px;font-weight:700;color:#34d399">${d.calls}</div><div style="font-family:var(--mono);font-size:7px;color:var(--muted)">CALLS</div></div>
       </div>
-      ${d.clicks>0?`<div style="margin-top:6px;font-family:var(--mono);font-size:8px;color:var(--muted)">${d.clicks} clicks · ${ctr.toFixed(1)}% CTR</div>`:''}
+      <div style="display:flex;align-items:center;justify-content:space-between;padding-top:6px;border-top:1px solid var(--border2)">
+        <div style="font-family:var(--mono);font-size:8px;color:${ctrColor}">${ctrLabel ? ctrLabel+' CTR' : 'NO DATA YET'}</div>
+        <div style="font-family:var(--mono);font-size:8px;color:${cpa>0?color:'var(--muted)'}">${cpa>0?'$'+cpa.toFixed(0)+'/call':d.calls===0?'0 calls yet':''}</div>
+      </div>
     </div>`;
   }).join('');
 }
