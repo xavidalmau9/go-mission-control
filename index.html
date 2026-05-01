@@ -608,6 +608,9 @@ body::after{content:'';position:fixed;inset:0;background-image:linear-gradient(r
       <div class="kpi c-amber" id="gbk-cpa"><div class="kpi-lbl">Cost per Call</div><div class="kpi-val" id="gbv-cpa">—</div><div class="kpi-sub" id="gbs-cpa">Spend ÷ calls</div></div>
     </div>
 
+    <!-- GB Ads panels — hidden until ads data arrives -->
+    <div id="gbAdsPanels" style="display:none">
+
     <!-- GB Main Chart + Campaign Scorecard -->
     <div style="display:grid;grid-template-columns:1fr 340px;gap:12px;margin-bottom:12px">
 
@@ -685,6 +688,8 @@ body::after{content:'';position:fixed;inset:0;background-image:linear-gradient(r
         <div style="font-family:var(--mono);font-size:10px;color:var(--muted);text-align:center;padding:20px 0;grid-column:1/-1">Awaiting data...</div>
       </div>
     </div>
+
+    </div><!-- /gbAdsPanels -->
 
     <!-- GA4 Website Analytics Panel -->
     <div style="margin-bottom:12px">
@@ -3322,6 +3327,9 @@ function gbApplyFilters() {
   const hourly  = GB_RAW.hourly.filter(filterRow);
   const keywords    = GB_RAW.keywords.filter(filterRow);
   const searchTerms = GB_RAW.searchTerms.filter(filterRow);
+
+  const adsPanel = document.getElementById('gbAdsPanels');
+  if (adsPanel) adsPanel.style.display = daily.length ? '' : 'none';
 
   gbRenderKPIs(daily);
   gbRenderChart(daily);
