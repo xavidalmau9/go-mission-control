@@ -12,7 +12,7 @@
  * Schedule: Every hour via Google Ads Scripts → Tools → Scripts → Schedule
  */
 
-var SPREADSHEET_ID = ''; // ← paste ID here after first run (see Logger output)
+var SPREADSHEET_ID = '10_X-G597viMypxssx9hoGr1k9RYVAooKoJngg5xZ878';
 var DAYS_BACK = 60;
 
 // Build a DURING clause for the last N days
