@@ -268,8 +268,10 @@ body::after{content:'';position:fixed;inset:0;background-image:linear-gradient(r
 .proj-tab:hover{color:var(--text)}
 .proj-tab.active{color:var(--accent);border-bottom-color:var(--accent)}
 .proj-tab.gobb-tab.active{color:#34d399;border-bottom-color:#34d399}
+.proj-tab.go2-tab.active{color:#f97316;border-bottom-color:#f97316}
 /* Go Broadband accent overrides */
 #gobbSection{--gb-accent:#34d399;--gb-accent2:#6ee7b7}
+#go2Section{--go2-accent:#f97316;--go2-accent2:#fdba74}
 #gobbSection .kpi.c-accent::before{background:var(--gb-accent)}
 #gobbSection .section-title span{color:var(--gb-accent)}
 .gobb-pill{display:inline-block;background:rgba(52,211,153,0.12);color:#34d399;border:1px solid rgba(52,211,153,0.3);border-radius:4px;font-family:var(--mono);font-size:8px;letter-spacing:1px;padding:2px 6px;margin-left:8px;vertical-align:middle}
@@ -306,6 +308,7 @@ body::after{content:'';position:fixed;inset:0;background-image:linear-gradient(r
   <div class="proj-tabs">
     <button class="proj-tab active" id="tabAssurance" onclick="switchProject('assurance')">🛡 Assurance Wireless</button>
     <button class="proj-tab gobb-tab" id="tabGoBB" onclick="switchProject('gobb')">📡 Go Broadband</button>
+    <button class="proj-tab go2-tab" id="tabGO2" onclick="switchProject('go2')">🛡 Assurance GO2</button>
   </div>
 
   <!-- ══════════════════ ASSURANCE WIRELESS SECTION ══════════════════ -->
@@ -758,6 +761,120 @@ body::after{content:'';position:fixed;inset:0;background-image:linear-gradient(r
     </div>
 
   </div><!-- /gobbSection -->
+
+  <!-- ══════════════════ ASSURANCE GO2 SECTION ══════════════════ -->
+  <div id="go2Section" style="display:none">
+
+    <!-- GO2 Filter Bar -->
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap;">
+      <select id="go2-campaign-select" onchange="go2ApplyFilters()" style="background:#0c1120;color:#e2e8f0;border:1px solid rgba(249,115,22,0.3);border-radius:8px;padding:7px 12px;font-family:inherit;font-size:12px;cursor:pointer;min-width:200px;">
+        <option value="all">All Campaigns</option>
+      </select>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;">
+        <button class="dr-btn" onclick="go2SetRange('today',event)">Today</button>
+        <button class="dr-btn" onclick="go2SetRange('yesterday',event)">Yesterday</button>
+        <button class="dr-btn" onclick="go2SetRange('7',event)">Last 7</button>
+        <button class="dr-btn active" id="go2Btn30" onclick="go2SetRange('30',event)">Last 30</button>
+        <button class="dr-btn" onclick="go2SetRange('mtd',event)">This Month</button>
+        <button class="dr-btn" onclick="go2SetRange('lastmonth',event)">Last Month</button>
+      </div>
+      <div style="font-family:var(--mono);font-size:9px;color:var(--muted);letter-spacing:1px;margin-left:auto" id="go2PeriodBanner">—</div>
+    </div>
+
+    <!-- GO2 KPI Row -->
+    <div class="kpi-primary" id="go2KpiRow">
+      <div class="kpi" style="border-left:3px solid #f97316"><div class="kpi-lbl">Ad Spend</div><div class="kpi-val" id="go2v-spend">—</div><div class="kpi-sub" id="go2s-spend">Google Ads</div></div>
+      <div class="kpi c-purple"><div class="kpi-lbl">Applications</div><div class="kpi-val" id="go2v-apps">—</div><div class="kpi-sub" id="go2s-apps">Google conversions</div></div>
+      <div class="kpi c-amber"><div class="kpi-lbl">Application CPA</div><div class="kpi-val" id="go2v-cpa">—</div><div class="kpi-sub" id="go2s-cpa">Spend ÷ applications</div></div>
+      <div class="kpi c-accent"><div class="kpi-lbl">Clicks</div><div class="kpi-val" id="go2v-clicks">—</div><div class="kpi-sub" id="go2s-clicks">—</div></div>
+    </div>
+    <div class="kpi-secondary">
+      <div class="kpi c-green"><div class="kpi-lbl">CTR</div><div class="kpi-val" id="go2v-ctr">—</div><div class="kpi-sub">Click-through rate</div></div>
+      <div class="kpi c-amber"><div class="kpi-lbl">Avg CPC</div><div class="kpi-val" id="go2v-cpc">—</div><div class="kpi-sub">Cost per click</div></div>
+    </div>
+
+    <!-- GO2 Ads panels -->
+    <div id="go2AdsPanels" style="display:none">
+
+    <!-- Daily Chart + Campaign Scorecard -->
+    <div style="display:grid;grid-template-columns:1fr 340px;gap:12px;margin-bottom:12px">
+      <div class="panel" style="background:var(--surface);border:1px solid var(--border2);border-radius:8px;padding:18px 20px">
+        <div class="section-title" style="font-family:var(--mono);font-size:9px;color:var(--muted);letter-spacing:2px;margin-bottom:16px">DAILY PERFORMANCE <span style="color:#f97316">· ASSURANCE GO2</span></div>
+        <div style="height:200px;position:relative"><canvas id="go2DailyChart"></canvas></div>
+      </div>
+      <div class="panel" style="background:var(--surface);border:1px solid var(--border2);border-radius:8px;padding:18px 20px">
+        <div class="section-title" style="font-family:var(--mono);font-size:9px;color:var(--muted);letter-spacing:2px;margin-bottom:14px">CAMPAIGN SCORECARD</div>
+        <div id="go2CampaignScorecard" style="display:flex;flex-direction:column;gap:10px">
+          <div style="font-family:var(--mono);font-size:10px;color:var(--muted);text-align:center;padding:30px 0">Awaiting data...</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Keywords + Search Terms -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
+      <div class="panel" style="background:var(--surface);border:1px solid var(--border2);border-radius:8px;padding:18px 20px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+          <div style="font-family:var(--mono);font-size:9px;color:var(--muted);letter-spacing:2px">KEYWORDS <span style="color:#f97316">· TOP BY SPEND</span></div>
+          <div style="font-family:var(--mono);font-size:9px;color:var(--muted)" id="go2KwCount">—</div>
+        </div>
+        <div id="go2KeywordList" style="max-height:320px;overflow-y:auto;display:flex;flex-direction:column;gap:6px">
+          <div style="font-family:var(--mono);font-size:10px;color:var(--muted);text-align:center;padding:20px 0">Awaiting data...</div>
+        </div>
+      </div>
+      <div class="panel" style="background:var(--surface);border:1px solid var(--border2);border-radius:8px;padding:18px 20px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+          <div style="font-family:var(--mono);font-size:9px;color:var(--muted);letter-spacing:2px">SEARCH TERMS <span style="color:#f97316">· TOP BY SPEND</span></div>
+          <div style="font-family:var(--mono);font-size:9px;color:var(--muted)" id="go2StCount">—</div>
+        </div>
+        <div id="go2SearchTermList" style="max-height:320px;overflow-y:auto;display:flex;flex-direction:column;gap:6px">
+          <div style="font-family:var(--mono);font-size:10px;color:var(--muted);text-align:center;padding:20px 0">Awaiting data...</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- States + Hourly -->
+    <div style="display:grid;grid-template-columns:1fr 380px;gap:12px;margin-bottom:12px">
+      <div class="panel" style="background:var(--surface);border:1px solid var(--border2);border-radius:8px;padding:18px 20px">
+        <div style="font-family:var(--mono);font-size:9px;color:var(--muted);letter-spacing:2px;margin-bottom:14px">STATE PERFORMANCE <span style="color:#f97316">· APPLICATIONS & SPEND</span></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+          <div>
+            <div style="font-family:var(--mono);font-size:8px;color:#f97316;letter-spacing:1px;margin-bottom:10px">🏆 TOP · LOWEST CPA</div>
+            <div id="go2StateBest" style="display:flex;flex-direction:column;gap:5px">
+              <div style="font-family:var(--mono);font-size:10px;color:var(--muted);text-align:center;padding:20px 0">Awaiting data...</div>
+            </div>
+          </div>
+          <div>
+            <div style="font-family:var(--mono);font-size:8px;color:var(--red);letter-spacing:1px;margin-bottom:10px">⚠ WORST · HIGHEST SPEND/0 APPS</div>
+            <div id="go2StateWorst" style="display:flex;flex-direction:column;gap:5px">
+              <div style="font-family:var(--mono);font-size:10px;color:var(--muted);text-align:center;padding:20px 0">Awaiting data...</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="panel" style="background:var(--surface);border:1px solid var(--border2);border-radius:8px;padding:18px 20px">
+        <div style="font-family:var(--mono);font-size:9px;color:var(--muted);letter-spacing:2px;margin-bottom:14px">HOURLY APPLICATION VOLUME <span style="color:#f97316">· 24H PATTERN</span></div>
+        <div id="go2HourlyHeatmap" style="display:grid;grid-template-columns:repeat(6,1fr);gap:4px"></div>
+        <div style="font-family:var(--mono);font-size:8px;color:var(--muted);margin-top:10px;text-align:center">Best application windows by hour of day</div>
+      </div>
+    </div>
+
+    <!-- Device Panel -->
+    <div class="panel" style="background:var(--surface);border:1px solid var(--border2);border-radius:8px;padding:18px 20px;margin-bottom:12px">
+      <div style="font-family:var(--mono);font-size:9px;color:var(--muted);letter-spacing:2px;margin-bottom:14px">DEVICE PERFORMANCE <span style="color:#f97316">· APPLICATION CPA BY DEVICE</span></div>
+      <div id="go2DeviceCards" style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px">
+        <div style="font-family:var(--mono);font-size:10px;color:var(--muted);text-align:center;padding:20px 0;grid-column:1/-1">Awaiting data...</div>
+      </div>
+    </div>
+
+    </div><!-- /go2AdsPanels -->
+
+    <!-- GO2 no-data -->
+    <div id="go2NoData" style="display:none;text-align:center;padding:60px 20px;font-family:var(--mono);font-size:11px;color:var(--muted);letter-spacing:2px">
+      NO DATA YET · SCRIPT NOT YET ACTIVE<br>
+      <span style="font-size:9px;display:block;margin-top:8px">Install go2-ads-script.js in Google Ads account 275-817-6694 and run at least once</span>
+    </div>
+
+  </div><!-- /go2Section -->
 
 </div><!-- /wrap -->
 
@@ -3229,21 +3346,29 @@ let gbDataLoaded = false;
 function switchProject(proj) {
   const assuranceSection = document.getElementById('assuranceSection');
   const gobbSection      = document.getElementById('gobbSection');
-  const tabA  = document.getElementById('tabAssurance');
-  const tabGB = document.getElementById('tabGoBB');
+  const go2Section       = document.getElementById('go2Section');
+  const tabA   = document.getElementById('tabAssurance');
+  const tabGB  = document.getElementById('tabGoBB');
+  const tabGO2 = document.getElementById('tabGO2');
+
+  assuranceSection.style.display = 'none';
+  gobbSection.style.display      = 'none';
+  go2Section.style.display       = 'none';
+  tabA.classList.remove('active');
+  tabGB.classList.remove('active');
+  tabGO2.classList.remove('active');
 
   if (proj === 'assurance') {
     assuranceSection.style.display = '';
-    gobbSection.style.display = 'none';
     tabA.classList.add('active');
-    tabGB.classList.remove('active');
-  } else {
-    assuranceSection.style.display = 'none';
+  } else if (proj === 'gobb') {
     gobbSection.style.display = '';
-    tabA.classList.remove('active');
     tabGB.classList.add('active');
-    // Lazy-load GB data on first tab visit
     if (!gbDataLoaded) gbFetchAndRender();
+  } else if (proj === 'go2') {
+    go2Section.style.display = '';
+    tabGO2.classList.add('active');
+    if (!go2DataLoaded) go2FetchAndRender();
   }
 }
 
@@ -3836,6 +3961,393 @@ async function init() {
 }
 
 init();
+
+// ════════════════════════════════════════════════════════════
+// ASSURANCE GO2 — INDEPENDENT DASHBOARD
+// Account: 275-817-6694
+// Conversion: applications (same product as GO1)
+// CPA Tiers: FANTASTIC ≤$10 · EXCELLENT ≤$12.50 · GOOD ≤$15 · POOR >$15
+// ════════════════════════════════════════════════════════════
+
+const GO2_SHEET_ID = '1OwGn3f_Qz1Sd8QOq18adpf-SZDYfNGpnf9gEHsil6aI';
+const GO2_ACT_TIERS = { FANTASTIC: 10, EXCELLENT: 12.50, GOOD: 15 };
+
+const GO2_RAW = { daily:[], devices:[], geo:[], hourly:[], keywords:[], searchTerms:[] };
+let go2DateRange = '30';
+let go2ActiveCampaign = 'all';
+let go2ChartInst = null;
+let go2DataLoaded = false;
+
+function go2SheetUrl(sheetName) {
+  return `https://docs.google.com/spreadsheets/d/${GO2_SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(sheetName)}`;
+}
+
+async function go2FetchAndRender() {
+  try {
+    const sheets = ['DailyCampaign','Devices','Geo','Hourly','Keywords','SearchTerms'];
+    const keys   = ['daily','devices','geo','hourly','keywords','searchTerms'];
+    const results = await Promise.all(sheets.map(s => fetch(go2SheetUrl(s)).then(r=>r.text()).catch(()=>'')));
+    results.forEach((txt, i) => { GO2_RAW[keys[i]] = txt ? parseCSV(txt) : []; });
+    go2DataLoaded = true;
+    go2PopulateCampaignDropdown();
+    go2ApplyFilters();
+  } catch(e) {
+    console.error('[GO2] Fetch failed:', e);
+    document.getElementById('go2NoData').style.display = 'block';
+  }
+}
+
+function go2PopulateCampaignDropdown() {
+  const sel = document.getElementById('go2-campaign-select');
+  if (!sel) return;
+  const campaigns = [...new Set(GO2_RAW.daily.map(r => r.CampaignName).filter(Boolean))].sort();
+  sel.innerHTML = '<option value="all">All Campaigns</option>' +
+    campaigns.map(c => `<option value="${c}">${c}</option>`).join('');
+}
+
+function go2SetRange(range, e) {
+  go2DateRange = range;
+  document.querySelectorAll('#go2Section .dr-btn').forEach(b => b.classList.remove('active'));
+  if (e && e.target) e.target.classList.add('active');
+  go2ApplyFilters();
+}
+
+function go2GetDates() {
+  const today = new Date();
+  const pad = n => String(n).padStart(2,'0');
+  const fmt = d => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+  const toDate = fmt(today);
+  let fromDate;
+  if (go2DateRange === 'today') {
+    fromDate = toDate;
+  } else if (go2DateRange === 'yesterday') {
+    const y = new Date(today); y.setDate(y.getDate()-1); fromDate = fmt(y);
+  } else if (go2DateRange === 'mtd') {
+    fromDate = `${today.getFullYear()}-${pad(today.getMonth()+1)}-01`;
+  } else if (go2DateRange === 'lastmonth') {
+    const lm = new Date(today.getFullYear(), today.getMonth()-1, 1);
+    const lme = new Date(today.getFullYear(), today.getMonth(), 0);
+    return { from: fmt(lm), to: fmt(lme) };
+  } else {
+    const days = parseInt(go2DateRange) || 30;
+    const d = new Date(today); d.setDate(d.getDate() - days + 1);
+    fromDate = fmt(d);
+  }
+  return { from: fromDate, to: toDate };
+}
+
+function go2ApplyFilters() {
+  go2ActiveCampaign = document.getElementById('go2-campaign-select')?.value || 'all';
+  const { from, to } = go2GetDates();
+  document.getElementById('go2PeriodBanner').textContent = `${from} → ${to}`;
+
+  const filterRow = r => {
+    const d = normDateStr(r.Date || r.date || '');
+    if (d && d < from) return false;
+    if (d && d > to)   return false;
+    if (go2ActiveCampaign !== 'all' && (r.CampaignName||'') !== go2ActiveCampaign) return false;
+    return true;
+  };
+
+  const daily       = GO2_RAW.daily.filter(filterRow);
+  const devices     = GO2_RAW.devices.filter(filterRow);
+  const geo         = GO2_RAW.geo.filter(filterRow);
+  const hourly      = GO2_RAW.hourly.filter(filterRow);
+  const keywords    = GO2_RAW.keywords.filter(filterRow);
+  const searchTerms = GO2_RAW.searchTerms.filter(filterRow);
+
+  const adsPanel = document.getElementById('go2AdsPanels');
+  if (adsPanel) adsPanel.style.display = daily.length ? '' : 'none';
+  const noData = document.getElementById('go2NoData');
+  if (noData) noData.style.display = (!go2DataLoaded || daily.length) ? 'none' : 'block';
+
+  go2RenderKPIs(daily);
+  go2RenderChart(daily);
+  go2RenderCampaignScorecard(daily);
+  go2RenderKeywords(keywords);
+  go2RenderSearchTerms(searchTerms);
+  go2RenderStates(geo);
+  go2RenderHourly(hourly);
+  go2RenderDevices(devices);
+}
+
+// ── GO2 CPA HELPERS ──
+function go2CpaInfo(cpa) {
+  if (cpa === 0)                            return { color:'var(--muted)', label:'NO DATA' };
+  if (cpa <= GO2_ACT_TIERS.FANTASTIC)       return { color:'var(--green)', label:'FANTASTIC' };
+  if (cpa <= GO2_ACT_TIERS.EXCELLENT)       return { color:'var(--accent)', label:'EXCELLENT' };
+  if (cpa <= GO2_ACT_TIERS.GOOD)            return { color:'var(--amber)', label:'GOOD' };
+  return { color:'var(--red)', label:'POOR' };
+}
+
+// ── GO2 KPIs ──
+function go2RenderKPIs(daily) {
+  let spend=0, apps=0, clicks=0, impressions=0;
+  daily.forEach(r => {
+    spend       += pn(r.Cost);
+    apps        += pn(r.Conversions);
+    clicks      += pn(r.Clicks);
+    impressions += pn(r.Impressions);
+  });
+  const cpa = apps > 0 ? spend/apps : 0;
+  const ctr = impressions > 0 ? (clicks/impressions*100) : 0;
+  const cpc = clicks > 0 ? spend/clicks : 0;
+  const { color, label } = go2CpaInfo(cpa);
+
+  const $v = id => document.getElementById(id);
+  $v('go2v-spend').textContent  = '$' + spend.toFixed(2);
+  $v('go2v-apps').textContent   = apps.toLocaleString();
+  $v('go2v-cpa').textContent    = apps > 0 ? '$' + cpa.toFixed(2) : '—';
+  $v('go2v-clicks').textContent = clicks.toLocaleString();
+  $v('go2v-ctr').textContent    = impressions > 0 ? ctr.toFixed(2)+'%' : '—';
+  $v('go2v-cpc').textContent    = clicks > 0 ? '$' + cpc.toFixed(2) : '—';
+  $v('go2s-spend').textContent  = daily.length + ' day(s) with spend';
+  $v('go2s-apps').textContent   = apps === 0 ? 'No applications yet' : apps + ' applications';
+  $v('go2s-cpa').textContent    = cpa > 0 ? label : '—';
+
+  if ($v('go2v-cpa') && cpa > 0) $v('go2v-cpa').style.color = color;
+}
+
+// ── GO2 DAILY CHART ──
+function go2RenderChart(daily) {
+  const byDate = {};
+  daily.forEach(r => {
+    const d = normDateStr(r.Date || '');
+    if (!d) return;
+    if (!byDate[d]) byDate[d] = { spend:0, apps:0 };
+    byDate[d].spend += pn(r.Cost);
+    byDate[d].apps  += pn(r.Conversions);
+  });
+  const dates  = Object.keys(byDate).sort();
+  const spends = dates.map(d => byDate[d].spend);
+  const apps   = dates.map(d => byDate[d].apps);
+  const labels = dates.map(d => d.slice(5));
+
+  const ctx = document.getElementById('go2DailyChart')?.getContext('2d');
+  if (!ctx) return;
+  if (go2ChartInst) { go2ChartInst.destroy(); go2ChartInst = null; }
+
+  go2ChartInst = new Chart(ctx, {
+    data: {
+      labels,
+      datasets: [
+        { type:'bar',  label:'Spend ($)',      data:spends, backgroundColor:'rgba(249,115,22,0.25)', borderColor:'rgba(249,115,22,0.7)', borderWidth:1, yAxisID:'ySpend' },
+        { type:'line', label:'Applications',   data:apps,   borderColor:'#f97316', backgroundColor:'rgba(249,115,22,0.1)', borderWidth:2, pointRadius:3, pointBackgroundColor:'#f97316', yAxisID:'yApps', tension:0.3, fill:true }
+      ]
+    },
+    options: {
+      responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{ labels:{ color:'#64748b', font:{ family:'Space Mono', size:9 } } } },
+      scales: {
+        x:{ ticks:{ color:'#64748b', font:{ family:'Space Mono', size:8 } }, grid:{ color:'rgba(255,255,255,0.04)' } },
+        ySpend:{ position:'left',  ticks:{ color:'#f97316', font:{ family:'Space Mono', size:8 }, callback:v=>'$'+v.toFixed(0) }, grid:{ color:'rgba(255,255,255,0.04)' } },
+        yApps: { position:'right', ticks:{ color:'#fdba74', font:{ family:'Space Mono', size:8 } }, grid:{ display:false } }
+      }
+    }
+  });
+}
+
+// ── GO2 CAMPAIGN SCORECARD ──
+function go2RenderCampaignScorecard(daily) {
+  const byC = {};
+  daily.forEach(r => {
+    const c = r.CampaignName || '';
+    if (!c) return;
+    if (!byC[c]) byC[c] = { spend:0, apps:0, clicks:0, impressions:0 };
+    byC[c].spend       += pn(r.Cost);
+    byC[c].apps        += pn(r.Conversions);
+    byC[c].clicks      += pn(r.Clicks);
+    byC[c].impressions += pn(r.Impressions);
+  });
+
+  const el = document.getElementById('go2CampaignScorecard');
+  if (!Object.keys(byC).length) {
+    el.innerHTML = '<div style="font-family:var(--mono);font-size:10px;color:var(--muted);text-align:center;padding:30px 0">Awaiting data...</div>';
+    return;
+  }
+
+  el.innerHTML = Object.entries(byC).sort((a,b)=>b[1].spend-a[1].spend).map(([c, d]) => {
+    const cpa = d.apps > 0 ? d.spend/d.apps : 0;
+    const ctr = d.impressions > 0 ? (d.clicks/d.impressions*100) : 0;
+    const cpc = d.clicks > 0 ? d.spend/d.clicks : 0;
+    const { color, label } = go2CpaInfo(cpa);
+    const shortName = c.length > 30 ? c.substring(0,28)+'…' : c;
+    return `<div style="background:var(--surface2);border:1px solid var(--border2);border-radius:6px;padding:10px 12px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+        <div style="font-family:var(--mono);font-size:9px;color:var(--text);letter-spacing:1px">${shortName}</div>
+        <div style="font-family:var(--mono);font-size:8px;color:var(--muted)">$${d.spend.toFixed(2)} spent</div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:8px">
+        <div style="text-align:center"><div style="font-family:var(--mono);font-size:13px;font-weight:700;color:var(--accent)">${d.clicks}</div><div style="font-family:var(--mono);font-size:7px;color:var(--muted)">CLICKS</div></div>
+        <div style="text-align:center"><div style="font-family:var(--mono);font-size:13px;font-weight:700;color:var(--amber)">${ctr>0?ctr.toFixed(1)+'%':'—'}</div><div style="font-family:var(--mono);font-size:7px;color:var(--muted)">CTR</div></div>
+        <div style="text-align:center"><div style="font-family:var(--mono);font-size:13px;font-weight:700;color:var(--muted)">${cpc>0?'$'+cpc.toFixed(2):'—'}</div><div style="font-family:var(--mono);font-size:7px;color:var(--muted)">CPC</div></div>
+        <div style="text-align:center"><div style="font-family:var(--mono);font-size:13px;font-weight:700;color:#f97316">${d.apps}</div><div style="font-family:var(--mono);font-size:7px;color:var(--muted)">APPS</div></div>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;padding-top:6px;border-top:1px solid var(--border2)">
+        <div style="font-family:var(--mono);font-size:8px;color:${color}">${label}</div>
+        <div style="font-family:var(--mono);font-size:8px;color:${cpa>0?color:'var(--muted)'}">${cpa>0?'$'+cpa.toFixed(2)+'/app':d.apps===0?'0 apps yet':''}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ── GO2 KEYWORDS ──
+function go2RenderKeywords(keywords) {
+  const byKw = {};
+  keywords.forEach(r => {
+    const k = (r.Keyword || r.Criteria || '').trim();
+    if (!k) return;
+    if (!byKw[k]) byKw[k] = { spend:0, apps:0, clicks:0, match:r.MatchType||r.KeywordMatchType||'' };
+    byKw[k].spend += pn(r.Cost);
+    byKw[k].apps  += pn(r.Conversions);
+    byKw[k].clicks+= pn(r.Clicks);
+  });
+  const sorted = Object.entries(byKw).sort((a,b) => b[1].spend - a[1].spend).slice(0,25);
+  const el = document.getElementById('go2KeywordList');
+  document.getElementById('go2KwCount').textContent = sorted.length + ' keywords';
+  if (!sorted.length) { el.innerHTML = '<div style="font-family:var(--mono);font-size:10px;color:var(--muted);text-align:center;padding:20px 0">Awaiting data...</div>'; return; }
+  el.innerHTML = sorted.map(([kw, d]) => {
+    const cpa = d.apps > 0 ? d.spend/d.apps : 0;
+    const { color } = go2CpaInfo(cpa);
+    return `<div style="display:flex;align-items:center;justify-content:space-between;padding:5px 8px;background:var(--surface2);border-radius:4px;gap:8px">
+      <div style="font-size:11px;color:var(--text);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${kw} <span style="font-family:var(--mono);font-size:8px;color:var(--muted)">${d.match}</span></div>
+      <div style="display:flex;gap:10px;flex-shrink:0;font-family:var(--mono);font-size:10px">
+        <span style="color:var(--accent)">$${d.spend.toFixed(0)}</span>
+        <span style="color:#f97316">${d.apps}a</span>
+        <span style="color:${cpa>0?color:'var(--muted)'}">${cpa>0?'$'+cpa.toFixed(0):'—'}</span>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ── GO2 SEARCH TERMS ──
+function go2RenderSearchTerms(searchTerms) {
+  const byST = {};
+  searchTerms.forEach(r => {
+    const k = (r.SearchTerm || r.Query || '').trim();
+    if (!k) return;
+    if (!byST[k]) byST[k] = { spend:0, apps:0, clicks:0 };
+    byST[k].spend += pn(r.Cost);
+    byST[k].apps  += pn(r.Conversions);
+    byST[k].clicks+= pn(r.Clicks);
+  });
+  const sorted = Object.entries(byST).sort((a,b) => b[1].spend - a[1].spend).slice(0,25);
+  const el = document.getElementById('go2SearchTermList');
+  document.getElementById('go2StCount').textContent = sorted.length + ' terms';
+  if (!sorted.length) { el.innerHTML = '<div style="font-family:var(--mono);font-size:10px;color:var(--muted);text-align:center;padding:20px 0">Awaiting data...</div>'; return; }
+  el.innerHTML = sorted.map(([term, d]) => {
+    const cpa = d.apps > 0 ? d.spend/d.apps : 0;
+    const { color } = go2CpaInfo(cpa);
+    return `<div style="display:flex;align-items:center;justify-content:space-between;padding:5px 8px;background:var(--surface2);border-radius:4px;gap:8px">
+      <div style="font-size:11px;color:var(--text);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${term}</div>
+      <div style="display:flex;gap:10px;flex-shrink:0;font-family:var(--mono);font-size:10px">
+        <span style="color:var(--accent)">$${d.spend.toFixed(0)}</span>
+        <span style="color:#f97316">${d.apps}a</span>
+        <span style="color:${cpa>0?color:'var(--muted)'}">${cpa>0?'$'+cpa.toFixed(0):'—'}</span>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ── GO2 STATES ──
+function go2RenderStates(geo) {
+  const STATE_ABBRS = {
+    'Alabama':'AL','Alaska':'AK','Arizona':'AZ','Arkansas':'AR','California':'CA',
+    'Colorado':'CO','Connecticut':'CT','Delaware':'DE','Florida':'FL','Georgia':'GA',
+    'Hawaii':'HI','Idaho':'ID','Illinois':'IL','Indiana':'IN','Iowa':'IA','Kansas':'KS',
+    'Kentucky':'KY','Louisiana':'LA','Maine':'ME','Maryland':'MD','Massachusetts':'MA',
+    'Michigan':'MI','Minnesota':'MN','Mississippi':'MS','Missouri':'MO','Montana':'MT',
+    'Nebraska':'NE','Nevada':'NV','New Hampshire':'NH','New Jersey':'NJ','New Mexico':'NM',
+    'New York':'NY','North Carolina':'NC','North Dakota':'ND','Ohio':'OH','Oklahoma':'OK',
+    'Oregon':'OR','Pennsylvania':'PA','Rhode Island':'RI','South Carolina':'SC',
+    'South Dakota':'SD','Tennessee':'TN','Texas':'TX','Utah':'UT','Vermont':'VT',
+    'Virginia':'VA','Washington':'WA','West Virginia':'WV','Wisconsin':'WI','Wyoming':'WY',
+    'Washington DC':'DC','Puerto Rico':'PR'
+  };
+  const byState = {};
+  geo.forEach(r => {
+    const raw = (r.Region || '').replace(/, United States/,'').trim();
+    const abbr = STATE_ABBRS[raw] || raw.substring(0,2).toUpperCase();
+    if (!abbr || abbr.length > 3) return;
+    if (!byState[abbr]) byState[abbr] = { spend:0, apps:0 };
+    byState[abbr].spend += pn(r.Cost);
+    byState[abbr].apps  += pn(r.Conversions);
+  });
+
+  const states = Object.entries(byState).map(([abbr,d]) => ({
+    abbr, ...d, cpa: d.apps > 0 ? d.spend/d.apps : (d.spend > 0 ? Infinity : 0)
+  })).filter(d => d.spend > 0);
+
+  const best  = [...states].filter(d=>d.apps>0).sort((a,b)=>a.cpa-b.cpa).slice(0,10);
+  const worst = [...states].sort((a,b)=>b.spend-a.spend).filter(d=>d.cpa===Infinity||d.cpa>GO2_ACT_TIERS.GOOD).slice(0,10);
+
+  const makeRow = (d, showCpa) => {
+    const { color } = go2CpaInfo(d.cpa);
+    return `<div style="display:flex;align-items:center;gap:8px;padding:4px 6px;background:var(--surface2);border-radius:4px">
+      <div style="font-family:var(--mono);font-size:13px;font-weight:700;color:${color};width:28px">${d.abbr}</div>
+      <div style="flex:1;font-family:var(--mono);font-size:9px;color:var(--muted)">${d.apps}a · $${d.spend.toFixed(0)}</div>
+      <div style="font-family:var(--mono);font-size:9px;color:${color}">${showCpa&&d.apps>0?'$'+d.cpa.toFixed(0):d.cpa===Infinity?'0a':''}</div>
+    </div>`;
+  };
+
+  document.getElementById('go2StateBest').innerHTML  = best.length  ? best.map(d=>makeRow(d,true)).join('')  : '<div style="font-family:var(--mono);font-size:10px;color:var(--muted);text-align:center;padding:10px">No applications yet</div>';
+  document.getElementById('go2StateWorst').innerHTML = worst.length ? worst.map(d=>makeRow(d,false)).join('') : '<div style="font-family:var(--mono);font-size:10px;color:var(--muted);text-align:center;padding:10px">No waste states</div>';
+}
+
+// ── GO2 HOURLY HEATMAP ──
+function go2RenderHourly(hourly) {
+  const byHour = {};
+  for (let h=0;h<24;h++) byHour[h]={apps:0,spend:0};
+  hourly.forEach(r => {
+    const h = parseInt(r.HourOfDay)||0;
+    byHour[h].apps  += pn(r.Conversions);
+    byHour[h].spend += pn(r.Cost);
+  });
+  const maxApps = Math.max(...Object.values(byHour).map(h=>h.apps), 1);
+  const fmt12 = h => h===0?'12A':h<12?h+'A':h===12?'12P':(h-12)+'P';
+  document.getElementById('go2HourlyHeatmap').innerHTML = Array.from({length:24},(_,h)=>{
+    const d = byHour[h];
+    const intensity = d.apps/maxApps;
+    const bg = d.apps > 0 ? `rgba(249,115,22,${0.08+intensity*0.7})` : 'rgba(255,255,255,0.03)';
+    return `<div title="Hour ${h}: ${d.apps} apps, $${d.spend.toFixed(2)}" style="background:${bg};border-radius:3px;padding:5px 2px;text-align:center;cursor:default">
+      <div style="font-family:var(--mono);font-size:8px;color:${d.apps>0?'#f97316':'var(--muted)'};">${d.apps>0?d.apps:'·'}</div>
+      <div style="font-family:var(--mono);font-size:7px;color:var(--muted);margin-top:2px">${fmt12(h)}</div>
+    </div>`;
+  }).join('');
+}
+
+// ── GO2 DEVICES ──
+function go2RenderDevices(devices) {
+  const byDev = {};
+  devices.forEach(r => {
+    let k = (r.Device||'').toLowerCase();
+    k = k.includes('mobile')?'Mobile':k.includes('computer')?'Desktop':k.includes('tablet')?'Tablet':'Other';
+    if (k==='Other') return;
+    if (!byDev[k]) byDev[k]={spend:0,apps:0,clicks:0};
+    byDev[k].spend += pn(r.Cost);
+    byDev[k].apps  += pn(r.Conversions);
+    byDev[k].clicks+= pn(r.Clicks);
+  });
+  const icons = {Mobile:'📱',Desktop:'🖥',Tablet:'📲'};
+  document.getElementById('go2DeviceCards').innerHTML = ['Mobile','Desktop','Tablet'].map(dev => {
+    const d = byDev[dev] || {spend:0,apps:0,clicks:0};
+    const cpa = d.apps>0?d.spend/d.apps:0;
+    const { color, label } = go2CpaInfo(cpa);
+    return `<div style="background:var(--surface2);border:1px solid var(--border2);border-radius:6px;padding:14px">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
+        <span style="font-size:18px">${icons[dev]}</span>
+        <div style="font-family:var(--mono);font-size:10px;color:var(--text);letter-spacing:1px">${dev.toUpperCase()}</div>
+        ${cpa>0?`<div style="margin-left:auto;background:var(--surface);border:1px solid ${color};border-radius:3px;padding:2px 6px;font-family:var(--mono);font-size:8px;color:${color}">${label}</div>`:''}
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">
+        <div style="text-align:center"><div style="font-family:var(--mono);font-size:16px;font-weight:700;color:${cpa>0?color:'var(--muted)'}">${cpa>0?'$'+cpa.toFixed(0):'—'}</div><div style="font-family:var(--mono);font-size:7px;color:var(--muted)">APP CPA</div></div>
+        <div style="text-align:center"><div style="font-family:var(--mono);font-size:16px;font-weight:700;color:#f97316">${d.apps}</div><div style="font-family:var(--mono);font-size:7px;color:var(--muted)">APPS</div></div>
+        <div style="text-align:center"><div style="font-family:var(--mono);font-size:16px;font-weight:700;color:var(--accent)">$${d.spend.toFixed(0)}</div><div style="font-family:var(--mono);font-size:7px;color:var(--muted)">SPEND</div></div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
 </script>
 </body>
 </html>
