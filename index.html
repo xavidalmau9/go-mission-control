@@ -1269,13 +1269,14 @@ function renderKPIs(kpis) {
     $('kv-revenue').style.color = '';
     $('ks-revenue').innerHTML = `<span style="color:var(--green);font-size:9px">✓ CONFIRMED · ${confirmedSources} · $${PAYOUT}/act</span>`;
   } else {
-    // No BGOA data for range — show Google conv estimate
-    $('kv-activations').textContent = activations.toLocaleString();
-    $('kv-activations').style.color = 'var(--amber)';
-    $('ks-activations').innerHTML = `<span style="color:var(--amber);font-size:9px">EST · Google conv × ${(ACT_RATE*100).toFixed(1)}%</span>`;
-    $('kv-revenue').textContent = fmtMoney(revenue);
-    $('kv-revenue').style.color = 'var(--amber)';
-    $('ks-revenue').innerHTML = `<span style="color:var(--amber);font-size:9px">EST · $${PAYOUT}/activation</span>`;
+    // No confirmed BGOA/BGOC data for this range — we do NOT project from a percentage.
+    // Show "—" until real Assurance numbers arrive.
+    $('kv-activations').textContent = '—';
+    $('kv-activations').style.color = 'var(--muted)';
+    $('ks-activations').innerHTML = `<span style="color:var(--muted);font-size:9px">N/A · awaiting Assurance report</span>`;
+    $('kv-revenue').textContent = '—';
+    $('kv-revenue').style.color = 'var(--muted)';
+    $('ks-revenue').innerHTML = `<span style="color:var(--muted);font-size:9px">N/A · awaiting Assurance report</span>`;
   }
 
   // Applications = Google conversions ONLY (Jun 2026 bot-mitigation rule)
@@ -1311,10 +1312,12 @@ function renderKPIs(kpis) {
   $('kv-gcpa').textContent = fmtCPA(appCPA);
   $('kv-gcpa').style.color = cpaColor(appCPA);
   $('ks-gcpa').innerHTML = `<span style="color:var(--muted)">FANTASTIC ≤${fmtCPA(t.FANTASTIC)}</span>`;
+  // Activation CPA needs real activations; show "—" on TODAY or when activations are unknown (null)
+  const acpaUnknown = isToday || activationCPA === null || activationCPA === undefined;
   const acpaCol = actCpaColor(activationCPA);
-  $('kv-acpa').textContent = isToday ? '—' : fmtCPA(activationCPA);
-  $('kv-acpa').style.color = isToday ? 'var(--muted)' : acpaCol;
-  $('ks-acpa').innerHTML = isToday
+  $('kv-acpa').textContent = acpaUnknown ? '—' : fmtCPA(activationCPA);
+  $('kv-acpa').style.color = acpaUnknown ? 'var(--muted)' : acpaCol;
+  $('ks-acpa').innerHTML = acpaUnknown
     ? `<span style="color:var(--muted);font-size:9px">N/A</span>`
     : `<span style="color:${acpaCol}">${actCpaLabel(activationCPA)}</span> · TARGET ≤$${ACT_TIERS.FANTASTIC}`;
 }
@@ -1860,14 +1863,14 @@ function renderBrief(dailyRaw, keywordsRaw, searchTermsRaw) {
   const yApps = googleAppsY;
   const yAppCPA = yApps > 0 ? ySpend / yApps : 0;
 
-  // Activations always from BGOA confirmed
-  const yActs    = bgoaYest ? bgoaYest.activations : Math.round(yApps * ACT_RATE);
+  // Activations ONLY from real BGOA confirmed data — never projected from a percentage.
+  const yActs    = bgoaYest ? bgoaYest.activations : null;
   const yActsConfirmed = !!bgoaYest;
   // Pending = BGOA row exists for yesterday but activations = 0 (Assurance hasn't reported yet)
   const yActsPending = yActsConfirmed && yActs === 0;
-  const yActCPA  = yActs > 0 ? ySpend / yActs : 0;
-  const yRevenue = yActs * PAYOUT;
-  const yProfit  = yRevenue - ySpend;
+  const yActCPA  = (yActs && yActs > 0) ? ySpend / yActs : null;
+  const yRevenue = yActs !== null ? yActs * PAYOUT : null;
+  const yProfit  = yRevenue !== null ? yRevenue - ySpend : null;
   const yCTR      = yData.impressions > 0 ? yData.clicks / yData.impressions * 100 : 0;
 
   // Day-before apps: Google conversions ONLY (same Jun 2026 rule)
@@ -2895,10 +2898,12 @@ function buildKPIs(daily) {
     confirmedDays    = Math.max(bgoaRows.length, bgocRows.length);
     confirmedSources = [hasBGOA ? 'BGOA' : null, hasBGOC ? 'BGOC' : null].filter(Boolean).join('+');
   } else {
-    // No confirmed data (or single campaign selected) — fall back to Google conv estimate
-    applications     = Math.round(conversions);   // Google conversions as proxy
-    activations      = Math.round(conversions * ACT_RATE);
-    revenue          = activations * PAYOUT;
+    // No confirmed data (or single campaign selected). Applications = real Google
+    // conversions, but we do NOT project activations/revenue from a percentage —
+    // those stay null and render as "—" until real Assurance numbers arrive.
+    applications     = Math.round(conversions);   // real Google conversions
+    activations      = null;
+    revenue          = null;
     isConfirmed      = false;
     confirmedDays    = 0;
     confirmedSources = isSingleCampaign ? 'CAMPAIGN ESTIMATE' : '';
@@ -2906,8 +2911,8 @@ function buildKPIs(daily) {
 
   // Spend = Google Ads total (all campaigns, WHERE Cost > 0 ensures none are missed)
   const appCPA        = applications > 0 ? spend / applications : 0;
-  const activationCPA = activations  > 0 ? spend / activations  : 0;
-  const profit        = revenue - spend;
+  const activationCPA = (activations && activations > 0) ? spend / activations : null;
+  const profit        = (revenue !== null && revenue !== undefined) ? revenue - spend : null;
 
   // Log campaign breakdown to console to diagnose missing campaigns
   const campTotals = {};
@@ -2956,9 +2961,10 @@ function buildChartDaily(daily) {
     }
   });
 
-  // Step 3: for days with no BGOA data, estimate from Google conv
+  // Step 3: days with no real BGOA activation data are NOT projected — leave activations
+  // as null so the chart simply shows no activation point (no fabricated percentage estimate).
   Object.values(byDate).forEach(d => {
-    if (!d.confirmed) d.activations = Math.round(d.apps * ACT_RATE);
+    if (!d.confirmed) d.activations = null;
   });
 
   return Object.values(byDate).sort((a,b) => a.date.localeCompare(b.date));
@@ -2989,18 +2995,17 @@ function buildDevices(devices) {
     mobile:  cpa('mobile') || 0,
     tablets: cpa('tablet') || 0,
   };
+  // Device panel shows Applications + spend only (no projected activations — we never
+  // estimate activations from a percentage).
   Object.entries(byDevice).forEach(([key, d]) => {
     if (key.includes('computer') || key.includes('desktop')) {
       result.desktopApps = (result.desktopApps||0) + d.conv;
-      result.desktopActs = (result.desktopActs||0) + Math.round(d.conv * ACT_RATE);
       result.desktopSpend = (result.desktopSpend||0) + d.cost;
     } else if (key.includes('mobile')) {
       result.mobileApps = (result.mobileApps||0) + d.conv;
-      result.mobileActs = (result.mobileActs||0) + Math.round(d.conv * ACT_RATE);
       result.mobileSpend = (result.mobileSpend||0) + d.cost;
     } else if (key.includes('tablet')) {
       result.tabletsApps = (result.tabletsApps||0) + d.conv;
-      result.tabletsActs = (result.tabletsActs||0) + Math.round(d.conv * ACT_RATE);
       result.tabletsSpend = (result.tabletsSpend||0) + d.cost;
     }
   });
@@ -3149,9 +3154,11 @@ function buildTrajectory(kpis, chartDaily) {
   const lookStr = `${lookback.getFullYear()}-${String(lookback.getMonth()+1).padStart(2,'0')}-${String(lookback.getDate()).padStart(2,'0')}`;
   const paceRows = (RAW && RAW.bgoa) ? RAW.bgoa.map(parseBGOARow).filter(r => r && r.date >= lookStr && r.date <= cutoffStr && r.activations > 0) : [];
   const settledDays = bgoaMTD.filter(r => r.date <= cutoffStr && r.activations > 0).length;
+  // Pace comes ONLY from real settled activations. If there's no real data yet, pace = 0
+  // (we never fall back to a percentage projection).
   const dailyPace = paceRows.length > 0
     ? paceRows.reduce((s,r) => s + r.activations, 0) / paceRows.length
-    : (settledDays > 0 ? mtdConfirmedActs / settledDays : ACT_RATE * (kpis.conversions / Math.max(dayOfMonth,1)));
+    : (settledDays > 0 ? mtdConfirmedActs / settledDays : 0);
 
   // Full month = confirmed MTD + pace × remaining days
   const remainingDays = daysInMonth - dayOfMonth;

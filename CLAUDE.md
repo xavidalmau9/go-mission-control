@@ -32,6 +32,12 @@ Bots hitting the funnel inflated the raw Approvals/Activations columns, so the c
 - **Activation rate = Activations ÷ Approvals (both de-duped)** — matches the sheet's col I ("Activation Percentage % / Approvals"). The OLD Activations ÷ Applications rate was retired (bots inflate applications). `getPeriodActRate` and `getLiveActRate` now divide by approvals, not applications. ⚠️ This rate also feeds the **App CPA tier thresholds** (`getAppTiers`) and **activation projections**, so those now derive from the approval-based rate too.
 - **Decimals:** `r2(v)` helper (`Math.round(v*100)/100`) caps any displayed number to 2 places — applied wherever fractional Google-application values are summed (KPI subtitle, chart tooltip, Intel Feed rows, BGOC panel) to kill float artifacts like `28355.720000000012`.
 
+### 🚫 NEVER PROJECT — real data only (Jun 13, 2026 directive)
+Bots made the activation-rate percentage unreliable, so the dashboard must **never estimate activations/revenue from a percentage.** Show real de-duped numbers, or `—`/N/A when none exist yet.
+- **Removed every `× ACT_RATE` projection of counts:** `buildKPIs` no-confirmed-data branch (`activations`/`revenue` = `null` → render `—`), `buildChartDaily` unconfirmed days (`activations = null`, no point plotted), per-device activations (deleted — device panel is Applications + spend only), trajectory pace fallback (`0` instead of `ACT_RATE × conv`), and the "yesterday" tile (`null` instead of `yApps × ACT_RATE`).
+- **TODAY** always shows Applications (real Google conversions) and `—` for Activations/Revenue/Activation CPA until the Assurance report arrives. Never show a projected activation count anywhere.
+- `ACT_RATE` (now Acts ÷ Approvals from real data) is used ONLY for App CPA tier color thresholds (`getAppTiers`) and the displayed rate — it no longer fabricates any count. If even that should go, replace App CPA tiers with fixed dollar thresholds.
+
 **Current daily sheet columns (BGOA & BGOC, gid 1141776879 / 1214117353):**
 `A Day · B Ad Spend · C GOOGLE Applications · D Approvals · E Approvals NO DUPLICATES · F Approval % · G Activations · H Activations NO DUPLICATES · I Activation % / Approvals · J REVENUE $ · K ACTUAL RECEIVED · L Application Cost · M Approved Application Cost`
 
