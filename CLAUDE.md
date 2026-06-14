@@ -1,6 +1,6 @@
 # Mission Control Dashboard — Claude Project Instructions
 **GO Advertising · Assurance Wireless / BGOA Partner Dashboard**
-**Last updated: April 23, 2026 (session 10)**
+**Last updated: June 8, 2026 (session 11)**
 
 > This file is read by Claude at the start of every session. Update it whenever significant decisions are made.
 
@@ -23,11 +23,17 @@ A single-page real-time performance dashboard (`index.html`) for tracking Google
 **Ad Spend always comes from Google Ads (DailyCampaign sheet) — never from the BGOA manual spreadsheet.**
 Google is always accurate for spend and has it broken down by campaign. BGOA is manually entered and can have mistakes.
 
-**Applications: always show whichever number is higher — Google conversions or Assurance confirmed.**
-Google has fresher same-day data. Assurance catches up T+1 with confirmed numbers that are often higher.
-Logic: `Math.max(confirmedApps, googleApps)` — never hardcode one source.
+**⚠️ UPDATED Jun 13, 2026 — BOT MITIGATION (supersedes the old Math.max rule):**
+Bots hitting the funnel inflated the raw Approvals/Activations columns, so the counting rules changed:
 
-**Activations always come from BGOA/BGOC confirmed data.** We get paid on Assurance numbers, not Google's.
+- **Applications: ONLY Google conversions — nothing else.** No more `Math.max(confirmedApps, googleApps)`. In `buildKPIs`, `applications = googleApps` (Google conversions for the period). In `parseBGOARow`, `applications` reads the **"GOOGLE Applications" column (col C)**.
+- **Approvals & Activations: ONLY from the daily-sheet NO-DUPLICATES columns** — `Approvals NO DUPLICATES` (**col E**) and `Activations NO DUPLICATES` (**col H**), summed across BOTH sheets (BGOA + BGOC). **NEVER use the with-duplicate columns** `Approvals` (col D) / `Activations` (col G) — those are bot-inflated (e.g. 6/5 showed 665 with dupes vs the correct 385 in col H).
+- `parseBGOARow` matches these columns by regex (`/approval[s]?\s*no\s*duplicate/i`, `/activation[s]?\s*no\s*duplicate/i`, `/google\s*applications/i`) because the BGOA and BGOC sheets differ in header spacing. **Fallback:** if a NO-DUPLICATES cell is blank, it falls back to the raw column (D/G) for that row only.
+- **Activation rate = Activations ÷ Approvals (both de-duped)** — matches the sheet's col I ("Activation Percentage % / Approvals"). The OLD Activations ÷ Applications rate was retired (bots inflate applications). `getPeriodActRate` and `getLiveActRate` now divide by approvals, not applications. ⚠️ This rate also feeds the **App CPA tier thresholds** (`getAppTiers`) and **activation projections**, so those now derive from the approval-based rate too.
+- **Decimals:** `r2(v)` helper (`Math.round(v*100)/100`) caps any displayed number to 2 places — applied wherever fractional Google-application values are summed (KPI subtitle, chart tooltip, Intel Feed rows, BGOC panel) to kill float artifacts like `28355.720000000012`.
+
+**Current daily sheet columns (BGOA & BGOC, gid 1141776879 / 1214117353):**
+`A Day · B Ad Spend · C GOOGLE Applications · D Approvals · E Approvals NO DUPLICATES · F Approval % · G Activations · H Activations NO DUPLICATES · I Activation % / Approvals · J REVENUE $ · K ACTUAL RECEIVED · L Application Cost · M Approved Application Cost`
 
 ---
 
@@ -188,7 +194,7 @@ Derives App CPA thresholds from ACT_TIERS × activation rate. NEVER hardcode app
 
 ### `buildKPIs(daily)`
 - **Spend:** Always `googleSpend` from DailyCampaign — never BGOA manual entry
-- **Applications:** `Math.max(confirmedApps, googleApps)` — whichever is higher
+- **Applications:** `googleApps` (Google conversions ONLY) — **changed Jun 13, 2026** from `Math.max(confirmedApps, googleApps)` due to bot inflation. See The #1 Rule.
 - **Activations:** BGOA+BGOC confirmed only. Falls back to `conversions × ACT_RATE` if no Assurance data
 - Returns `{ ..., googleApps, confirmedApps }` so `renderKPIs` can show which source won in subtitle
 
@@ -335,7 +341,8 @@ A `US_STATE_CRITERIA` lookup table in the script converts these to state names (
 - **Never call Google-tracked numbers "activations"** — Google only tracks conversions (= applications). Always label them "Google Conversions". Only BGOA/Assurance confirmed data can be called "Activations".
 - **Never show Activation Rate without a PROJECTED label for TODAY or fallback views** — only show `✓ REAL` when confirmed period data from BGOA exists
 - **Never use BGOA Ad Spend as the spend source** — always use Google DailyCampaign for spend
-- **Never use only one source for applications** — always `Math.max(confirmedApps, googleApps)`
+- **Applications come from Google conversions ONLY** (Jun 13, 2026 bot-mitigation rule) — do NOT use `Math.max(confirmedApps, googleApps)` anymore; do NOT pull applications from the BGOA/BGOC manual columns
+- **Never count Approvals/Activations from the with-duplicate columns** (col D `Approvals` / col G `Activations`) — always use the NO-DUPLICATES columns (col E / col H), which `parseBGOARow` reads
 - **Never hardcode App CPA thresholds** — always derive from `getAppTiers(ACT_RATE)`
 - **Never hardcode activation rate** — use `getPeriodActRate()` for ranges, `getLiveActRate()` for defaults
 - **Never add a daily spend target** — budget changes daily
@@ -601,6 +608,53 @@ We have **beaten every month with a real target**.
 - **Never wire the Device CPA trend chart to the main date filter** — it has its own independent toggle (`devTrendPeriod`) and is refreshed via `refreshDevTrendChart()`. The main date filter (Today/Yesterday/Last 7/etc.) should never affect this chart. Always call `refreshDevTrendChart()` from `applyFilters()` — do not call `buildDeviceTrend(f.devices, ...)` directly there.
 
 ---
+
+## Session 11 Changes (Jun 8, 2026)
+
+### GO2 Google Ads Script — separate account, separate spreadsheet
+
+There are now **TWO** Google Ads scripts (one per account):
+- **BGOA** → `google-ads-script.js` (canonical). Account goadvertising9@gmail.com. Writes to spreadsheet `1ZLzpR9oGk5y2amRr0jS4QPVIIzC44m1VfBRIxDK64Vg`.
+- **GO2 / BGOC** → `google-ads-script-GO2.js` (canonical). Account **275-817-6694**. Writes to spreadsheet `1OwGn3f_Qz1Sd8QOq18adpf-SZDYfNGpnf9gEHsil6aI`.
+
+### `pushDailyCampaign` in GO2 counts ONLY the "BGOC Application" conversion action
+
+- The Conversions column must reflect **only** the conversion action named `BGOC Application`, not the sum of all conversion actions. This feeds **column C** of the Lifeline daily-tracking spreadsheet (which was showing an inflated total).
+- **Why it can't be one query:** Google rejects a conversion-action segment (`ConversionTypeName` / `segments.conversion_action_name`) in the same query as `clicks` / `cost_micros` / `impressions` → `QueryError.PROHIBITED_SEGMENT_WITH_METRIC_IN_SELECT_OR_WHERE_CLAUSE`.
+- **The fix — two queries merged on `Date|CampaignName`:**
+  - Query A: `SELECT Date, CampaignName, Impressions, Clicks, Cost ... WHERE Cost > 0` (spend/clicks/impressions, no conversion segment)
+  - Query B: `SELECT Date, CampaignName, Conversions ... WHERE ConversionTypeName = 'BGOC Application'` (conversions only)
+  - Merge: spend/clicks/impressions from A, conversions from B (0 if no BGOC Application conversion that day/campaign).
+- The conversion action name is held in `var BGOC_CONV_ACTION = 'BGOC Application';` (line ~18). Must match the Google Ads conversion name **exactly** (capitalization/spacing). If renamed in Ads, update only this constant.
+- **Never put a conversion-action segment in the same query as clicks/cost/impressions.** Always split into two queries.
+- Only `pushDailyCampaign` differs from the BGOA script pattern; all other GO2 push functions are unchanged.
+
+### BGOC data pipeline — full 3-hop chain (CRITICAL reference)
+
+Column C ("Google Applications") of the destination BGOC tracking sheet flows through THREE hops, each a separate Apps Script on its own daily trigger:
+
+```
+GO2 Google Ads script  →  1OwGn3f… (DailyCampaign tab)        [hourly; Conversions = BGOC Application only]
+        ↓  updateBGOCData            [bound to 11b7VOP0…; trigger 7:00am ET daily]
+11b7VOP0… (month-named tabs: Date | Ad Spend | Google Applications | App Cost | BGOC Manual | CPA | PM BGOC | CPA | Prime Time BGOC | CPA)
+        ↓  dailySync2                [trigger 7:15am ET daily; copies cols B:C only]
+1Yr0gtdyf5x0… 'ad spend BGOC'        [the dashboard's BGOC data source]
+```
+
+- **`updateBGOCData`** (separate script, bound to `11b7VOP0…`): reads `1OwGn3f…` DailyCampaign, sums `Conversions` per date into "Google Applications" (`d.conv`), and breaks campaigns out via `CAMPAIGN_MAP` (`Brand Search`→BGOC Manual, `Performance Max`→PM BGOC, `Prime Time`→Prime Time BGOC). **Updates ALL months every run** (attribution lag), **skips today** (partial), uses **UTC dates**, **cell-by-cell writes** (never `setValues` a full row — destroys formulas). Because it just sums the DailyCampaign Conversions column, it needs NO change when the GO2 ads-script filter changes — it inherits the filter automatically on next run.
+- **`dailySync`/`dailySync2`** (the `1nEbt2j…`/`11b7VOP0…` → `1Yr0gtdyf5x0…` copy step): plain B:C mirror into 'ad spend BGOA' / 'ad spend BGOC'. `BGOA_DEST_ROWS`/`BGOC_DEST_ROWS` map month→start row.
+- **When a GO2 ads-script change must reach the dashboard same-day:** run `updateBGOCData` THEN `dailySync2` manually. Otherwise both run next morning (7:00 / 7:15am ET) and self-correct. The chain only flows once a day — a mid-day source fix will NOT appear downstream until those triggers fire or are run by hand.
+- **`updateBGOCData`'s header comment says spreadsheet `1nEbt2j…` but it writes to `getActiveSpreadsheet()`** — the comment is stale; trust the binding, not the comment.
+
+### ⚠️ BGOA March keeps getting overwritten — REAL ROOT CAUSE + FIX (Jun 10, 2026)
+- **Symptom:** March in 'ad spend BGOA' dashboard (rows B97:C127) shows wrong conversions (~2,322) instead of the settled **3,044**. Manual pastes don't hold — wiped every morning.
+- **TWO scripts run each morning, both separate Apps Script projects:**
+  1. **`updateGoogleAdsData`** (bound to `1nEbt2j…` via `getActiveSpreadsheet`; trigger **7:00am**) — reads the BGOA Google Ads **DailyCampaign** sheet (`1ZLzpR9o…`), sums Cost→"Ad Spend" and Conversions→"Google Applications" per day, writes into the `1nEbt2j…` month tabs. **THIS is the real clobberer.**
+  2. **`dailySync`** (separate project; **7:15am**) — copies `1nEbt2j…` B:C → dashboard 'ad spend BGOA'. Just a mirror; not the culprit.
+- **Why March is wrong at the source:** DailyCampaign's March conversions are **stale/under-counted (2,322)** — captured when March was still settling; March is now outside the BGOA Ads script's 60-day window so it never refreshed to the settled **3,044**. `updateGoogleAdsData` faithfully re-writes that stale 2,322 into `1nEbt2j` March every 7am, then `dailySync` carries it to the dashboard.
+- **THE FIX (applied Jun 10):** in `updateGoogleAdsData` added `var FROZEN_MONTHS = ['March'];` + a skip guard (`if FROZEN_MONTHS.indexOf(tabName)!==-1 continue;`) so the 7am job never touches March again, plus a one-time `writeCorrectMarch()` that writes the settled numbers into BOTH `1nEbt2j` March (B2:C32) and the dashboard (B97:C127). User pastes the updated script and runs `writeCorrectMarch()` once. Canonical copy: `/Users/305partners/assurance/updateGoogleAdsData-BGOA.js`. **`dailySync` left unchanged.**
+- **Correct March = $21,117.47 spend / 3,044.15 conversions** (matches Google Ads "All conv."). Do NOT use the stale 2,322 DailyCampaign figure.
+- **General rule:** to freeze any settled month from auto-overwrite, add its name to `FROZEN_MONTHS` in `updateGoogleAdsData`. The stale-after-60-days problem will recur for other months if they're ever manually corrected.
 
 ## Pending / Known Issues
 

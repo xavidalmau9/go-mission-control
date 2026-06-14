@@ -930,20 +930,23 @@ function getLiveActRate() {
   const settledDate = new Date(today.getFullYear(), today.getMonth() - (dayOfMonth >= 15 ? 1 : 2), 1);
   const settledMonth = settledDate.toISOString().substring(0, 7); // YYYY-MM
 
+  // Activation rate = Activations ÷ Approvals (both de-duped) — matches the sheet's
+  // "Activation Percentage % / Approvals" column (col I). Jun 2026: the old
+  // Activations ÷ Applications rate is no longer valid (bots inflate applications).
   // First try: settled prior month
   const settledRows = rows.filter(r => r.date.startsWith(settledMonth));
   if (settledRows.length >= 15) {
     const acts = settledRows.reduce((s,r) => s + r.activations, 0);
-    const apps = settledRows.reduce((s,r) => s + r.applications, 0);
-    if (apps > 50 && acts > 0) return acts / apps;
+    const approvals = settledRows.reduce((s,r) => s + r.approvals, 0);
+    if (approvals > 50 && acts > 0) return acts / approvals;
   }
 
   // Fallback: March 2026 — first full settled month with Google conv tracking
   const marchRows = rows.filter(r => r.date.startsWith('2026-03'));
   if (marchRows.length >= 15) {
     const acts = marchRows.reduce((s,r) => s + r.activations, 0);
-    const apps = marchRows.reduce((s,r) => s + r.applications, 0);
-    if (apps > 50 && acts > 0) return acts / apps;
+    const approvals = marchRows.reduce((s,r) => s + r.approvals, 0);
+    if (approvals > 50 && acts > 0) return acts / approvals;
   }
 
   return ACT_RATE_BASELINE;
@@ -960,8 +963,8 @@ function getSettledRateLabel() {
   const settledRows = rows.filter(r => r.date.startsWith(settledMonth));
   if (settledRows.length >= 15) {
     const acts = settledRows.reduce((s,r) => s + r.activations, 0);
-    const apps = settledRows.reduce((s,r) => s + r.applications, 0);
-    if (apps > 50 && acts > 0) {
+    const approvals = settledRows.reduce((s,r) => s + r.approvals, 0);
+    if (approvals > 50 && acts > 0) {
       const mo = settledDate.toLocaleString('default', { month: 'short', year: '2-digit' });
       return mo + ' settled';
     }
@@ -970,8 +973,11 @@ function getSettledRateLabel() {
 }
 
 // Compute ACTUAL activation rate for the selected date range from BGOA daily data.
+// Rate = Activations ÷ Approvals (both de-duped) — matches the sheet's col I
+// ("Activation Percentage % / Approvals"). Jun 2026: replaced the old ÷ Applications
+// formula (bots inflate applications, making that ratio meaningless).
 // Excludes the last LAG_DAYS (5) days because activations take ~5 days to settle.
-// Returns { rate, days, acts, apps } or null if not enough settled data.
+// Returns { rate, days, acts, approvals, apps } or null if not enough settled data.
 function getPeriodActRate(from, to) {
   const LAG_DAYS = 5;
   const cutoff = new Date();
@@ -981,15 +987,16 @@ function getPeriodActRate(from, to) {
   if (!from || settledTo < from) return null;
 
   const rows = RAW.bgoa.map(parseBGOARow).filter(r =>
-    r && r.date >= from && r.date <= settledTo && r.applications > 0
+    r && r.date >= from && r.date <= settledTo && r.approvals > 0
   );
   if (rows.length < 3) return null; // need at least 3 settled days
 
-  const totalActs = rows.reduce((s, r) => s + r.activations, 0);
-  const totalApps = rows.reduce((s, r) => s + r.applications, 0);
-  if (totalApps < 30) return null; // not enough volume to be meaningful
+  const totalActs      = rows.reduce((s, r) => s + r.activations, 0);
+  const totalApprovals = rows.reduce((s, r) => s + r.approvals, 0);
+  const totalApps      = rows.reduce((s, r) => s + r.applications, 0);
+  if (totalApprovals < 30) return null; // not enough volume to be meaningful
 
-  return { rate: totalActs / totalApps, days: rows.length, acts: totalActs, apps: totalApps };
+  return { rate: totalActs / totalApprovals, days: rows.length, acts: totalActs, approvals: totalApprovals, apps: totalApps };
 }
 
 // Map US zip code (5 digits) → state name via 3-digit prefix ranges
@@ -1078,6 +1085,9 @@ function zipToStateAbbr(zip) {
 // Parse numeric strings from Google Ads CSV — strips commas (e.g. "1,083.67" → 1083.67)
 // AWQL returns numbers with comma separators for values >= 1000; parseFloat stops at comma.
 function pn(v) { return parseFloat(String(v||'').replace(/,/g,'')) || 0; }
+// r2 — cap any number to 2 decimal places (kills float-sum artifacts like 28355.720000000012).
+// Returns a Number; drops trailing zeros (28355.72, 426, 90.38).
+function r2(v) { return Math.round(((+v)||0) * 100) / 100; }
 
 function normDateStr(s) {
   if (!s) return '';
@@ -1218,7 +1228,7 @@ function renderChart(daily) {
             beforeBody: items => {
               const i = items[0].dataIndex, a = acts[i], ap = rawApps[i], sp = spends[i];
               const rate = ap > 0 ? ((a/ap)*100).toFixed(1) : '—';
-              return [`Activations:  ${a}`, `Applications: ${ap}`, `Act. Rate:    ${rate}%`, `Ad Spend:     $${(sp*1000).toLocaleString()}`];
+              return [`Activations:  ${r2(a)}`, `Applications: ${r2(ap)}`, `Act. Rate:    ${rate}%`, `Ad Spend:     $${(sp*1000).toLocaleString()}`];
             },
             label: () => null
           }
@@ -1268,14 +1278,9 @@ function renderKPIs(kpis) {
     $('ks-revenue').innerHTML = `<span style="color:var(--amber);font-size:9px">EST · $${PAYOUT}/activation</span>`;
   }
 
-  // Applications: use BGOA confirmed count when available, else Google conversions as fallback
+  // Applications = Google conversions ONLY (Jun 2026 bot-mitigation rule)
   $('kv-apps').textContent = Math.round(applications).toLocaleString();
-  $('ks-apps').innerHTML = isConfirmed
-    ? (() => {
-        const src = googleApps > confirmedApps ? 'Google (fresher)' : `${confirmedSources} (higher)`;
-        return `<span style="color:var(--green);font-size:9px">✓ ${src} · Assurance: ${confirmedApps} · Google: ${googleApps}</span>`;
-      })()
-    : `<span style="color:var(--amber);font-size:9px">EST · Google conversions</span>`;
+  $('ks-apps').innerHTML = `<span style="color:var(--green);font-size:9px">✓ Google conversions</span>`;
   // Activation rate: use actual period data from BGOA (excluding last 5 unsettled days)
   // Falls back to settled monthly rate, then baseline
   // TODAY view: always projected — no confirmed activations same day (T+1 lag)
@@ -1450,9 +1455,9 @@ function renderFeed(daily) {
             return `<tr style="border-bottom:1px solid var(--border2);${rowStyle}">
               <td style="padding:4px 4px;color:${isToday ? 'var(--accent)' : 'var(--muted)'}">${dateLabel}${isToday ? '<span style="font-size:7px;margin-left:3px;color:var(--accent)">NOW</span>' : ''}</td>
               <td style="text-align:right;padding:4px 4px;color:var(--green)">${fmtMoney(r.spend)}</td>
-              <td style="text-align:right;padding:4px 4px;color:${appsCol}">${r.applications > 0 ? r.applications : '—'}</td>
-              <td style="text-align:right;padding:4px 4px;color:${approvalsCol}">${r.approvals > 0 ? r.approvals : '—'}</td>
-              <td style="text-align:right;padding:4px 4px;color:${actsCol}">${r.activations > 0 ? r.activations : '—'}</td>
+              <td style="text-align:right;padding:4px 4px;color:${appsCol}">${r.applications > 0 ? r2(r.applications) : '—'}</td>
+              <td style="text-align:right;padding:4px 4px;color:${approvalsCol}">${r.approvals > 0 ? r2(r.approvals) : '—'}</td>
+              <td style="text-align:right;padding:4px 4px;color:${actsCol}">${r.activations > 0 ? r2(r.activations) : '—'}</td>
             </tr>`;
           }).join('')}
         </tbody>
@@ -1848,12 +1853,11 @@ function renderBrief(dailyRaw, keywordsRaw, searchTermsRaw) {
 
   const ySpend = yData.spend;
 
-  // Applications: always use whichever is higher — BGOA confirmed or Google conversions
+  // Applications: Google conversions ONLY (Jun 2026 rule — bots inflate confirmed counts)
   const bgoaYest = RAW.bgoa.map(parseBGOARow).filter(Boolean).find(r => r.date === yStr);
   const bgoaDB   = RAW.bgoa.map(parseBGOARow).filter(Boolean).find(r => r.date === dbStr);
   const googleAppsY = yData.conv;
-  const confirmedAppsY = bgoaYest ? bgoaYest.applications : 0;
-  const yApps = Math.max(googleAppsY, confirmedAppsY);
+  const yApps = googleAppsY;
   const yAppCPA = yApps > 0 ? ySpend / yApps : 0;
 
   // Activations always from BGOA confirmed
@@ -1866,10 +1870,9 @@ function renderBrief(dailyRaw, keywordsRaw, searchTermsRaw) {
   const yProfit  = yRevenue - ySpend;
   const yCTR      = yData.impressions > 0 ? yData.clicks / yData.impressions * 100 : 0;
 
-  // Day-before apps: same rule — whichever is higher
+  // Day-before apps: Google conversions ONLY (same Jun 2026 rule)
   const googleAppsDB  = dbData ? dbData.conv : null;
-  const confirmedAppsDB = bgoaDB ? bgoaDB.applications : 0;
-  const dbApps   = googleAppsDB !== null ? Math.max(googleAppsDB, confirmedAppsDB) : null;
+  const dbApps   = googleAppsDB;
   const dbSpend  = dbData ? dbData.spend   : null;
   const dbAppCPA = dbData && dbApps > 0 ? dbSpend / dbApps : null;
 
@@ -1986,14 +1989,24 @@ function parseBGOARow(r) {
   const day = (r.Day || r.date || '').trim();
   if (!day.match(/^\d{4}-\d{2}-\d{2}$/)) return null; // skip totals/label rows
   const n = v => parseFloat((v||'').replace(/[$,%\s]/g,'').replace(/,/g,'')) || 0;
+  // pick() = first NON-EMPTY cell whose header matches the regex (robust to spacing
+  // differences between the BGOA and BGOC sheets, e.g. "Approvals   NO DUPLICATES").
+  const pick = re => { for (const k in r) { if (re.test(k.trim()) && (r[k]||'').trim() !== '') return r[k]; } return ''; };
+  // dedup() = prefer the NO-DUPLICATES column; fall back to the raw (with-duplicates)
+  // column ONLY when the no-dup cell is blank.
+  const dedup = (noDupRe, rawRe) => { const v = pick(noDupRe); return v !== '' ? v : pick(rawRe); };
+  // RULE (Jun 2026 — bots inflate the raw counts): Applications come ONLY from Google
+  // conversions ("GOOGLE Applications", col C). Approvals & Activations come from the
+  // de-duplicated columns — "Approvals NO DUPLICATES" (col E) / "Activations NO DUPLICATES"
+  // (col H) — falling back to the raw columns (D/G) only when the no-dup cell is empty.
   return {
     date:          day,
     spend:         n(r['Ad Spend']),
-    applications:  n(r.Applications),
-    approvals:     n(r.Approvals),
+    applications:  n(pick(/google\s*applications/i)),
+    approvals:     n(dedup(/approval[s]?\s*no\s*duplicate/i, /^approvals?$/i)),
     approvalRate:  n(r['Approval Percentage %']),
-    activations:   n(r.Activations),
-    activationRate:n(r['Activation Percentage % / Applications']),
+    activations:   n(dedup(/activation[s]?\s*no\s*duplicate/i, /^activations?$/i)),
+    activationRate:n(pick(/activation\s*percentage/i)),
     revenue:       n(r['REVENUE $']),
     actualReceived:n(r['ACTUAL RECEIVED']),
     appCPA:        n(r['Application Cost']),
@@ -2444,7 +2457,7 @@ function renderAssuranceIntelligence() {
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
         <div><div style="font-family:var(--mono);font-size:16px;font-weight:700;color:var(--accent2)">${fmtMoney(bgocTotSpend||472.50)}</div><div style="font-family:var(--mono);font-size:8px;color:var(--muted)">AD SPEND</div></div>
         <div><div style="font-family:var(--mono);font-size:16px;font-weight:700;color:var(--green)">${(bgocTotActs||4).toLocaleString()}</div><div style="font-family:var(--mono);font-size:8px;color:var(--muted)">ACTIVATIONS</div></div>
-        <div><div style="font-family:var(--mono);font-size:16px;font-weight:700;color:var(--amber)">${(bgocTotApps||13).toLocaleString()}</div><div style="font-family:var(--mono);font-size:8px;color:var(--muted)">APPLICATIONS</div></div>
+        <div><div style="font-family:var(--mono);font-size:16px;font-weight:700;color:var(--amber)">${r2(bgocTotApps||13).toLocaleString()}</div><div style="font-family:var(--mono);font-size:8px;color:var(--muted)">APPLICATIONS</div></div>
         <div><div style="font-family:var(--mono);font-size:16px;font-weight:700;color:${bgocCPA>0&&bgocCPA<=10?'var(--green)':bgocCPA>15?'var(--red)':'var(--amber)'}">${bgocCPA > 0 ? fmtCPA(bgocCPA) : '$118.13'}</div><div style="font-family:var(--mono);font-size:8px;color:var(--muted)">Activation CPA</div></div>
       </div>
       <div style="font-family:var(--mono);font-size:8px;color:var(--muted);padding:6px;background:rgba(129,140,248,0.06);border-radius:4px;line-height:1.6">
@@ -2873,10 +2886,10 @@ function buildKPIs(daily) {
     const bgocRev  = bgocRows.reduce((s,r) => s + r.revenue, 0);
     const confirmedApps = bgoaApps + bgocApps;
     const googleApps    = Math.round(conversions);
-    // Always use whichever is higher — Google has fresher data (same day),
-    // Assurance catches up a day later with confirmed numbers that are often higher.
-    applications     = Math.max(confirmedApps, googleApps);
-    activations      = bgoaActs + bgocActs;   // confirmed from Assurance tracking
+    // RULE (Jun 2026): Applications count ONLY from Google conversions — nothing else.
+    // Bots inflate the manual/confirmed columns, so we no longer take Math.max.
+    applications     = googleApps;
+    activations      = bgoaActs + bgocActs;   // de-duped (col H) from Assurance tracking
     revenue          = bgoaRev  + bgocRev;
     isConfirmed      = true;
     confirmedDays    = Math.max(bgoaRows.length, bgocRows.length);
