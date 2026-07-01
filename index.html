@@ -2210,10 +2210,17 @@ function renderAssuranceIntelligence() {
     byMonth[m].activations += r.activations;
     byMonth[m].revenue     += r.revenue;
   });
-  // Confirmed paid amounts (from Assurance payment history)
-  // March 2026 paid — 1,861 activations confirmed (higher than expected)
-  const confirmedPaid = { '2025-12': 1150, '2026-01': 10375, '2026-02': 13800, '2026-03': 46525, '2026-04': 78325 };
-  const confirmedActs = { '2025-12': 46,   '2026-01': 415,   '2026-02': 552,   '2026-03': 1861,  '2026-04': 3133 };
+  // Confirmed paid $ + activations — read LIVE from the Lifeline spreadsheet
+  // (getLifelineActuals), NEVER hardcoded. A month counts as paid when its status row
+  // says PAID; e.g. May 2026 ($183,000 / 7,320 acts) flows in automatically once marked
+  // PAID in the sheet — no code change needed for future months.
+  const _LA = getLifelineActuals();
+  const confirmedPaid = {};  // month -> gross $, only for PAID months
+  const confirmedActs = {};  // month -> Lifeline settled activation count
+  Object.entries(_LA).forEach(([mk, v]) => {
+    if (v.paid && v.gross > 0) confirmedPaid[mk] = v.gross;
+    if (v.acts > 0) confirmedActs[mk] = v.acts;
+  });
   // Final locked CPAs for closed/paid months — use these, never recalculate from live data
   const confirmedCPA  = { '2025-12': 2.83, '2026-01': 3.21,  '2026-02': 12.38, '2026-03': 11.35 };
   const monthNames = { '2025-12':'DEC 2025','2026-01':'JAN 2026','2026-02':'FEB 2026','2026-03':'MAR 2026','2026-04':'APR 2026','2026-05':'MAY 2026' };
@@ -2266,8 +2273,8 @@ function renderAssuranceIntelligence() {
 
   // ── Business Health KPIs ──
   const totalSpend      = rows.reduce((s,r) => s+r.spend, 0);
-  const totalActs       = Object.values(confirmedActs).reduce((s,v)=>s+v, 0) + (byMonth['2026-04']?.activations||0);
-  const totalRevConfirm = 1150+10375+13800+46525+78325; // confirmed paid through April 2026
+  const totalActs       = Object.values(confirmedActs).reduce((s,v)=>s+v, 0);
+  const totalRevConfirm = Object.values(_LA).filter(m=>m.paid).reduce((s,m)=>s+m.gross,0); // live: sum of ALL paid gross
   const totalRevBGOA    = rows.reduce((s,r)=>s+r.revenue, 0);
   const netToDate       = totalRevBGOA - totalSpend;
   const roi             = totalSpend > 0 ? (netToDate/totalSpend*100) : 0;
@@ -2519,7 +2526,7 @@ function renderAssuranceIntelligence() {
     const isCurrent = mk === _curMonth;
     const label = new Date(mk+'-15').toLocaleDateString('en-US',{month:'short',year:'numeric'}).toUpperCase();
     const proj = ORIG_PROJ[mk];
-    const status = mk === '2026-04' ? 'PENDING' : confirmedPaid && confirmedPaid[mk] ? 'PAID ✓' : mk === _curMonth ? 'CURRENT MONTH' : mk === _prevMonth ? 'PENDING' : 'PAID ✓';
+    const status = confirmedPaid && confirmedPaid[mk] ? 'PAID ✓' : mk === _curMonth ? 'CURRENT MONTH' : mk === _prevMonth ? 'PENDING' : 'PAID ✓';
     const finalActs  = confirmedActs[mk] || d.acts;
     const finalCPA   = confirmedCPA[mk]  || (finalActs > 0 && d.spend > 0 ? d.spend / finalActs : null);
     return { month:label, projected:proj, actual:finalActs, spend:d.spend, cpa:finalCPA, partial:isCurrent, projFull: isCurrent ? aprProjFull : null, status, mk };
@@ -2600,11 +2607,20 @@ function getLifelineActuals() {
     if (rows[i].some(v => /December|January|February|March|April|May|June/.test(v))) { monthIdx = i; break; }
   }
   if (monthIdx < 0) return {};
-  // Map column index → month key
-  const MONTH_KEYS = { "December '25":'2025-12', 'December':'2025-12', 'January':'2026-01',
-    'February':'2026-02', 'March':'2026-03', 'April':'2026-04', 'May':'2026-05', 'June':'2026-06' };
+  // Map column index → month key. The REALITY row is a 13-month timeline: "December '25"
+  // then Jan–Dec 2026, so "December" appears TWICE. Derive the YEAR from the cell text
+  // ("… '25" → 2025, otherwise 2026) so Dec '25 (real data) and Dec '26 (empty) don't collide.
+  const MONTH_NUM = { January:'01', February:'02', March:'03', April:'04', May:'05', June:'06',
+    July:'07', August:'08', September:'09', October:'10', November:'11', December:'12' };
   const colToMonth = {};
-  rows[monthIdx].forEach((v, i) => { const mk = MONTH_KEYS[v.trim()]; if (mk) colToMonth[i] = mk; });
+  rows[monthIdx].forEach((v, i) => {
+    const t = (v||'').trim();
+    const m = t.match(/^(January|February|March|April|May|June|July|August|September|October|November|December)/i);
+    if (!m) return;
+    const name = m[1].charAt(0).toUpperCase() + m[1].slice(1).toLowerCase();
+    const yr = /(?:'|\s)25\b|2025/.test(t) ? '2025' : '2026';
+    colToMonth[i] = yr + '-' + MONTH_NUM[name];
+  });
   // Find Activations, Gross (revenue), Ad Spend rows, and PAID/PENDING status row
   let actsIdx = -1, grossIdx = -1, spendIdx = -1, paidIdx = -1;
   for (let i = monthIdx + 1; i < rows.length; i++) {
