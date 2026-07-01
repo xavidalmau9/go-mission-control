@@ -2250,14 +2250,14 @@ function renderAssuranceIntelligence() {
         <td class="num" style="color:var(--muted)">${Math.round(d.apps).toLocaleString()}</td>
         <td class="num" style="color:var(--accent)">${displayActs.toLocaleString()}</td>
         <td class="num" style="color:${cpaCol}">${actCPA > 0 ? fmtCPA(actCPA) : '—'}</td>
-        <td class="num" style="color:var(--green)">${fmtMoney(d.revenue)}</td>
+        <td class="num" style="color:var(--green)">${fmtMoney(confirmedPaid[m] || d.revenue)}</td>
         <td>${status}</td>
       </tr>`;
     }).join('')}
     <tr style="border-top:1px solid var(--border)">
       <td><b>TOTAL</b></td>
       ${(() => {
-        const tot = Object.values(byMonth).reduce((s,d)=>({spend:s.spend+d.spend,apps:s.apps+d.apps,activations:s.activations+d.activations,revenue:s.revenue+d.revenue}),{spend:0,apps:0,activations:0,revenue:0});
+        const tot = Object.entries(byMonth).reduce((s,[m,d])=>({spend:s.spend+d.spend,apps:s.apps+d.apps,activations:s.activations+(confirmedActs[m]||d.activations),revenue:s.revenue+(confirmedPaid[m]||d.revenue)}),{spend:0,apps:0,activations:0,revenue:0});
         const totCPA = tot.activations > 0 ? tot.spend/tot.activations : 0;
         const totCol = totCPA <= 15 ? 'var(--amber)' : 'var(--red)';
         return `<td class="num" style="color:var(--amber)"><b>${fmtMoney(tot.spend)}</b></td>
