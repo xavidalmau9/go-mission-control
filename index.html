@@ -48,14 +48,14 @@ body::after{content:'';position:fixed;inset:0;background-image:linear-gradient(r
 .live-row{display:flex;align-items:center;gap:7px;font-family:var(--mono);font-size:10px;color:var(--green);letter-spacing:2px}
 .live-dot{width:7px;height:7px;border-radius:50%;background:var(--green);animation:livep 1.5s ease-in-out infinite}
 @keyframes livep{0%,100%{box-shadow:0 0 0 0 rgba(52,211,153,.4)}50%{box-shadow:0 0 0 5px rgba(52,211,153,0)}}
-.data-source{font-family:var(--mono);font-size:9px;color:var(--muted);letter-spacing:1px}
+.data-source{font-family:var(--mono);font-size:10px;color:var(--muted);letter-spacing:1px}
 
 /* Loading overlay */
 #loadingOverlay{position:fixed;inset:0;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:999;transition:opacity .5s}
 #loadingOverlay.hidden{opacity:0;pointer-events:none}
 .loader-text{font-family:var(--mono);font-size:12px;color:var(--accent);letter-spacing:4px;animation:blink 1s step-end infinite}
 @keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
-.loader-sub{font-family:var(--mono);font-size:9px;color:var(--muted);letter-spacing:2px;margin-top:8px}
+.loader-sub{font-family:var(--mono);font-size:10px;color:var(--muted);letter-spacing:2px;margin-top:8px}
 
 /* Error banner */
 #errorBanner{display:none;background:rgba(248,113,113,.1);border:1px solid rgba(248,113,113,.3);border-radius:6px;padding:10px 16px;margin-bottom:16px;font-family:var(--mono);font-size:11px;color:var(--red);letter-spacing:1px}
@@ -71,12 +71,12 @@ body::after{content:'';position:fixed;inset:0;background-image:linear-gradient(r
 .kpi.c-amber::before{background:var(--amber)}
 .kpi.c-red::before{background:var(--red)}
 .kpi.c-purple::before{background:var(--accent2)}
-.kpi-lbl{font-family:var(--mono);font-size:8px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:7px}
+.kpi-lbl{font-family:var(--mono);font-size:9px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:7px}
 .kpi-val{font-family:var(--mono);font-size:21px;font-weight:700;line-height:1;margin-bottom:5px}
 .kpi-sub{font-size:10px;color:var(--muted)}
 /* Primary tiles — bigger numbers */
 .kpi-primary .kpi{padding:22px 20px 18px}
-.kpi-primary .kpi-lbl{font-size:9px;margin-bottom:10px;letter-spacing:2.5px}
+.kpi-primary .kpi-lbl{font-size:10px;margin-bottom:10px;letter-spacing:2.5px}
 .kpi-primary .kpi-val{font-size:38px;margin-bottom:8px}
 .kpi-primary .kpi-sub{font-size:11px}
 .up{color:var(--green)}.down{color:var(--red)}.warn{color:var(--amber)}
@@ -85,8 +85,16 @@ body::after{content:'';position:fixed;inset:0;background-image:linear-gradient(r
 .main-grid{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,1fr);gap:14px;margin-bottom:14px}
 .panel{background:var(--surface);border:1px solid var(--border2);border-radius:8px;padding:15px;position:relative}
 .panel-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;padding-bottom:10px;border-bottom:1px solid var(--border2)}
-.ptitle{font-family:var(--mono);font-size:9px;color:var(--accent);letter-spacing:2px;text-transform:uppercase}
-.pmeta{font-family:var(--mono);font-size:8px;color:var(--muted);letter-spacing:1px}
+.ptitle{font-family:var(--mono);font-size:10px;color:var(--accent);letter-spacing:2px;text-transform:uppercase}
+/* Hero all-time stat bar */
+.hero-bar{margin-bottom:14px;background:linear-gradient(90deg,rgba(52,211,153,0.07),rgba(56,189,248,0.05));border:1px solid rgba(52,211,153,0.22);border-radius:10px;padding:14px 18px}
+.hero-tag{font-family:var(--mono);font-size:10px;color:var(--green);letter-spacing:2px;margin-bottom:10px;text-transform:uppercase}
+.hero-cells{display:grid;grid-template-columns:repeat(5,1fr);gap:12px}
+.hero-cell{min-width:0}
+.hero-val{font-family:var(--mono);font-size:26px;font-weight:700;line-height:1.05;white-space:nowrap}
+.hero-lbl{font-family:var(--mono);font-size:10px;color:var(--muted);letter-spacing:1.2px;margin-top:4px;text-transform:uppercase}
+@media(max-width:760px){.hero-cells{grid-template-columns:repeat(2,1fr)}.hero-val{font-size:21px}}
+.pmeta{font-family:var(--mono);font-size:9px;color:var(--muted);letter-spacing:1px}
 
 /* chart */
 .chart-wrap{position:relative;height:410px}
@@ -95,30 +103,30 @@ body::after{content:'';position:fixed;inset:0;background-image:linear-gradient(r
 .dev-card{border-radius:6px;padding:10px 12px;border:1px solid var(--border2);background:var(--surface2);transition:border-color .2s,box-shadow .2s;cursor:default}
 .dev-card:hover{border-color:var(--border);box-shadow:0 0 12px rgba(56,189,248,.06)}
 .dev-top{display:flex;align-items:center;gap:8px;margin-bottom:8px}
-.dev-name{font-family:var(--mono);font-size:9px;color:var(--muted);width:64px;flex-shrink:0;letter-spacing:1px}
+.dev-name{font-family:var(--mono);font-size:10px;color:var(--muted);width:64px;flex-shrink:0;letter-spacing:1px}
 .dev-track{flex:1;height:5px;background:rgba(255,255,255,.04);border-radius:3px;overflow:hidden}
 .dev-fill{height:100%;border-radius:3px;transition:width 1.2s ease}
-.dev-badge{font-family:var(--mono);font-size:8px;padding:2px 7px;border-radius:3px;letter-spacing:1px;flex-shrink:0;min-width:58px;text-align:center}
+.dev-badge{font-family:var(--mono);font-size:9px;padding:2px 7px;border-radius:3px;letter-spacing:1px;flex-shrink:0;min-width:58px;text-align:center}
 .dev-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:4px}
 .dstat{text-align:center;padding:4px 0}
 .dstat-v{font-family:var(--mono);font-size:11px;font-weight:700;line-height:1}
-.dstat-l{font-family:var(--mono);font-size:7px;color:var(--muted);letter-spacing:1px;margin-top:3px}
+.dstat-l{font-family:var(--mono);font-size:8px;color:var(--muted);letter-spacing:1px;margin-top:3px}
 
 /* campaigns */
 .camp-card{background:var(--surface2);border:1px solid var(--border2);border-radius:6px;padding:10px 12px;margin-bottom:8px}
 .camp-card:last-child{margin-bottom:0}
 .camp-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
-.camp-name{font-family:var(--mono);font-size:9px;color:var(--text);letter-spacing:1px}
+.camp-name{font-family:var(--mono);font-size:10px;color:var(--text);letter-spacing:1px}
 .grade-box{font-family:var(--mono);font-size:10px;font-weight:700;width:24px;height:24px;border-radius:3px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
 .camp-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
 .cs{text-align:center}
 .cs-v{font-family:var(--mono);font-size:12px;font-weight:700}
-.cs-l{font-family:var(--mono);font-size:7px;color:var(--muted);letter-spacing:1px;margin-top:2px}
+.cs-l{font-family:var(--mono);font-size:8px;color:var(--muted);letter-spacing:1px;margin-top:2px}
 
 /* feed */
 .feed-item{padding:8px 0;border-bottom:1px solid var(--border2)}
 .feed-item:last-child{border-bottom:none}
-.feed-date{font-family:var(--mono);font-size:9px;color:var(--accent);letter-spacing:1px;margin-bottom:5px}
+.feed-date{font-family:var(--mono);font-size:10px;color:var(--accent);letter-spacing:1px;margin-bottom:5px}
 .feed-txt{font-size:12px;color:var(--muted);line-height:1.6}
 
 /* ── BOTTOM GRID ── */
@@ -129,14 +137,14 @@ body::after{content:'';position:fixed;inset:0;background-image:linear-gradient(r
 .state-row:last-child{border-bottom:none}
 .s-code{font-family:var(--mono);font-size:13px;font-weight:700;width:28px;flex-shrink:0;text-align:center}
 .s-count{font-family:var(--mono);font-size:12px;color:var(--text);width:32px;text-align:right;flex-shrink:0}
-.s-status{font-family:var(--mono);font-size:8px;padding:2px 5px;border-radius:3px;flex-shrink:0;min-width:52px;text-align:center}
+.s-status{font-family:var(--mono);font-size:9px;padding:2px 5px;border-radius:3px;flex-shrink:0;min-width:52px;text-align:center}
 
 /* heatmap */
 .heatmap{display:grid;grid-template-columns:repeat(8,1fr);gap:5px;flex:1;align-content:stretch}
 .hcell{border-radius:6px;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:13px;font-weight:700;cursor:default;transition:transform .1s,box-shadow .1s;position:relative;min-height:60px}
 .hcell:hover{transform:scale(1.05);z-index:10;box-shadow:0 0 14px rgba(0,0,0,0.4)}
 .hm-leg{display:flex;align-items:center;justify-content:flex-end;gap:10px;margin-top:8px}
-.hm-li{display:flex;align-items:center;gap:4px;font-family:var(--mono);font-size:8px;color:var(--muted)}
+.hm-li{display:flex;align-items:center;gap:4px;font-family:var(--mono);font-size:9px;color:var(--muted)}
 .hm-dot{width:7px;height:7px;border-radius:2px}
 
 /* trajectory rows — pill-based, no progress bar */
@@ -145,9 +153,9 @@ body::after{content:'';position:fixed;inset:0;background-image:linear-gradient(r
 .traj-left{display:flex;align-items:center;gap:8px;min-width:0;flex-wrap:wrap}
 .traj-right{display:flex;align-items:center;gap:8px;justify-self:end;white-space:nowrap}
 .traj-month{font-family:var(--mono);font-size:11px;color:var(--text);letter-spacing:1.2px;font-weight:600}
-.traj-metric{font-family:var(--mono);font-size:9px;color:var(--muted);letter-spacing:1px}
+.traj-metric{font-family:var(--mono);font-size:10px;color:var(--muted);letter-spacing:1px}
 .traj-val{font-family:var(--mono);font-size:15px;font-weight:600}
-.traj-pill{font-family:var(--mono);font-size:8px;padding:3px 8px;border-radius:10px;letter-spacing:1.2px;white-space:nowrap;font-weight:600}
+.traj-pill{font-family:var(--mono);font-size:9px;padding:3px 8px;border-radius:10px;letter-spacing:1.2px;white-space:nowrap;font-weight:600}
 .traj-pill-proj{background:rgba(56,189,248,.12);color:var(--accent);border:1px solid rgba(56,189,248,.25)}
 .traj-pill-pending{background:rgba(251,191,36,.12);color:var(--amber);border:1px solid rgba(251,191,36,.3)}
 .traj-pill-paid{background:rgba(52,211,153,.12);color:var(--green);border:1px solid rgba(52,211,153,.3)}
@@ -163,7 +171,7 @@ body::after{content:'';position:fixed;inset:0;background-image:linear-gradient(r
 .spark-bar:hover{opacity:.8}
 
 /* tooltip */
-.tooltip{display:none;position:absolute;background:#1e293b;border:1px solid var(--border);border-radius:5px;padding:6px 10px;font-family:var(--mono);font-size:9px;color:var(--text);letter-spacing:1px;white-space:nowrap;z-index:100;pointer-events:none;top:-36px;left:50%;transform:translateX(-50%)}
+.tooltip{display:none;position:absolute;background:#1e293b;border:1px solid var(--border);border-radius:5px;padding:6px 10px;font-family:var(--mono);font-size:10px;color:var(--text);letter-spacing:1px;white-space:nowrap;z-index:100;pointer-events:none;top:-36px;left:50%;transform:translateX(-50%)}
 .hcell:hover .tooltip{display:block}
 
 /* ── DATA TABLES (Keywords / Search Terms) ── */
@@ -172,12 +180,12 @@ body::after{content:'';position:fixed;inset:0;background-image:linear-gradient(r
 .data-table-wrap::-webkit-scrollbar-track{background:rgba(255,255,255,.03)}
 .data-table-wrap::-webkit-scrollbar-thumb{background:rgba(56,189,248,.2);border-radius:2px}
 .data-table{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:10px}
-.data-table th{font-size:8px;color:var(--muted);letter-spacing:1.5px;text-transform:uppercase;padding:6px 10px;border-bottom:1px solid var(--border);text-align:left;position:sticky;top:0;background:var(--surface);z-index:2;white-space:nowrap}
+.data-table th{font-size:9px;color:var(--muted);letter-spacing:1.5px;text-transform:uppercase;padding:6px 10px;border-bottom:1px solid var(--border);text-align:left;position:sticky;top:0;background:var(--surface);z-index:2;white-space:nowrap}
 .data-table td{padding:6px 10px;border-bottom:1px solid var(--border2);color:var(--text);white-space:nowrap}
 .data-table tr:last-child td{border-bottom:none}
 .data-table tr:hover td{background:rgba(56,189,248,.03)}
 .dt-num{text-align:right}
-.action-badge{font-size:8px;padding:2px 7px;border-radius:3px;letter-spacing:1px;font-family:var(--mono);white-space:nowrap}
+.action-badge{font-size:9px;padding:2px 7px;border-radius:3px;letter-spacing:1px;font-family:var(--mono);white-space:nowrap}
 .badge-neg{background:rgba(248,113,113,.15);color:var(--red)}
 .badge-pause{background:rgba(251,191,36,.15);color:var(--amber)}
 .badge-keep{background:rgba(52,211,153,.12);color:var(--green)}
@@ -189,7 +197,7 @@ body::after{content:'';position:fixed;inset:0;background-image:linear-gradient(r
 .brief-wrap{display:flex;flex-direction:column;gap:0}
 .brief-section{padding:14px 0;border-bottom:1px solid var(--border2)}
 .brief-section:last-child{border-bottom:none}
-.brief-section-title{font-family:var(--mono);font-size:8px;color:var(--accent);letter-spacing:2px;text-transform:uppercase;margin-bottom:8px}
+.brief-section-title{font-family:var(--mono);font-size:9px;color:var(--accent);letter-spacing:2px;text-transform:uppercase;margin-bottom:8px}
 .brief-body{font-size:13px;color:var(--text);line-height:1.8}
 .brief-body b{color:var(--accent);font-weight:600}
 .brief-kpi-row{display:grid;grid-template-columns:repeat(6,1fr);gap:10px;margin-top:8px}
@@ -232,7 +240,7 @@ body::after{content:'';position:fixed;inset:0;background-image:linear-gradient(r
 
 /* ── ASSURANCE INTEL TABLES ── */
 .intel-table{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:10px}
-.intel-table th{font-size:8px;color:var(--muted);letter-spacing:1.5px;text-transform:uppercase;padding:5px 8px;border-bottom:1px solid var(--border);text-align:left;background:var(--surface);white-space:nowrap}
+.intel-table th{font-size:9px;color:var(--muted);letter-spacing:1.5px;text-transform:uppercase;padding:5px 8px;border-bottom:1px solid var(--border);text-align:left;background:var(--surface);white-space:nowrap}
 .intel-table td{padding:5px 8px;border-bottom:1px solid var(--border2);white-space:nowrap}
 .intel-table tr:last-child td{border-bottom:none;font-weight:700}
 .intel-table tr:hover td{background:rgba(56,189,248,.03)}
@@ -240,15 +248,15 @@ body::after{content:'';position:fixed;inset:0;background-image:linear-gradient(r
 .biz-kpi{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .biz-kpi-item{background:var(--surface2);border:1px solid var(--border2);border-radius:6px;padding:10px 12px}
 .biz-kpi-v{font-family:var(--mono);font-size:18px;font-weight:700;line-height:1;margin-bottom:4px}
-.biz-kpi-l{font-family:var(--mono);font-size:8px;color:var(--muted);letter-spacing:1px}
-.biz-kpi-sub{font-family:var(--mono);font-size:9px;margin-top:3px}
+.biz-kpi-l{font-family:var(--mono);font-size:9px;color:var(--muted);letter-spacing:1px}
+.biz-kpi-sub{font-family:var(--mono);font-size:10px;margin-top:3px}
 .gva-row{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--border2)}
 .gva-row:last-child{border-bottom:none}
-.gva-label{font-family:var(--mono);font-size:9px;color:var(--muted);letter-spacing:1px}
+.gva-label{font-family:var(--mono);font-size:10px;color:var(--muted);letter-spacing:1px}
 .gva-vals{display:flex;gap:16px}
 .gva-val{text-align:right}
 .gva-v{font-family:var(--mono);font-size:11px;font-weight:700}
-.gva-l{font-family:var(--mono);font-size:7px;color:var(--muted);letter-spacing:1px}
+.gva-l{font-family:var(--mono);font-size:8px;color:var(--muted);letter-spacing:1px}
 .proj-compare-row{display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid var(--border2)}
 .proj-compare-row:last-child{border-bottom:none}
 
@@ -315,8 +323,8 @@ body::after{content:'';position:fixed;inset:0;background-image:linear-gradient(r
 
   <!-- Period Banner -->
   <div class="period-banner" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:4px;margin-bottom:10px;padding:6px 12px;background:rgba(56,189,248,0.04);border:1px solid rgba(56,189,248,0.10);border-radius:6px;min-width:0">
-    <div style="font-family:var(--mono);font-size:9px;color:var(--accent);letter-spacing:2px;min-width:0" id="periodBanner">REPORT WINDOW: LOADING...</div>
-    <div class="period-banner-right" style="font-family:var(--mono);font-size:9px;color:var(--muted);letter-spacing:1px;white-space:nowrap">KPI TILES = FILTERED WINDOW &nbsp;·&nbsp; CHART = DAILY BREAKDOWN &nbsp;·&nbsp; TRAJECTORY = MONTHLY</div>
+    <div style="font-family:var(--mono);font-size:10px;color:var(--accent);letter-spacing:2px;min-width:0" id="periodBanner">REPORT WINDOW: LOADING...</div>
+    <div class="period-banner-right" style="font-family:var(--mono);font-size:10px;color:var(--muted);letter-spacing:1px;white-space:nowrap">KPI TILES = FILTERED WINDOW &nbsp;·&nbsp; CHART = DAILY BREAKDOWN &nbsp;·&nbsp; TRAJECTORY = MONTHLY</div>
   </div>
 
   <!-- Filter Bar -->
@@ -341,6 +349,9 @@ body::after{content:'';position:fixed;inset:0;background-image:linear-gradient(r
     </div>
   </div>
 
+  <!-- Hero: all-time performance (not date-filtered) -->
+  <div id="heroBar" class="hero-bar fade" style="animation-delay:.05s"></div>
+
   <!-- KPI Row: 4 big primary + 2 secondary -->
   <div id="kpiRow" class="fade" style="animation-delay:.1s">
     <div class="kpi-primary">
@@ -353,6 +364,15 @@ body::after{content:'';position:fixed;inset:0;background-image:linear-gradient(r
       <div class="kpi c-green"><div class="kpi-lbl">Total Revenue</div><div class="kpi-val" style="color:var(--green)" id="kv-revenue">—</div><div class="kpi-sub" id="ks-revenue">loading...</div></div>
       <div class="kpi c-amber"><div class="kpi-lbl">Application CPA</div><div class="kpi-val" style="color:var(--amber)" id="kv-gcpa">—</div><div class="kpi-sub" id="ks-gcpa">loading...</div></div>
     </div>
+  </div>
+
+  <!-- Monthly Growth chart (all-time, confirmed) -->
+  <div class="panel fade" style="animation-delay:.15s;margin-bottom:14px">
+    <div class="panel-hdr">
+      <div class="ptitle">Monthly Growth · Activations &amp; Revenue Paid</div>
+      <div class="pmeta">ALL-TIME · CONFIRMED</div>
+    </div>
+    <div style="height:230px;position:relative"><canvas id="growthChart"></canvas></div>
   </div>
 
   <!-- Main Grid -->
@@ -438,14 +458,14 @@ body::after{content:'';position:fixed;inset:0;background-image:linear-gradient(r
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:0;flex:1;min-height:0;overflow:hidden">
         <!-- Best 20 -->
         <div style="display:flex;flex-direction:column;min-height:0;padding-right:8px">
-          <div style="font-size:9px;font-weight:700;color:var(--green);letter-spacing:.08em;padding:5px 4px 4px;border-bottom:1px solid rgba(52,211,153,0.18);margin-bottom:2px;flex-shrink:0">🏆 TOP 20 · LOWEST CPA</div>
+          <div style="font-size:10px;font-weight:700;color:var(--green);letter-spacing:.08em;padding:5px 4px 4px;border-bottom:1px solid rgba(52,211,153,0.18);margin-bottom:2px;flex-shrink:0">🏆 TOP 20 · LOWEST CPA</div>
           <div id="stateListBest" style="flex:1;display:flex;flex-direction:column;justify-content:flex-start;gap:0;overflow-y:auto;min-height:0">
             <div class="no-data-state"><div class="nd-icon">🗺</div><div class="nd-title">AWAITING LIVE DATA</div></div>
           </div>
         </div>
         <!-- Worst 20 -->
         <div style="display:flex;flex-direction:column;min-height:0;border-left:1px solid var(--border2);padding-left:10px">
-          <div style="font-size:9px;font-weight:700;color:var(--red);letter-spacing:.08em;padding:5px 4px 4px;border-bottom:1px solid rgba(248,113,113,0.18);margin-bottom:2px;flex-shrink:0">⚠️ WORST 20 · HIGHEST COST</div>
+          <div style="font-size:10px;font-weight:700;color:var(--red);letter-spacing:.08em;padding:5px 4px 4px;border-bottom:1px solid rgba(248,113,113,0.18);margin-bottom:2px;flex-shrink:0">⚠️ WORST 20 · HIGHEST COST</div>
           <div id="stateListWorst" style="flex:1;display:flex;flex-direction:column;justify-content:flex-start;gap:0;overflow-y:auto;min-height:0">
             <div class="no-data-state"><div class="nd-icon">🗺</div><div class="nd-title">AWAITING LIVE DATA</div></div>
           </div>
@@ -526,7 +546,7 @@ body::after{content:'';position:fixed;inset:0;background-image:linear-gradient(r
 
     <!-- Monthly Actuals (full width) -->
     <div style="margin-bottom:14px">
-      <div style="font-family:var(--mono);font-size:8px;color:var(--accent);letter-spacing:2px;margin-bottom:10px">MONTHLY ACTUALS · BGOA CONFIRMED</div>
+      <div style="font-family:var(--mono);font-size:9px;color:var(--accent);letter-spacing:2px;margin-bottom:10px">MONTHLY ACTUALS · BGOA CONFIRMED</div>
       <div id="monthlyActuals">
         <div class="no-data-state"><div class="nd-icon">📅</div><div class="nd-title">LOADING BGOA DATA...</div></div>
       </div>
@@ -534,7 +554,7 @@ body::after{content:'';position:fixed;inset:0;background-image:linear-gradient(r
 
     <!-- CPA Trend Chart (full width) -->
     <div style="margin-bottom:14px">
-      <div style="font-family:var(--mono);font-size:8px;color:var(--accent);letter-spacing:2px;margin-bottom:10px">ACTIVATION CPA TREND · BGOA DAILY (7-DAY ROLLING) · TARGET &lt;$10</div>
+      <div style="font-family:var(--mono);font-size:9px;color:var(--accent);letter-spacing:2px;margin-bottom:10px">ACTIVATION CPA TREND · BGOA DAILY (7-DAY ROLLING) · TARGET &lt;$10</div>
       <div style="position:relative;height:200px"><canvas id="cpaTrendChart"></canvas></div>
     </div>
 
@@ -543,7 +563,7 @@ body::after{content:'';position:fixed;inset:0;background-image:linear-gradient(r
 
       <!-- Google vs Assurance -->
       <div>
-        <div style="font-family:var(--mono);font-size:8px;color:var(--accent);letter-spacing:2px;margin-bottom:10px">GOOGLE ADS vs ASSURANCE CONFIRMED</div>
+        <div style="font-family:var(--mono);font-size:9px;color:var(--accent);letter-spacing:2px;margin-bottom:10px">GOOGLE ADS vs ASSURANCE CONFIRMED</div>
         <div id="gvaPanel">
           <div class="no-data-state"><div class="nd-icon">⚖️</div><div class="nd-title">LOADING...</div></div>
         </div>
@@ -551,19 +571,12 @@ body::after{content:'';position:fixed;inset:0;background-image:linear-gradient(r
 
       <!-- BGOC Meta -->
       <div style="padding-top:28px">
-        <div style="font-family:var(--mono);font-size:8px;color:var(--accent);letter-spacing:2px;margin-bottom:10px">META ADS (BGOC) · APRIL 2026</div>
+        <div style="font-family:var(--mono);font-size:9px;color:var(--accent);letter-spacing:2px;margin-bottom:10px">META ADS (BGOC) · APRIL 2026</div>
         <div id="bgocPanel">
           <div class="no-data-state"><div class="nd-icon">📘</div><div class="nd-title">LOADING...</div></div>
         </div>
       </div>
 
-      <!-- Projections vs Reality -->
-      <div>
-        <div style="font-family:var(--mono);font-size:8px;color:var(--accent);letter-spacing:2px;margin-bottom:10px">PROJECTIONS vs REALITY</div>
-        <div id="projVsReal">
-          <div class="no-data-state"><div class="nd-icon">📐</div><div class="nd-title">LOADING...</div></div>
-        </div>
-      </div>
 
     </div>
   </div>
@@ -587,7 +600,7 @@ body::after{content:'';position:fixed;inset:0;background-image:linear-gradient(r
         <button class="dr-btn" onclick="go2SetRange('mtd',event)">This Month</button>
         <button class="dr-btn" onclick="go2SetRange('lastmonth',event)">Last Month</button>
       </div>
-      <div style="font-family:var(--mono);font-size:9px;color:var(--muted);letter-spacing:1px;margin-left:auto" id="go2PeriodBanner">—</div>
+      <div style="font-family:var(--mono);font-size:10px;color:var(--muted);letter-spacing:1px;margin-left:auto" id="go2PeriodBanner">—</div>
     </div>
 
     <!-- GO2 KPI Row -->
@@ -608,11 +621,11 @@ body::after{content:'';position:fixed;inset:0;background-image:linear-gradient(r
     <!-- Daily Chart + Campaign Scorecard -->
     <div style="display:grid;grid-template-columns:1fr 340px;gap:12px;margin-bottom:12px">
       <div class="panel" style="background:var(--surface);border:1px solid var(--border2);border-radius:8px;padding:18px 20px">
-        <div class="section-title" style="font-family:var(--mono);font-size:9px;color:var(--muted);letter-spacing:2px;margin-bottom:16px">DAILY PERFORMANCE <span style="color:#f97316">· ASSURANCE GO2</span></div>
+        <div class="section-title" style="font-family:var(--mono);font-size:10px;color:var(--muted);letter-spacing:2px;margin-bottom:16px">DAILY PERFORMANCE <span style="color:#f97316">· ASSURANCE GO2</span></div>
         <div style="height:200px;position:relative"><canvas id="go2DailyChart"></canvas></div>
       </div>
       <div class="panel" style="background:var(--surface);border:1px solid var(--border2);border-radius:8px;padding:18px 20px">
-        <div class="section-title" style="font-family:var(--mono);font-size:9px;color:var(--muted);letter-spacing:2px;margin-bottom:14px">CAMPAIGN SCORECARD</div>
+        <div class="section-title" style="font-family:var(--mono);font-size:10px;color:var(--muted);letter-spacing:2px;margin-bottom:14px">CAMPAIGN SCORECARD</div>
         <div id="go2CampaignScorecard" style="display:flex;flex-direction:column;gap:10px">
           <div style="font-family:var(--mono);font-size:10px;color:var(--muted);text-align:center;padding:30px 0">Awaiting data...</div>
         </div>
@@ -623,8 +636,8 @@ body::after{content:'';position:fixed;inset:0;background-image:linear-gradient(r
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
       <div class="panel" style="background:var(--surface);border:1px solid var(--border2);border-radius:8px;padding:18px 20px">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
-          <div style="font-family:var(--mono);font-size:9px;color:var(--muted);letter-spacing:2px">KEYWORDS <span style="color:#f97316">· TOP BY SPEND</span></div>
-          <div style="font-family:var(--mono);font-size:9px;color:var(--muted)" id="go2KwCount">—</div>
+          <div style="font-family:var(--mono);font-size:10px;color:var(--muted);letter-spacing:2px">KEYWORDS <span style="color:#f97316">· TOP BY SPEND</span></div>
+          <div style="font-family:var(--mono);font-size:10px;color:var(--muted)" id="go2KwCount">—</div>
         </div>
         <div id="go2KeywordList" style="max-height:320px;overflow-y:auto;display:flex;flex-direction:column;gap:6px">
           <div style="font-family:var(--mono);font-size:10px;color:var(--muted);text-align:center;padding:20px 0">Awaiting data...</div>
@@ -632,8 +645,8 @@ body::after{content:'';position:fixed;inset:0;background-image:linear-gradient(r
       </div>
       <div class="panel" style="background:var(--surface);border:1px solid var(--border2);border-radius:8px;padding:18px 20px">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
-          <div style="font-family:var(--mono);font-size:9px;color:var(--muted);letter-spacing:2px">SEARCH TERMS <span style="color:#f97316">· TOP BY SPEND</span></div>
-          <div style="font-family:var(--mono);font-size:9px;color:var(--muted)" id="go2StCount">—</div>
+          <div style="font-family:var(--mono);font-size:10px;color:var(--muted);letter-spacing:2px">SEARCH TERMS <span style="color:#f97316">· TOP BY SPEND</span></div>
+          <div style="font-family:var(--mono);font-size:10px;color:var(--muted)" id="go2StCount">—</div>
         </div>
         <div id="go2SearchTermList" style="max-height:320px;overflow-y:auto;display:flex;flex-direction:column;gap:6px">
           <div style="font-family:var(--mono);font-size:10px;color:var(--muted);text-align:center;padding:20px 0">Awaiting data...</div>
@@ -644,16 +657,16 @@ body::after{content:'';position:fixed;inset:0;background-image:linear-gradient(r
     <!-- States + Hourly -->
     <div style="display:grid;grid-template-columns:1fr 380px;gap:12px;margin-bottom:12px">
       <div class="panel" style="background:var(--surface);border:1px solid var(--border2);border-radius:8px;padding:18px 20px">
-        <div style="font-family:var(--mono);font-size:9px;color:var(--muted);letter-spacing:2px;margin-bottom:14px">STATE PERFORMANCE <span style="color:#f97316">· APPLICATIONS & SPEND</span></div>
+        <div style="font-family:var(--mono);font-size:10px;color:var(--muted);letter-spacing:2px;margin-bottom:14px">STATE PERFORMANCE <span style="color:#f97316">· APPLICATIONS & SPEND</span></div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
           <div>
-            <div style="font-family:var(--mono);font-size:8px;color:#f97316;letter-spacing:1px;margin-bottom:10px">🏆 TOP · LOWEST CPA</div>
+            <div style="font-family:var(--mono);font-size:9px;color:#f97316;letter-spacing:1px;margin-bottom:10px">🏆 TOP · LOWEST CPA</div>
             <div id="go2StateBest" style="display:flex;flex-direction:column;gap:5px">
               <div style="font-family:var(--mono);font-size:10px;color:var(--muted);text-align:center;padding:20px 0">Awaiting data...</div>
             </div>
           </div>
           <div>
-            <div style="font-family:var(--mono);font-size:8px;color:var(--red);letter-spacing:1px;margin-bottom:10px">⚠ WORST · HIGHEST SPEND/0 APPS</div>
+            <div style="font-family:var(--mono);font-size:9px;color:var(--red);letter-spacing:1px;margin-bottom:10px">⚠ WORST · HIGHEST SPEND/0 APPS</div>
             <div id="go2StateWorst" style="display:flex;flex-direction:column;gap:5px">
               <div style="font-family:var(--mono);font-size:10px;color:var(--muted);text-align:center;padding:20px 0">Awaiting data...</div>
             </div>
@@ -661,15 +674,15 @@ body::after{content:'';position:fixed;inset:0;background-image:linear-gradient(r
         </div>
       </div>
       <div class="panel" style="background:var(--surface);border:1px solid var(--border2);border-radius:8px;padding:18px 20px">
-        <div style="font-family:var(--mono);font-size:9px;color:var(--muted);letter-spacing:2px;margin-bottom:14px">HOURLY APPLICATION VOLUME <span style="color:#f97316">· 24H PATTERN</span></div>
+        <div style="font-family:var(--mono);font-size:10px;color:var(--muted);letter-spacing:2px;margin-bottom:14px">HOURLY APPLICATION VOLUME <span style="color:#f97316">· 24H PATTERN</span></div>
         <div id="go2HourlyHeatmap" style="display:grid;grid-template-columns:repeat(6,1fr);gap:4px"></div>
-        <div style="font-family:var(--mono);font-size:8px;color:var(--muted);margin-top:10px;text-align:center">Best application windows by hour of day</div>
+        <div style="font-family:var(--mono);font-size:9px;color:var(--muted);margin-top:10px;text-align:center">Best application windows by hour of day</div>
       </div>
     </div>
 
     <!-- Device Panel -->
     <div class="panel" style="background:var(--surface);border:1px solid var(--border2);border-radius:8px;padding:18px 20px;margin-bottom:12px">
-      <div style="font-family:var(--mono);font-size:9px;color:var(--muted);letter-spacing:2px;margin-bottom:14px">DEVICE PERFORMANCE <span style="color:#f97316">· APPLICATION CPA BY DEVICE</span></div>
+      <div style="font-family:var(--mono);font-size:10px;color:var(--muted);letter-spacing:2px;margin-bottom:14px">DEVICE PERFORMANCE <span style="color:#f97316">· APPLICATION CPA BY DEVICE</span></div>
       <div id="go2DeviceCards" style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px">
         <div style="font-family:var(--mono);font-size:10px;color:var(--muted);text-align:center;padding:20px 0;grid-column:1/-1">Awaiting data...</div>
       </div>
@@ -680,7 +693,7 @@ body::after{content:'';position:fixed;inset:0;background-image:linear-gradient(r
     <!-- GO2 no-data -->
     <div id="go2NoData" style="display:none;text-align:center;padding:60px 20px;font-family:var(--mono);font-size:11px;color:var(--muted);letter-spacing:2px">
       NO DATA YET · SCRIPT NOT YET ACTIVE<br>
-      <span style="font-size:9px;display:block;margin-top:8px">Install go2-ads-script.js in Google Ads account 275-817-6694 and run at least once</span>
+      <span style="font-size:10px;display:block;margin-top:8px">Install go2-ads-script.js in Google Ads account 275-817-6694 and run at least once</span>
     </div>
 
   </div><!-- /go2Section -->
@@ -1065,32 +1078,32 @@ function renderKPIs(kpis) {
     const yest = bgoa[0];
     $('kv-activations').textContent = '—';
     $('kv-activations').style.color = 'var(--muted)';
-    $('ks-activations').innerHTML = `<span style="color:var(--muted);font-size:9px">N/A</span>`;
+    $('ks-activations').innerHTML = `<span style="color:var(--muted);font-size:10px">N/A</span>`;
     $('kv-revenue').textContent = '—';
     $('kv-revenue').style.color = 'var(--muted)';
-    $('ks-revenue').innerHTML = `<span style="color:var(--muted);font-size:9px">N/A</span>`;
+    $('ks-revenue').innerHTML = `<span style="color:var(--muted);font-size:10px">N/A</span>`;
   } else if (isConfirmed) {
     // Confirmed data from BGOA and/or BGOC
     $('kv-activations').textContent = activations.toLocaleString();
     $('kv-activations').style.color = 'var(--green)';
-    $('ks-activations').innerHTML = `<span style="color:var(--green);font-size:9px">✓ CONFIRMED · ${confirmedSources}</span>`;
+    $('ks-activations').innerHTML = `<span style="color:var(--green);font-size:10px">✓ CONFIRMED · ${confirmedSources}</span>`;
     $('kv-revenue').textContent = fmtMoney(revenue);
     $('kv-revenue').style.color = '';
-    $('ks-revenue').innerHTML = `<span style="color:var(--green);font-size:9px">✓ CONFIRMED · ${confirmedSources} · $${PAYOUT}/act</span>`;
+    $('ks-revenue').innerHTML = `<span style="color:var(--green);font-size:10px">✓ CONFIRMED · ${confirmedSources} · $${PAYOUT}/act</span>`;
   } else {
     // No confirmed BGOA/BGOC data for this range — we do NOT project from a percentage.
     // Show "—" until real Assurance numbers arrive.
     $('kv-activations').textContent = '—';
     $('kv-activations').style.color = 'var(--muted)';
-    $('ks-activations').innerHTML = `<span style="color:var(--muted);font-size:9px">N/A · awaiting Assurance report</span>`;
+    $('ks-activations').innerHTML = `<span style="color:var(--muted);font-size:10px">N/A · awaiting Assurance report</span>`;
     $('kv-revenue').textContent = '—';
     $('kv-revenue').style.color = 'var(--muted)';
-    $('ks-revenue').innerHTML = `<span style="color:var(--muted);font-size:9px">N/A · awaiting Assurance report</span>`;
+    $('ks-revenue').innerHTML = `<span style="color:var(--muted);font-size:10px">N/A · awaiting Assurance report</span>`;
   }
 
   // Applications = Google conversions ONLY (Jun 2026 bot-mitigation rule)
   $('kv-apps').textContent = Math.round(applications).toLocaleString();
-  $('ks-apps').innerHTML = `<span style="color:var(--green);font-size:9px">✓ Google conversions</span>`;
+  $('ks-apps').innerHTML = `<span style="color:var(--green);font-size:10px">✓ Google conversions</span>`;
   // Activation rate: use actual period data from BGOA (excluding last 5 unsettled days)
   // Falls back to settled monthly rate, then baseline
   // TODAY view: always projected — no confirmed activations same day (T+1 lag)
@@ -1127,7 +1140,7 @@ function renderKPIs(kpis) {
   $('kv-acpa').textContent = acpaUnknown ? '—' : fmtCPA(activationCPA);
   $('kv-acpa').style.color = acpaUnknown ? 'var(--muted)' : acpaCol;
   $('ks-acpa').innerHTML = acpaUnknown
-    ? `<span style="color:var(--muted);font-size:9px">N/A</span>`
+    ? `<span style="color:var(--muted);font-size:10px">N/A</span>`
     : `<span style="color:${acpaCol}">${actCpaLabel(activationCPA)}</span>`;
 }
 
@@ -1228,32 +1241,32 @@ function renderFeed(daily) {
 
   el.innerHTML = `
     <div style="padding:0 2px 8px;border-bottom:1px solid var(--border2);margin-bottom:8px">
-      <div style="font-family:var(--mono);font-size:8px;color:var(--muted);letter-spacing:1.5px;margin-bottom:6px">7-DAY AVERAGES (SETTLED) · SOURCE: BGOA</div>
+      <div style="font-family:var(--mono);font-size:9px;color:var(--muted);letter-spacing:1.5px;margin-bottom:6px">7-DAY AVERAGES (SETTLED) · SOURCE: BGOA</div>
       <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px">
         <div style="background:var(--surface2);border-radius:5px;padding:7px 8px;text-align:center">
           <div style="font-family:var(--mono);font-size:15px;font-weight:700;color:var(--green)">${fmtMoney(avgSpend)}</div>
-          <div style="font-family:var(--mono);font-size:7px;color:var(--muted);margin-top:2px">SPEND/DAY</div>
+          <div style="font-family:var(--mono);font-size:8px;color:var(--muted);margin-top:2px">SPEND/DAY</div>
         </div>
         <div style="background:var(--surface2);border-radius:5px;padding:7px 8px;text-align:center">
           <div style="font-family:var(--mono);font-size:15px;font-weight:700;color:var(--accent)">${avgApps.toFixed(1)}</div>
-          <div style="font-family:var(--mono);font-size:7px;color:var(--muted);margin-top:2px">APPS/DAY</div>
+          <div style="font-family:var(--mono);font-size:8px;color:var(--muted);margin-top:2px">APPS/DAY</div>
         </div>
         <div style="background:var(--surface2);border-radius:5px;padding:7px 8px;text-align:center">
           <div style="font-family:var(--mono);font-size:15px;font-weight:700;color:var(--amber)">${avgActs.toFixed(1)}</div>
-          <div style="font-family:var(--mono);font-size:7px;color:var(--muted);margin-top:2px">ACTIVATIONS/DAY</div>
+          <div style="font-family:var(--mono);font-size:8px;color:var(--muted);margin-top:2px">ACTIVATIONS/DAY</div>
         </div>
       </div>
     </div>
-    <div style="font-family:var(--mono);font-size:8px;color:var(--muted);letter-spacing:1.5px;margin-bottom:4px;padding:0 2px">DAILY BREAKDOWN · LAST ${rows.length} DAYS · BGOA CONFIRMED</div>
+    <div style="font-family:var(--mono);font-size:9px;color:var(--muted);letter-spacing:1.5px;margin-bottom:4px;padding:0 2px">DAILY BREAKDOWN · LAST ${rows.length} DAYS · BGOA CONFIRMED</div>
     <div style="overflow-y:auto;flex:1">
       <table style="width:100%;border-collapse:collapse;font-family:var(--mono);font-size:10px">
         <thead>
           <tr style="border-bottom:1px solid var(--border)">
-            <th style="text-align:left;padding:3px 4px;font-size:8px;color:var(--muted);letter-spacing:1px;font-weight:400">DATE</th>
-            <th style="text-align:right;padding:3px 4px;font-size:8px;color:var(--muted);letter-spacing:1px;font-weight:400">SPEND</th>
-            <th style="text-align:right;padding:3px 4px;font-size:8px;color:var(--muted);letter-spacing:1px;font-weight:400">APPS</th>
-            <th style="text-align:right;padding:3px 4px;font-size:8px;color:var(--muted);letter-spacing:1px;font-weight:400">APPROVALS</th>
-            <th style="text-align:right;padding:3px 4px;font-size:8px;color:var(--muted);letter-spacing:1px;font-weight:400">ACTIVATIONS</th>
+            <th style="text-align:left;padding:3px 4px;font-size:9px;color:var(--muted);letter-spacing:1px;font-weight:400">DATE</th>
+            <th style="text-align:right;padding:3px 4px;font-size:9px;color:var(--muted);letter-spacing:1px;font-weight:400">SPEND</th>
+            <th style="text-align:right;padding:3px 4px;font-size:9px;color:var(--muted);letter-spacing:1px;font-weight:400">APPS</th>
+            <th style="text-align:right;padding:3px 4px;font-size:9px;color:var(--muted);letter-spacing:1px;font-weight:400">APPROVALS</th>
+            <th style="text-align:right;padding:3px 4px;font-size:9px;color:var(--muted);letter-spacing:1px;font-weight:400">ACTIVATIONS</th>
           </tr>
         </thead>
         <tbody>
@@ -1265,7 +1278,7 @@ function renderFeed(daily) {
             const appsCol = r.applications > 0 ? 'var(--accent)' : 'var(--muted)';
             const approvalsCol = r.approvals > 0 ? 'var(--accent2)' : 'var(--muted)';
             return `<tr style="border-bottom:1px solid var(--border2);${rowStyle}">
-              <td style="padding:4px 4px;color:${isToday ? 'var(--accent)' : 'var(--muted)'}">${dateLabel}${isToday ? '<span style="font-size:7px;margin-left:3px;color:var(--accent)">NOW</span>' : ''}</td>
+              <td style="padding:4px 4px;color:${isToday ? 'var(--accent)' : 'var(--muted)'}">${dateLabel}${isToday ? '<span style="font-size:8px;margin-left:3px;color:var(--accent)">NOW</span>' : ''}</td>
               <td style="text-align:right;padding:4px 4px;color:var(--green)">${fmtMoney(r.spend)}</td>
               <td style="text-align:right;padding:4px 4px;color:${appsCol}">${r.applications > 0 ? r2(r.applications) : '—'}</td>
               <td style="text-align:right;padding:4px 4px;color:${approvalsCol}">${r.approvals > 0 ? r2(r.approvals) : '—'}</td>
@@ -1315,7 +1328,7 @@ function renderStates(stateData, sourceLabel) {
       const spend = s.spend || 0;
       const col   = 'var(--red)';
       const spendStr = spend >= 1000 ? '$' + (spend/1000).toFixed(1) + 'k' : '$' + spend.toFixed(2);
-      const convLabel = count === 0 ? '<span style="color:var(--red);font-size:9px">0 CONV</span>' : `<span style="color:var(--muted);font-size:9px">${count} conv</span>`;
+      const convLabel = count === 0 ? '<span style="color:var(--red);font-size:10px">0 CONV</span>' : `<span style="color:var(--muted);font-size:10px">${count} conv</span>`;
       return `<div class="state-row">
         <div class="s-code" style="color:${col}">${code}</div>
         <div style="font-family:var(--mono);font-size:12px;font-weight:700;color:var(--amber);min-width:52px;text-align:right">${spendStr}</div>
@@ -1370,7 +1383,10 @@ function renderTrajectory(monthly, daily) {
       </div>`;
     }
 
-    // Actual monthly row: month + status on the left, activations + gross paid on the right
+    // Actual monthly row: month + status on the left; activations · ROI · gross paid on the right
+    const roiStr = (m.roi !== null && m.roi !== undefined)
+      ? `<span class="traj-metric" style="color:${m.roi >= 0 ? 'var(--green)' : 'var(--red)'}">${m.roi >= 0 ? '+' : ''}${Math.round(m.roi * 100)}% ROI</span>`
+      : '';
     return `<div class="traj-row">
       <div class="traj-left">
         <span class="traj-month">${m.month}</span>
@@ -1378,6 +1394,7 @@ function renderTrajectory(monthly, daily) {
       </div>
       <div class="traj-right">
         <span class="traj-metric">${(m.acts||0).toLocaleString()} acts</span>
+        ${roiStr}
         <span class="traj-val" style="color:var(--green)">${fmtMoney(m.gross||0)}</span>
       </div>
     </div>`;
@@ -1521,7 +1538,7 @@ function renderKeywords(keywords, campaign) {
   const matchBadge = (mt) => {
     const colors = { EXACT:'rgba(52,211,153,0.15)', PHRASE:'rgba(251,191,36,0.15)', BROAD:'rgba(248,113,113,0.12)' };
     const col = colors[(mt||'').toUpperCase()] || 'rgba(100,116,139,0.15)';
-    return `<span style="font-size:8px;padding:1px 5px;border-radius:2px;background:${col};font-family:var(--mono)">${(mt||'—').toUpperCase()}</span>`;
+    return `<span style="font-size:9px;padding:1px 5px;border-radius:2px;background:${col};font-family:var(--mono)">${(mt||'—').toUpperCase()}</span>`;
   };
 
   $('kwMeta').textContent = `LIVE · ${rows.length} KEYWORDS BY SPEND`;
@@ -2039,10 +2056,10 @@ function renderAssuranceIntelligence() {
       const _now = new Date();
       const _curKey = `${_now.getFullYear()}-${String(_now.getMonth()+1).padStart(2,'0')}`;
       const status = paid
-        ? `<span style="color:var(--green);font-size:8px">✓ PAID ${fmtMoney(paid)}</span>`
+        ? `<span style="color:var(--green);font-size:9px">✓ PAID ${fmtMoney(paid)}</span>`
         : m === _curKey
-          ? `<span style="color:var(--accent);font-size:8px">CURRENT MONTH</span>`
-          : `<span style="color:var(--amber);font-size:8px">PENDING</span>`;
+          ? `<span style="color:var(--accent);font-size:9px">CURRENT MONTH</span>`
+          : `<span style="color:var(--amber);font-size:9px">PENDING</span>`;
       const displayActs = paidActs || d.activations;
       return `<tr>
         <td><b style="color:var(--text)">${monthNames[m]||m}</b></td>
@@ -2065,7 +2082,7 @@ function renderAssuranceIntelligence() {
         <td class="num" style="color:var(--accent)"><b>${tot.activations.toLocaleString()}</b></td>
         <td class="num" style="color:${totCol}"><b>${totCPA > 0 ? fmtCPA(totCPA) : '—'}</b></td>
         <td class="num" style="color:var(--green)"><b>${fmtMoney(tot.revenue)}</b></td>
-        <td><span style="color:var(--muted);font-size:8px">ALL TIME</span></td>`;
+        <td><span style="color:var(--muted);font-size:9px">ALL TIME</span></td>`;
       })()}
     </tr>
     </tbody>
@@ -2226,32 +2243,32 @@ function renderAssuranceIntelligence() {
     });
   $('gvaPanel').innerHTML = gvaData.map(g => `
     <div style="padding:8px 0;border-bottom:1px solid var(--border2)">
-      <div style="font-family:var(--mono);font-size:9px;color:var(--accent);letter-spacing:1px;margin-bottom:6px">${g.month} <span style="color:${g.status==='PAID ✓'?'var(--green)':g.status==='PENDING'?'var(--amber)':'var(--accent)'};margin-left:8px">${g.status}</span></div>
+      <div style="font-family:var(--mono);font-size:10px;color:var(--accent);letter-spacing:1px;margin-bottom:6px">${g.month} <span style="color:${g.status==='PAID ✓'?'var(--green)':g.status==='PENDING'?'var(--amber)':'var(--accent)'};margin-left:8px">${g.status}</span></div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px">
         <div style="background:var(--surface2);border-radius:4px;padding:6px 8px">
           <div style="font-family:var(--mono);font-size:13px;color:var(--accent)">${g.assuranceActs.toLocaleString()}</div>
-          <div style="font-family:var(--mono);font-size:7px;color:var(--muted);letter-spacing:1px">BGOA ACTIVATIONS</div>
-          <div style="font-family:var(--mono);font-size:9px;color:var(--amber);margin-top:2px">${g.assuranceCPA ? fmtCPA(g.assuranceCPA)+' CPA' : '—'}</div>
+          <div style="font-family:var(--mono);font-size:8px;color:var(--muted);letter-spacing:1px">BGOA ACTIVATIONS</div>
+          <div style="font-family:var(--mono);font-size:10px;color:var(--amber);margin-top:2px">${g.assuranceCPA ? fmtCPA(g.assuranceCPA)+' CPA' : '—'}</div>
         </div>
         <div style="background:var(--surface2);border-radius:4px;padding:6px 8px">
           ${g.googleActs !== null ? `
           <div style="font-family:var(--mono);font-size:13px;color:var(--accent2)">${g.googleActs.toLocaleString()}</div>
-          <div style="font-family:var(--mono);font-size:7px;color:var(--muted);letter-spacing:1px">GOOGLE CONVERSIONS</div>
-          <div style="font-family:var(--mono);font-size:9px;color:var(--amber);margin-top:2px">${g.googleCPA ? fmtCPA(g.googleCPA)+' CPA' : '—'}</div>
+          <div style="font-family:var(--mono);font-size:8px;color:var(--muted);letter-spacing:1px">GOOGLE CONVERSIONS</div>
+          <div style="font-family:var(--mono);font-size:10px;color:var(--amber);margin-top:2px">${g.googleCPA ? fmtCPA(g.googleCPA)+' CPA' : '—'}</div>
           ` : `
           <div style="font-family:var(--mono);font-size:13px;color:var(--muted)">0</div>
-          <div style="font-family:var(--mono);font-size:7px;color:var(--muted);letter-spacing:1px">GOOGLE CONVERSIONS</div>
-          <div style="font-family:var(--mono);font-size:9px;color:var(--muted);margin-top:2px">Not tracked</div>
+          <div style="font-family:var(--mono);font-size:8px;color:var(--muted);letter-spacing:1px">GOOGLE CONVERSIONS</div>
+          <div style="font-family:var(--mono);font-size:10px;color:var(--muted);margin-top:2px">Not tracked</div>
           `}
         </div>
       </div>
-      <div style="font-family:var(--mono);font-size:8px;color:var(--muted);margin-top:5px">
+      <div style="font-family:var(--mono);font-size:9px;color:var(--muted);margin-top:5px">
         ${g.googleActs !== null
           ? `Δ ${Math.abs(g.googleActs - g.assuranceActs)} · Google conversions ${g.googleActs > g.assuranceActs ? 'over-report' : 'under-report'} vs BGOA activations by ${((Math.abs(g.googleActs-g.assuranceActs)/g.assuranceActs)*100).toFixed(1)}% · `
           : ''}Paid out: <span style="color:var(--green)">${fmtMoney(g.paidOut)}</span>
       </div>
     </div>
-  `).join('') + `<div style="font-family:var(--mono);font-size:8px;color:var(--muted);margin-top:8px;line-height:1.6;padding:6px;background:rgba(56,189,248,0.04);border-radius:4px">
+  `).join('') + `<div style="font-family:var(--mono);font-size:9px;color:var(--muted);margin-top:8px;line-height:1.6;padding:6px;background:rgba(56,189,248,0.04);border-radius:4px">
     ⚡ 30-day cookie window means activations backfill after month close. BGOA final numbers typically come in 7-10 days after end of month.
   </div>`;
 
@@ -2265,107 +2282,16 @@ function renderAssuranceIntelligence() {
   $('bgocPanel').innerHTML = `
     <div style="background:var(--surface2);border:1px solid rgba(129,140,248,0.2);border-radius:6px;padding:12px">
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
-        <div><div style="font-family:var(--mono);font-size:16px;font-weight:700;color:var(--accent2)">${fmtMoney(bgocTotSpend||472.50)}</div><div style="font-family:var(--mono);font-size:8px;color:var(--muted)">AD SPEND</div></div>
-        <div><div style="font-family:var(--mono);font-size:16px;font-weight:700;color:var(--green)">${(bgocTotActs||4).toLocaleString()}</div><div style="font-family:var(--mono);font-size:8px;color:var(--muted)">ACTIVATIONS</div></div>
-        <div><div style="font-family:var(--mono);font-size:16px;font-weight:700;color:var(--amber)">${r2(bgocTotApps||13).toLocaleString()}</div><div style="font-family:var(--mono);font-size:8px;color:var(--muted)">APPLICATIONS</div></div>
-        <div><div style="font-family:var(--mono);font-size:16px;font-weight:700;color:${bgocCPA>0&&bgocCPA<=10?'var(--green)':bgocCPA>15?'var(--red)':'var(--amber)'}">${bgocCPA > 0 ? fmtCPA(bgocCPA) : '$118.13'}</div><div style="font-family:var(--mono);font-size:8px;color:var(--muted)">Activation CPA</div></div>
+        <div><div style="font-family:var(--mono);font-size:16px;font-weight:700;color:var(--accent2)">${fmtMoney(bgocTotSpend||472.50)}</div><div style="font-family:var(--mono);font-size:9px;color:var(--muted)">AD SPEND</div></div>
+        <div><div style="font-family:var(--mono);font-size:16px;font-weight:700;color:var(--green)">${(bgocTotActs||4).toLocaleString()}</div><div style="font-family:var(--mono);font-size:9px;color:var(--muted)">ACTIVATIONS</div></div>
+        <div><div style="font-family:var(--mono);font-size:16px;font-weight:700;color:var(--amber)">${r2(bgocTotApps||13).toLocaleString()}</div><div style="font-family:var(--mono);font-size:9px;color:var(--muted)">APPLICATIONS</div></div>
+        <div><div style="font-family:var(--mono);font-size:16px;font-weight:700;color:${bgocCPA>0&&bgocCPA<=10?'var(--green)':bgocCPA>15?'var(--red)':'var(--amber)'}">${bgocCPA > 0 ? fmtCPA(bgocCPA) : '$118.13'}</div><div style="font-family:var(--mono);font-size:9px;color:var(--muted)">Activation CPA</div></div>
       </div>
-      <div style="font-family:var(--mono);font-size:8px;color:var(--muted);padding:6px;background:rgba(129,140,248,0.06);border-radius:4px;line-height:1.6">
+      <div style="font-family:var(--mono);font-size:9px;color:var(--muted);padding:6px;background:rgba(129,140,248,0.06);border-radius:4px;line-height:1.6">
         ⚡ Meta campaign just started April 2026. Very early data — CPA will normalize as more activations come in. 4 activations from $472.50 spend. Revenue: ${fmtMoney(bgocTotActs*25||100)}.
       </div>
     </div>`;
 
-  // ── Projections vs Reality ──
-  // Correct original projections (from "original plan/projections" tab)
-  // All projections are numeric. Dec and Jan were 0 — we beat them with 47 and 415 respectively.
-  const ORIG_PROJ = { '2025-12':0, '2026-01':0, '2026-02':500, '2026-03':1000, '2026-04':2000, '2026-05':3000, '2026-06':4000 };
-
-  // Build monthly actuals: use Math.max(BGOA daily, Lifeline sheet) — always the higher confirmed number
-  const allBgoaRows = RAW.bgoa.map(parseBGOARow).filter(Boolean);
-  const allBgocRows = RAW.bgoc.map(parseBGOARow).filter(Boolean);
-  const mActualsBgoa = {};
-  [...allBgoaRows, ...allBgocRows].forEach(r => {
-    const m = r.date.substring(0,7);
-    if (!mActualsBgoa[m]) mActualsBgoa[m] = { acts:0, spend:0, confirmedDays:0 };
-    mActualsBgoa[m].acts  += r.activations;
-    mActualsBgoa[m].spend += r.spend;
-    if (r.activations > 0) mActualsBgoa[m].confirmedDays++;
-  });
-  // Merge with Lifeline: use highest acts count, prefer Google Ads spend
-  const mActuals = {};
-  const allMkeys = new Set([...Object.keys(mActualsBgoa), ...Object.keys(lifelineActs)]);
-  allMkeys.forEach(mk => {
-    const b = mActualsBgoa[mk] || { acts:0, spend:0, confirmedDays:0 };
-    const l = lifelineActs[mk]  || { acts:0, spend:0 };
-    const g = googleByMonth[mk] || null;
-    mActuals[mk] = {
-      acts:         Math.max(b.acts, l.acts),
-      spend:        g ? g.spend : (l.spend || b.spend),
-      confirmedDays: b.confirmedDays,
-    };
-  });
-
-  // Current month full-month projection from confirmed daily rate
-  const aprKey = _curMonth;
-  const aprD = mActuals[aprKey];
-  const aprProjFull = aprD && aprD.confirmedDays >= 5
-    ? Math.round(aprD.acts / aprD.confirmedDays * 30)
-    : null;
-
-  // Settled totals (exclude current month from revenue summary)
-  const settledMkeys = Object.keys(mActuals).filter(mk => mk < _curMonth).sort();
-  const totActs  = settledMkeys.reduce((s,m)=>s+(mActuals[m]?.acts||0),0);
-  const totSpend = settledMkeys.reduce((s,m)=>s+(mActuals[m]?.spend||0),0);
-  const totRev   = totActs * PAYOUT;
-  const totNet   = totRev - totSpend;
-  const totROI   = totSpend > 0 ? (totNet/totSpend*100) : 0;
-
-  const showMonths = ['2025-12','2026-01','2026-02','2026-03','2026-04','2026-05'];
-  const projDataDyn = showMonths.map(mk => {
-    const d = mActuals[mk] || { acts:0, spend:0, confirmedDays:0 };
-    const isCurrent = mk === _curMonth;
-    const label = new Date(mk+'-15').toLocaleDateString('en-US',{month:'short',year:'numeric'}).toUpperCase();
-    const proj = ORIG_PROJ[mk];
-    const status = confirmedPaid && confirmedPaid[mk] ? 'PAID ✓' : mk === _curMonth ? 'CURRENT MONTH' : mk === _prevMonth ? 'PENDING' : 'PAID ✓';
-    const finalActs  = confirmedActs[mk] || d.acts;
-    const finalCPA   = confirmedCPA[mk]  || (finalActs > 0 && d.spend > 0 ? d.spend / finalActs : null);
-    return { month:label, projected:proj, actual:finalActs, spend:d.spend, cpa:finalCPA, partial:isCurrent, projFull: isCurrent ? aprProjFull : null, status, mk };
-  });
-
-  $('projVsReal').innerHTML = projDataDyn.map(p => {
-    const hasProjTarget = typeof p.projected === 'number' && p.projected > 0;
-    const projIsZero   = p.projected === 0;
-    const beatZero     = projIsZero && p.actual > 0;  // had 0 target, got > 0 = beat
-    const pct          = hasProjTarget ? (p.actual / p.projected * 100) : null;
-    const beat         = (pct !== null && pct >= 100) || beatZero;
-    const pctCol       = beat ? 'var(--green)' : pct === null ? 'var(--muted)' : pct >= 75 ? 'var(--amber)' : 'var(--red)';
-    const pctStr       = beatZero ? `+${p.actual.toLocaleString()}` : (pct !== null ? `${Math.round(pct)}%` : '—');
-    const projDisplay  = p.projected > 0 ? p.projected.toLocaleString() : '0';
-    const statusCol    = p.status === 'PAID ✓' ? 'var(--green)' : p.status === 'PENDING' ? 'var(--amber)' : 'var(--accent)';
-    return `
-    <div style="padding:14px 0;border-bottom:1px solid var(--border2)">
-      <div style="font-family:var(--mono);font-size:9px;color:var(--accent);letter-spacing:1px;margin-bottom:6px">
-        ${p.month} <span style="color:${statusCol};margin-left:8px">${p.status}</span>
-      </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:4px">
-        <div style="background:var(--surface2);border-radius:4px;padding:6px 8px">
-          <div style="font-family:var(--mono);font-size:18px;font-weight:700;color:var(--accent)">${p.actual > 0 ? p.actual.toLocaleString() : '—'}</div>
-          <div style="font-family:var(--mono);font-size:7px;color:var(--muted);letter-spacing:1px;margin-top:2px">ACTUAL ACTIVATIONS</div>
-          <div style="font-family:var(--mono);font-size:9px;color:var(--amber);margin-top:3px">${p.spend > 0 ? fmtMoney(p.spend) : '—'}${p.cpa ? ` · <span style="color:${actCpaColor(p.cpa)}">${fmtCPA(p.cpa)} CPA</span>` : ''}</div>
-        </div>
-        <div style="background:var(--surface2);border-radius:4px;padding:6px 8px">
-          <div style="font-family:var(--mono);font-size:18px;font-weight:700;color:var(--muted)">${projDisplay}</div>
-          <div style="font-family:var(--mono);font-size:7px;color:var(--muted);letter-spacing:1px;margin-top:2px">PROJECTED</div>
-        </div>
-        <div style="background:var(--surface2);border-radius:4px;padding:6px 8px">
-          <div style="font-family:var(--mono);font-size:18px;font-weight:700;color:${pctCol}">${pctStr}${beat && !beatZero ? ' ▲' : ''}</div>
-          <div style="font-family:var(--mono);font-size:7px;color:var(--muted);letter-spacing:1px;margin-top:2px">VS PROJ</div>
-          <div style="font-family:var(--mono);font-size:9px;color:${pctCol};margin-top:3px">${beat ? 'BEAT ✓' : hasProjTarget ? 'BELOW TARGET' : '—'}</div>
-        </div>
-      </div>
-      ${p.partial && p.projFull ? `<div style="font-family:var(--mono);font-size:8px;color:var(--muted);margin-top:5px">Full month projection: ~${p.projFull.toLocaleString()} activations</div>` : ''}
-    </div>`;
-  }).join('');
 }
 
 // ── LIVE DATA LAYER ── //
@@ -2928,7 +2854,7 @@ function renderTopStates(states) {
       <div style="font-family:var(--mono);font-size:12px;font-weight:700;color:var(--text);width:40px;text-align:right;flex-shrink:0">${Math.round(s.conv).toLocaleString()}</div>
       <div style="font-family:var(--mono);font-size:10px;color:${col};width:42px;text-align:right;flex-shrink:0">$${s.cpa.toFixed(2)}</div>
     </div>`;
-  }).join('') + `<div style="font-size:9px;color:var(--muted);margin-top:6px;text-align:right">Applications · Google Ads Geo data</div>`;
+  }).join('') + `<div style="font-size:10px;color:var(--muted);margin-top:6px;text-align:right">Applications · Google Ads Geo data</div>`;
 }
 
 // Build hourly
@@ -2951,10 +2877,24 @@ function buildHourly(hourly) {
 }
 
 // Build trajectory for current data
+// All-time performance totals from the Lifeline reality data (shared by the hero bar + trajectory).
+function getPerformanceTotals() {
+  const la = getLifelineActuals();
+  const keys = Object.keys(la).filter(mk => (la[mk].acts > 0 || la[mk].gross > 0));
+  const totActs   = keys.reduce((s, mk) => s + la[mk].acts, 0);
+  const totGross  = keys.reduce((s, mk) => s + la[mk].gross, 0);
+  const totSpend  = keys.reduce((s, mk) => s + (la[mk].spend || 0), 0);
+  const paidGross = keys.filter(mk => la[mk].paid).reduce((s, mk) => s + la[mk].gross, 0);
+  const pending   = keys.filter(mk => !la[mk].paid).reduce((s, mk) => s + la[mk].gross, 0);
+  const net = totGross - totSpend;
+  const roi = totSpend > 0 ? net / totSpend : 0;
+  return { totActs, totGross, totSpend, paidGross, pending, net, roi, months: keys.length };
+}
+
 function buildTrajectory(kpis, chartDaily) {
   // REAL monthly performance from the Lifeline sheet (actuals only — no projections).
-  // Each month shows confirmed activations + the gross amount Assurance actually paid,
-  // and its settlement status (PAID / PENDING / CURRENT MONTH). Newest month first.
+  // Each month shows confirmed activations, the gross amount Assurance actually paid,
+  // ROI, and its settlement status (PAID / PENDING / CURRENT MONTH). Newest month first.
   const la = getLifelineActuals();
   const now = new Date();
   const curKey = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
@@ -2969,17 +2909,68 @@ function buildTrajectory(kpis, chartDaily) {
     const [y, mo] = mk.split('-');
     const m = la[mk];
     const status = m.paid ? 'PAID ✓' : (mk === curKey ? 'CURRENT MONTH' : 'PENDING');
-    return { month: `${MN[+mo - 1]} ${y}`, status, acts: m.acts, gross: m.gross };
+    const spend = m.spend || 0;
+    const roi = spend > 0 ? (m.gross - spend) / spend : null;
+    return { month: `${MN[+mo - 1]} ${y}`, status, acts: m.acts, gross: m.gross, roi };
   });
 
-  const totActs   = keys.reduce((s, mk) => s + la[mk].acts, 0);
-  const totGross  = keys.reduce((s, mk) => s + la[mk].gross, 0);
-  const paidGross = keys.filter(mk => la[mk].paid).reduce((s, mk) => s + la[mk].gross, 0);
-
-  rows.push({ isSummary:true, summaryLabel:'TOTAL ACTIVATIONS',        val: totActs,   color:'var(--accent)' });
-  rows.push({ isSummary:true, summaryLabel:'REVENUE SETTLED (PAID)',   val: paidGross, color:'var(--green)', isDollar:true });
-  rows.push({ isSummary:true, summaryLabel:'GROSS TO DATE (incl. pending)', val: totGross, color:'var(--green)', isDollar:true });
+  const t = getPerformanceTotals();
+  rows.push({ isSummary:true, summaryLabel:'REVENUE SETTLED (PAID)', val: t.paidGross, color:'var(--green)', isDollar:true });
+  rows.push({ isSummary:true, summaryLabel:'PENDING PAYMENT',        val: t.pending,   color:'var(--amber)', isDollar:true });
+  rows.push({ isSummary:true, summaryLabel:'GROSS TO DATE',          val: t.totGross,  color:'var(--green)', isDollar:true });
   return rows;
+}
+
+// Hero all-time stat bar (not date-filtered)
+function renderHeroBar() {
+  const el = document.getElementById('heroBar');
+  if (!el) return;
+  const t = getPerformanceTotals();
+  if (!t.months) { el.innerHTML = ''; return; }
+  const cells = [
+    ['GROSS TO DATE',      fmtMoney(t.totGross),        'var(--green)'],
+    ['NET PROFIT',         fmtMoney(t.net),             t.net >= 0 ? 'var(--green)' : 'var(--red)'],
+    ['TOTAL ACTIVATIONS',  t.totActs.toLocaleString(),  'var(--accent)'],
+    ['BLENDED ROI',        Math.round(t.roi * 100) + '%', t.roi >= 0 ? 'var(--green)' : 'var(--red)'],
+    ['PENDING PAYMENT',    fmtMoney(t.pending),         'var(--amber)'],
+  ];
+  el.innerHTML = `<div class="hero-tag">All-time performance · Assurance Wireless</div>` +
+    `<div class="hero-cells">` +
+    cells.map(c => `<div class="hero-cell"><div class="hero-val" style="color:${c[2]}">${c[1]}</div><div class="hero-lbl">${c[0]}</div></div>`).join('') +
+    `</div>`;
+}
+
+// Monthly growth chart — confirmed activations (bars) + revenue paid (line)
+let growthChartInst = null;
+function renderMonthlyGrowth() {
+  const cv = document.getElementById('growthChart');
+  if (!cv || typeof Chart === 'undefined') return;
+  const la = getLifelineActuals();
+  const MN = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
+  const keys = Object.keys(la).filter(mk => la[mk].acts > 0 || la[mk].gross > 0).sort();
+  if (!keys.length) return;
+  const labels = keys.map(mk => { const [y, mo] = mk.split('-'); return MN[+mo - 1] + " '" + y.slice(2); });
+  const acts = keys.map(mk => la[mk].acts);
+  const rev  = keys.map(mk => la[mk].gross);
+  if (growthChartInst) growthChartInst.destroy();
+  growthChartInst = new Chart(cv.getContext('2d'), {
+    data: { labels, datasets: [
+      { type:'bar',  label:'Activations',      data:acts, backgroundColor:'rgba(56,189,248,0.5)', borderColor:'#38bdf8', borderWidth:1, yAxisID:'y',  order:2 },
+      { type:'line', label:'Revenue Paid ($)', data:rev,  borderColor:'#34d399', backgroundColor:'rgba(52,211,153,0.12)', borderWidth:2, pointRadius:3, pointBackgroundColor:'#34d399', tension:0.3, yAxisID:'y2', order:1, fill:true },
+    ]},
+    options: {
+      responsive:true, maintainAspectRatio:false,
+      plugins:{
+        legend:{ labels:{ color:'#a7b4c9', font:{family:'Space Mono',size:9}, boxWidth:10, boxHeight:6, padding:12 } },
+        tooltip:{ callbacks:{ label:c => c.dataset.yAxisID === 'y2' ? c.dataset.label + ': ' + fmtMoney(c.parsed.y) : c.dataset.label + ': ' + c.parsed.y.toLocaleString() } },
+      },
+      scales:{
+        x:{ ticks:{ color:'#a7b4c9', font:{family:'Space Mono',size:9} }, grid:{ color:'rgba(255,255,255,0.04)' } },
+        y:{ position:'left', beginAtZero:true, ticks:{ color:'#38bdf8', font:{family:'Space Mono',size:8}, callback:v=>v.toLocaleString() }, grid:{ color:'rgba(255,255,255,0.04)' }, title:{ display:true, text:'Activations', color:'#38bdf8', font:{family:'Space Mono',size:8} } },
+        y2:{ position:'right', beginAtZero:true, ticks:{ color:'#34d399', font:{family:'Space Mono',size:8}, callback:v=>'$'+Math.round(v/1000)+'k' }, grid:{ display:false }, title:{ display:true, text:'Revenue $', color:'#34d399', font:{family:'Space Mono',size:8} } },
+      },
+    },
+  });
 }
 
 // Restore the KPI row to its original DOM structure so renderKPIs can write to kv-*/ks-* elements.
@@ -3093,6 +3084,8 @@ function applyFilters() {
   try { renderFeed(chartData); }               catch(e) { console.error('Feed',e); }
   try { renderSummary(chartData, kpis); }      catch(e) { console.error('Summary',e); }
   try { renderTrajectory(buildTrajectory(kpis, chartData), chartData); } catch(e) { console.error('Traj',e); }
+  try { renderHeroBar(); }                     catch(e) { console.error('Hero',e); }
+  try { renderMonthlyGrowth(); }               catch(e) { console.error('Growth',e); }
 
   // Build campaigns from daily aggregation
   try {
@@ -3437,18 +3430,18 @@ function go2RenderCampaignScorecard(daily) {
     const shortName = c.length > 30 ? c.substring(0,28)+'…' : c;
     return `<div style="background:var(--surface2);border:1px solid var(--border2);border-radius:6px;padding:10px 12px">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
-        <div style="font-family:var(--mono);font-size:9px;color:var(--text);letter-spacing:1px">${shortName}</div>
-        <div style="font-family:var(--mono);font-size:8px;color:var(--muted)">$${d.spend.toFixed(2)} spent</div>
+        <div style="font-family:var(--mono);font-size:10px;color:var(--text);letter-spacing:1px">${shortName}</div>
+        <div style="font-family:var(--mono);font-size:9px;color:var(--muted)">$${d.spend.toFixed(2)} spent</div>
       </div>
       <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:8px">
-        <div style="text-align:center"><div style="font-family:var(--mono);font-size:13px;font-weight:700;color:var(--accent)">${d.clicks}</div><div style="font-family:var(--mono);font-size:7px;color:var(--muted)">CLICKS</div></div>
-        <div style="text-align:center"><div style="font-family:var(--mono);font-size:13px;font-weight:700;color:var(--amber)">${ctr>0?ctr.toFixed(1)+'%':'—'}</div><div style="font-family:var(--mono);font-size:7px;color:var(--muted)">CTR</div></div>
-        <div style="text-align:center"><div style="font-family:var(--mono);font-size:13px;font-weight:700;color:var(--muted)">${cpc>0?'$'+cpc.toFixed(2):'—'}</div><div style="font-family:var(--mono);font-size:7px;color:var(--muted)">CPC</div></div>
-        <div style="text-align:center"><div style="font-family:var(--mono);font-size:13px;font-weight:700;color:#f97316">${d.apps}</div><div style="font-family:var(--mono);font-size:7px;color:var(--muted)">APPS</div></div>
+        <div style="text-align:center"><div style="font-family:var(--mono);font-size:13px;font-weight:700;color:var(--accent)">${d.clicks}</div><div style="font-family:var(--mono);font-size:8px;color:var(--muted)">CLICKS</div></div>
+        <div style="text-align:center"><div style="font-family:var(--mono);font-size:13px;font-weight:700;color:var(--amber)">${ctr>0?ctr.toFixed(1)+'%':'—'}</div><div style="font-family:var(--mono);font-size:8px;color:var(--muted)">CTR</div></div>
+        <div style="text-align:center"><div style="font-family:var(--mono);font-size:13px;font-weight:700;color:var(--muted)">${cpc>0?'$'+cpc.toFixed(2):'—'}</div><div style="font-family:var(--mono);font-size:8px;color:var(--muted)">CPC</div></div>
+        <div style="text-align:center"><div style="font-family:var(--mono);font-size:13px;font-weight:700;color:#f97316">${d.apps}</div><div style="font-family:var(--mono);font-size:8px;color:var(--muted)">APPS</div></div>
       </div>
       <div style="display:flex;align-items:center;justify-content:space-between;padding-top:6px;border-top:1px solid var(--border2)">
-        <div style="font-family:var(--mono);font-size:8px;color:${color}">${label}</div>
-        <div style="font-family:var(--mono);font-size:8px;color:${cpa>0?color:'var(--muted)'}">${cpa>0?'$'+cpa.toFixed(2)+'/app':d.apps===0?'0 apps yet':''}</div>
+        <div style="font-family:var(--mono);font-size:9px;color:${color}">${label}</div>
+        <div style="font-family:var(--mono);font-size:9px;color:${cpa>0?color:'var(--muted)'}">${cpa>0?'$'+cpa.toFixed(2)+'/app':d.apps===0?'0 apps yet':''}</div>
       </div>
     </div>`;
   }).join('');
@@ -3473,7 +3466,7 @@ function go2RenderKeywords(keywords) {
     const cpa = d.apps > 0 ? d.spend/d.apps : 0;
     const { color } = go2CpaInfo(cpa);
     return `<div style="display:flex;align-items:center;justify-content:space-between;padding:5px 8px;background:var(--surface2);border-radius:4px;gap:8px">
-      <div style="font-size:11px;color:var(--text);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${kw} <span style="font-family:var(--mono);font-size:8px;color:var(--muted)">${d.match}</span></div>
+      <div style="font-size:11px;color:var(--text);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${kw} <span style="font-family:var(--mono);font-size:9px;color:var(--muted)">${d.match}</span></div>
       <div style="display:flex;gap:10px;flex-shrink:0;font-family:var(--mono);font-size:10px">
         <span style="color:var(--accent)">$${d.spend.toFixed(0)}</span>
         <span style="color:#f97316">${d.apps}a</span>
@@ -3548,8 +3541,8 @@ function go2RenderStates(geo) {
     const { color } = go2CpaInfo(d.cpa);
     return `<div style="display:flex;align-items:center;gap:8px;padding:4px 6px;background:var(--surface2);border-radius:4px">
       <div style="font-family:var(--mono);font-size:13px;font-weight:700;color:${color};width:28px">${d.abbr}</div>
-      <div style="flex:1;font-family:var(--mono);font-size:9px;color:var(--muted)">${d.apps}a · $${d.spend.toFixed(0)}</div>
-      <div style="font-family:var(--mono);font-size:9px;color:${color}">${showCpa&&d.apps>0?'$'+d.cpa.toFixed(0):d.cpa===Infinity?'0a':''}</div>
+      <div style="flex:1;font-family:var(--mono);font-size:10px;color:var(--muted)">${d.apps}a · $${d.spend.toFixed(0)}</div>
+      <div style="font-family:var(--mono);font-size:10px;color:${color}">${showCpa&&d.apps>0?'$'+d.cpa.toFixed(0):d.cpa===Infinity?'0a':''}</div>
     </div>`;
   };
 
@@ -3573,8 +3566,8 @@ function go2RenderHourly(hourly) {
     const intensity = d.apps/maxApps;
     const bg = d.apps > 0 ? `rgba(249,115,22,${0.08+intensity*0.7})` : 'rgba(255,255,255,0.03)';
     return `<div title="Hour ${h}: ${d.apps} apps, $${d.spend.toFixed(2)}" style="background:${bg};border-radius:3px;padding:5px 2px;text-align:center;cursor:default">
-      <div style="font-family:var(--mono);font-size:8px;color:${d.apps>0?'#f97316':'var(--muted)'};">${d.apps>0?d.apps:'·'}</div>
-      <div style="font-family:var(--mono);font-size:7px;color:var(--muted);margin-top:2px">${fmt12(h)}</div>
+      <div style="font-family:var(--mono);font-size:9px;color:${d.apps>0?'#f97316':'var(--muted)'};">${d.apps>0?d.apps:'·'}</div>
+      <div style="font-family:var(--mono);font-size:8px;color:var(--muted);margin-top:2px">${fmt12(h)}</div>
     </div>`;
   }).join('');
 }
@@ -3600,12 +3593,12 @@ function go2RenderDevices(devices) {
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
         <span style="font-size:18px">${icons[dev]}</span>
         <div style="font-family:var(--mono);font-size:10px;color:var(--text);letter-spacing:1px">${dev.toUpperCase()}</div>
-        ${cpa>0?`<div style="margin-left:auto;background:var(--surface);border:1px solid ${color};border-radius:3px;padding:2px 6px;font-family:var(--mono);font-size:8px;color:${color}">${label}</div>`:''}
+        ${cpa>0?`<div style="margin-left:auto;background:var(--surface);border:1px solid ${color};border-radius:3px;padding:2px 6px;font-family:var(--mono);font-size:9px;color:${color}">${label}</div>`:''}
       </div>
       <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">
-        <div style="text-align:center"><div style="font-family:var(--mono);font-size:16px;font-weight:700;color:${cpa>0?color:'var(--muted)'}">${cpa>0?'$'+cpa.toFixed(0):'—'}</div><div style="font-family:var(--mono);font-size:7px;color:var(--muted)">APP CPA</div></div>
-        <div style="text-align:center"><div style="font-family:var(--mono);font-size:16px;font-weight:700;color:#f97316">${d.apps}</div><div style="font-family:var(--mono);font-size:7px;color:var(--muted)">APPS</div></div>
-        <div style="text-align:center"><div style="font-family:var(--mono);font-size:16px;font-weight:700;color:var(--accent)">$${d.spend.toFixed(0)}</div><div style="font-family:var(--mono);font-size:7px;color:var(--muted)">SPEND</div></div>
+        <div style="text-align:center"><div style="font-family:var(--mono);font-size:16px;font-weight:700;color:${cpa>0?color:'var(--muted)'}">${cpa>0?'$'+cpa.toFixed(0):'—'}</div><div style="font-family:var(--mono);font-size:8px;color:var(--muted)">APP CPA</div></div>
+        <div style="text-align:center"><div style="font-family:var(--mono);font-size:16px;font-weight:700;color:#f97316">${d.apps}</div><div style="font-family:var(--mono);font-size:8px;color:var(--muted)">APPS</div></div>
+        <div style="text-align:center"><div style="font-family:var(--mono);font-size:16px;font-weight:700;color:var(--accent)">$${d.spend.toFixed(0)}</div><div style="font-family:var(--mono);font-size:8px;color:var(--muted)">SPEND</div></div>
       </div>
     </div>`;
   }).join('');
