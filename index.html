@@ -19,8 +19,8 @@
   --green: #34d399;
   --amber: #fbbf24;
   --red: #f87171;
-  --muted: #64748b;
-  --text: #e2e8f0;
+  --muted: #a7b4c9;
+  --text: #eef2f8;
   --mono: 'Space Mono', monospace;
   --sans: 'DM Sans', sans-serif;
 }
@@ -258,7 +258,7 @@ body::after{content:'';position:fixed;inset:0;background-image:linear-gradient(r
 .dr-btn{background:rgba(255,255,255,0.05);color:#94a3b8;border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:6px 12px;font-size:11px;font-family:inherit;cursor:pointer;transition:all .2s;text-transform:uppercase;letter-spacing:.5px;}
 .dr-btn:hover{background:rgba(56,189,248,0.15);color:#38bdf8;border-color:rgba(56,189,248,0.3);}
 .dr-btn.active{background:rgba(56,189,248,0.2);color:#38bdf8;border-color:rgba(56,189,248,0.5);}
-.dtt-btn{background:rgba(255,255,255,0.04);color:#64748b;border:1px solid rgba(255,255,255,0.08);border-radius:6px;padding:3px 9px;font-size:10px;font-family:inherit;cursor:pointer;transition:all .15s;text-transform:uppercase;letter-spacing:.4px;}
+.dtt-btn{background:rgba(255,255,255,0.04);color:#a7b4c9;border:1px solid rgba(255,255,255,0.08);border-radius:6px;padding:3px 9px;font-size:10px;font-family:inherit;cursor:pointer;transition:all .15s;text-transform:uppercase;letter-spacing:.4px;}
 .dtt-btn:hover{background:rgba(160,80,255,0.15);color:#a050ff;border-color:rgba(160,80,255,0.3);}
 .dtt-btn.dtt-active{background:rgba(160,80,255,0.18);color:#a050ff;border-color:rgba(160,80,255,0.5);}
 
@@ -267,14 +267,8 @@ body::after{content:'';position:fixed;inset:0;background-image:linear-gradient(r
 .proj-tab{font-family:var(--mono);font-size:10px;letter-spacing:2px;color:var(--muted);padding:8px 20px;cursor:pointer;border-bottom:2px solid transparent;transition:all .2s;background:none;border-top:none;border-left:none;border-right:none;text-transform:uppercase;white-space:nowrap}
 .proj-tab:hover{color:var(--text)}
 .proj-tab.active{color:var(--accent);border-bottom-color:var(--accent)}
-.proj-tab.gobb-tab.active{color:#34d399;border-bottom-color:#34d399}
 .proj-tab.go2-tab.active{color:#f97316;border-bottom-color:#f97316}
-/* Go Broadband accent overrides */
-#gobbSection{--gb-accent:#34d399;--gb-accent2:#6ee7b7}
 #go2Section{--go2-accent:#f97316;--go2-accent2:#fdba74}
-#gobbSection .kpi.c-accent::before{background:var(--gb-accent)}
-#gobbSection .section-title span{color:var(--gb-accent)}
-.gobb-pill{display:inline-block;background:rgba(52,211,153,0.12);color:#34d399;border:1px solid rgba(52,211,153,0.3);border-radius:4px;font-family:var(--mono);font-size:8px;letter-spacing:1px;padding:2px 6px;margin-left:8px;vertical-align:middle}
 </style>
 </head>
 <body>
@@ -307,7 +301,6 @@ body::after{content:'';position:fixed;inset:0;background-image:linear-gradient(r
   <!-- Project Tab Switcher -->
   <div class="proj-tabs">
     <button class="proj-tab active" id="tabAssurance" onclick="switchProject('assurance')">🛡 Assurance Wireless</button>
-    <button class="proj-tab gobb-tab" id="tabGoBB" onclick="switchProject('gobb')">📡 Go Broadband</button>
     <button class="proj-tab go2-tab" id="tabGO2" onclick="switchProject('go2')">🛡 Assurance GO2</button>
   </div>
 
@@ -343,7 +336,7 @@ body::after{content:'';position:fixed;inset:0;background-image:linear-gradient(r
     </div>
     <div id="custom-range" style="display:none;gap:6px;align-items:center;">
       <input type="date" id="custom-from" onchange="applyFilters()" style="background:#0c1120;color:#e2e8f0;border:1px solid rgba(56,189,248,0.3);border-radius:8px;padding:6px 10px;font-size:12px;" />
-      <span style="color:#64748b;">to</span>
+      <span style="color:#a7b4c9;">to</span>
       <input type="date" id="custom-to" onchange="applyFilters()" style="background:#0c1120;color:#e2e8f0;border:1px solid rgba(56,189,248,0.3);border-radius:8px;padding:6px 10px;font-size:12px;" />
     </div>
   </div>
@@ -577,190 +570,6 @@ body::after{content:'';position:fixed;inset:0;background-image:linear-gradient(r
 
   </div><!-- /assuranceSection -->
 
-  <!-- ══════════════════ GO BROADBAND SECTION ══════════════════ -->
-  <div id="gobbSection" style="display:none">
-
-    <!-- GB Filter Bar -->
-    <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap;">
-      <select id="gb-campaign-select" onchange="gbApplyFilters()" style="background:#0c1120;color:#e2e8f0;border:1px solid rgba(52,211,153,0.3);border-radius:8px;padding:7px 12px;font-family:inherit;font-size:12px;cursor:pointer;min-width:200px;">
-        <option value="all">All Campaigns</option>
-        <option value="GoBB | Buy Now | Search">Buy Now</option>
-        <option value="GoBB | Price-Flex | Search">Price-Flex</option>
-        <option value="GoBB | Compare | Search">Compare</option>
-      </select>
-      <div style="display:flex;gap:6px;flex-wrap:wrap;">
-        <button class="dr-btn" onclick="gbSetRange('today')">Today</button>
-        <button class="dr-btn" onclick="gbSetRange('yesterday')">Yesterday</button>
-        <button class="dr-btn" onclick="gbSetRange('7')">Last 7</button>
-        <button class="dr-btn active" id="gbBtn30" onclick="gbSetRange('30')">Last 30</button>
-        <button class="dr-btn" onclick="gbSetRange('mtd')">This Month</button>
-        <button class="dr-btn" onclick="gbSetRange('lastmonth')">Last Month</button>
-      </div>
-      <div style="font-family:var(--mono);font-size:9px;color:var(--muted);letter-spacing:1px;margin-left:auto" id="gbPeriodBanner">—</div>
-    </div>
-
-    <!-- GB KPI Row — early-stage priority: CPC + CTR front and center -->
-    <div class="kpi-primary" id="gbKpiRow">
-      <div class="kpi c-accent" id="gbk-spend"><div class="kpi-lbl">Ad Spend</div><div class="kpi-val" id="gbv-spend">—</div><div class="kpi-sub" id="gbs-spend">Google Ads</div></div>
-      <div class="kpi c-purple" id="gbk-clicks"><div class="kpi-lbl">Clicks</div><div class="kpi-val" id="gbv-clicks">—</div><div class="kpi-sub" id="gbs-clicks">—</div></div>
-      <div class="kpi c-amber" id="gbk-cpc"><div class="kpi-lbl">Avg CPC</div><div class="kpi-val" id="gbv-cpc">—</div><div class="kpi-sub" id="gbs-cpc">Cost per click</div></div>
-      <div class="kpi c-green" id="gbk-ctr"><div class="kpi-lbl">CTR</div><div class="kpi-val" id="gbv-ctr">—</div><div class="kpi-sub" id="gbs-ctr">Click-through rate</div></div>
-    </div>
-    <div class="kpi-secondary">
-      <div class="kpi c-green" id="gbk-calls"><div class="kpi-lbl">Calls (≥60s)</div><div class="kpi-val" id="gbv-calls">—</div><div class="kpi-sub" id="gbs-calls">Confirmed conversions</div></div>
-      <div class="kpi c-amber" id="gbk-cpa"><div class="kpi-lbl">Cost per Call</div><div class="kpi-val" id="gbv-cpa">—</div><div class="kpi-sub" id="gbs-cpa">Spend ÷ calls</div></div>
-    </div>
-
-    <!-- GB Ads panels — hidden until ads data arrives -->
-    <div id="gbAdsPanels" style="display:none">
-
-    <!-- GB Main Chart + Campaign Scorecard -->
-    <div style="display:grid;grid-template-columns:1fr 340px;gap:12px;margin-bottom:12px">
-
-      <!-- Daily Chart -->
-      <div class="panel" style="background:var(--surface);border:1px solid var(--border2);border-radius:8px;padding:18px 20px">
-        <div class="section-title" style="font-family:var(--mono);font-size:9px;color:var(--muted);letter-spacing:2px;margin-bottom:16px">DAILY PERFORMANCE <span style="color:#34d399">· GO BROADBAND</span></div>
-        <div style="height:200px;position:relative">
-          <canvas id="gbDailyChart"></canvas>
-        </div>
-      </div>
-
-      <!-- Campaign Scorecard -->
-      <div class="panel" style="background:var(--surface);border:1px solid var(--border2);border-radius:8px;padding:18px 20px">
-        <div class="section-title" style="font-family:var(--mono);font-size:9px;color:var(--muted);letter-spacing:2px;margin-bottom:14px">CAMPAIGN SCORECARD</div>
-        <div id="gbCampaignScorecard" style="display:flex;flex-direction:column;gap:10px">
-          <div style="font-family:var(--mono);font-size:10px;color:var(--muted);text-align:center;padding:30px 0">Script not yet configured —<br>data loads after first run</div>
-        </div>
-      </div>
-    </div>
-
-    <!-- GB Keywords + Search Terms -->
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
-      <div class="panel" style="background:var(--surface);border:1px solid var(--border2);border-radius:8px;padding:18px 20px">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
-          <div style="font-family:var(--mono);font-size:9px;color:var(--muted);letter-spacing:2px">KEYWORDS <span style="color:#34d399">· TOP BY SPEND</span></div>
-          <div style="font-family:var(--mono);font-size:9px;color:var(--muted)" id="gbKwCount">—</div>
-        </div>
-        <div id="gbKeywordList" style="max-height:320px;overflow-y:auto;display:flex;flex-direction:column;gap:6px">
-          <div style="font-family:var(--mono);font-size:10px;color:var(--muted);text-align:center;padding:20px 0">Awaiting data...</div>
-        </div>
-      </div>
-      <div class="panel" style="background:var(--surface);border:1px solid var(--border2);border-radius:8px;padding:18px 20px">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
-          <div style="font-family:var(--mono);font-size:9px;color:var(--muted);letter-spacing:2px">SEARCH TERMS <span style="color:#34d399">· TOP BY SPEND</span></div>
-          <div style="font-family:var(--mono);font-size:9px;color:var(--muted)" id="gbStCount">—</div>
-        </div>
-        <div id="gbSearchTermList" style="max-height:320px;overflow-y:auto;display:flex;flex-direction:column;gap:6px">
-          <div style="font-family:var(--mono);font-size:10px;color:var(--muted);text-align:center;padding:20px 0">Awaiting data...</div>
-        </div>
-      </div>
-    </div>
-
-    <!-- GB States + Hourly -->
-    <div style="display:grid;grid-template-columns:1fr 380px;gap:12px;margin-bottom:12px">
-
-      <!-- States -->
-      <div class="panel" style="background:var(--surface);border:1px solid var(--border2);border-radius:8px;padding:18px 20px">
-        <div style="font-family:var(--mono);font-size:9px;color:var(--muted);letter-spacing:2px;margin-bottom:14px">STATE PERFORMANCE <span style="color:#34d399">· CALLS & SPEND</span></div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
-          <div>
-            <div style="font-family:var(--mono);font-size:8px;color:#34d399;letter-spacing:1px;margin-bottom:10px">🏆 TOP · LOWEST CPA</div>
-            <div id="gbStateBest" style="display:flex;flex-direction:column;gap:5px">
-              <div style="font-family:var(--mono);font-size:10px;color:var(--muted);text-align:center;padding:20px 0">Awaiting data...</div>
-            </div>
-          </div>
-          <div>
-            <div style="font-family:var(--mono);font-size:8px;color:var(--red);letter-spacing:1px;margin-bottom:10px">⚠ WORST · HIGHEST SPEND/0 CALLS</div>
-            <div id="gbStateWorst" style="display:flex;flex-direction:column;gap:5px">
-              <div style="font-family:var(--mono);font-size:10px;color:var(--muted);text-align:center;padding:20px 0">Awaiting data...</div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Hourly Heatmap -->
-      <div class="panel" style="background:var(--surface);border:1px solid var(--border2);border-radius:8px;padding:18px 20px">
-        <div style="font-family:var(--mono);font-size:9px;color:var(--muted);letter-spacing:2px;margin-bottom:14px">HOURLY CALL VOLUME <span style="color:#34d399">· 24H PATTERN</span></div>
-        <div id="gbHourlyHeatmap" style="display:grid;grid-template-columns:repeat(6,1fr);gap:4px"></div>
-        <div style="font-family:var(--mono);font-size:8px;color:var(--muted);margin-top:10px;text-align:center">Best call windows by hour of day</div>
-      </div>
-    </div>
-
-    <!-- GB Device Panel -->
-    <div class="panel" style="background:var(--surface);border:1px solid var(--border2);border-radius:8px;padding:18px 20px;margin-bottom:12px">
-      <div style="font-family:var(--mono);font-size:9px;color:var(--muted);letter-spacing:2px;margin-bottom:14px">DEVICE PERFORMANCE <span style="color:#34d399">· APPLICATION CPA BY DEVICE</span></div>
-      <div id="gbDeviceCards" style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px">
-        <div style="font-family:var(--mono);font-size:10px;color:var(--muted);text-align:center;padding:20px 0;grid-column:1/-1">Awaiting data...</div>
-      </div>
-    </div>
-
-    </div><!-- /gbAdsPanels -->
-
-    <!-- GA4 Website Analytics Panel -->
-    <div style="margin-bottom:12px">
-      <div style="font-family:var(--mono);font-size:9px;color:var(--muted);letter-spacing:2px;margin-bottom:10px;display:flex;align-items:center;gap:8px">
-        <span>🌐 WEBSITE ANALYTICS <span style="color:#34d399">· GOBROADBAND.IO</span></span>
-        <span id="ga4UpdatedAt" style="margin-left:auto;font-size:8px;opacity:.4"></span>
-      </div>
-
-      <!-- GA4 primary KPIs -->
-      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:10px">
-        <div class="kpi" style="position:relative;overflow:hidden;border-left:3px solid #34d399">
-          <div class="kpi-lbl">Active Now</div>
-          <div class="kpi-val" id="ga4-active" style="font-size:32px">—</div>
-          <div class="kpi-sub" style="color:#34d399">realtime users</div>
-        </div>
-        <div class="kpi" style="position:relative;overflow:hidden;border-left:3px solid #6ee7b7">
-          <div class="kpi-lbl">Sessions</div>
-          <div class="kpi-val" id="ga4-sessions" style="font-size:32px">—</div>
-          <div class="kpi-sub" id="ga4s-sessions">period total</div>
-        </div>
-        <div class="kpi" style="position:relative;overflow:hidden;border-left:3px solid #a78bfa">
-          <div class="kpi-lbl">Engagement Rate</div>
-          <div class="kpi-val" id="ga4-engagement" style="font-size:32px">—</div>
-          <div class="kpi-sub">% engaged sessions</div>
-        </div>
-      </div>
-
-      <!-- GA4 secondary KPIs -->
-      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:12px">
-        <div class="kpi" style="position:relative;overflow:hidden">
-          <div class="kpi-lbl">Users</div>
-          <div class="kpi-val" id="ga4-users" style="font-size:22px">—</div>
-          <div class="kpi-sub" id="ga4s-users">total visitors</div>
-        </div>
-        <div class="kpi" style="position:relative;overflow:hidden">
-          <div class="kpi-lbl">Avg Duration</div>
-          <div class="kpi-val" id="ga4-duration" style="font-size:22px">—</div>
-          <div class="kpi-sub">per session</div>
-        </div>
-        <div class="kpi" style="position:relative;overflow:hidden">
-          <div class="kpi-lbl">New Users</div>
-          <div class="kpi-val" id="ga4-newusers" style="font-size:22px">—</div>
-          <div class="kpi-sub" id="ga4s-newusers">first visit</div>
-        </div>
-      </div>
-
-      <!-- Traffic Sources + Top Pages -->
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
-        <div style="background:var(--surface);border:1px solid var(--border2);border-radius:8px;padding:18px 20px">
-          <div style="font-family:var(--mono);font-size:9px;color:var(--muted);letter-spacing:2px;margin-bottom:14px">TRAFFIC SOURCES</div>
-          <div id="ga4SourcesList"><div style="font-family:var(--mono);font-size:10px;color:var(--muted);text-align:center;padding:24px 0">Awaiting data...</div></div>
-        </div>
-        <div style="background:var(--surface);border:1px solid var(--border2);border-radius:8px;padding:18px 20px">
-          <div style="font-family:var(--mono);font-size:9px;color:var(--muted);letter-spacing:2px;margin-bottom:14px">TOP PAGES</div>
-          <div id="ga4PagesList"><div style="font-family:var(--mono);font-size:10px;color:var(--muted);text-align:center;padding:24px 0">Awaiting data...</div></div>
-        </div>
-      </div>
-    </div>
-
-    <!-- GB no-data -->
-    <div id="gbNoData" style="display:none;text-align:center;padding:60px 20px;font-family:var(--mono);font-size:11px;color:var(--muted);letter-spacing:2px">
-      NO DATA YET · CAMPAIGNS LAUNCHING SOON<br>
-      <span style="font-size:9px;display:block;margin-top:8px">Script must be installed in Google Ads account 889-993-5007 and run at least once</span>
-    </div>
-
-  </div><!-- /gobbSection -->
 
   <!-- ══════════════════ ASSURANCE GO2 SECTION ══════════════════ -->
   <div id="go2Section" style="display:none">
@@ -1218,7 +1027,7 @@ function renderChart(daily) {
     options: {
       responsive:true, maintainAspectRatio:false,
       plugins: {
-        legend: { display:true, position:'top', align:'end', labels:{ color:'#64748b', font:{family:'Space Mono',size:8}, boxWidth:10, boxHeight:6, padding:12 } },
+        legend: { display:true, position:'top', align:'end', labels:{ color:'#a7b4c9', font:{family:'Space Mono',size:8}, boxWidth:10, boxHeight:6, padding:12 } },
         tooltip: {
           backgroundColor:'#111827', borderColor:'rgba(56,189,248,0.2)', borderWidth:1,
           titleColor:'#38bdf8', bodyColor:'#94a3b8',
@@ -1237,7 +1046,7 @@ function renderChart(daily) {
       scales: {
         x: { stacked:true, grid:{color:'rgba(255,255,255,0.025)'}, ticks:{color:'#475569',font:{family:'Space Mono',size:8},maxRotation:45,maxTicksLimit:12} },
         y: { stacked:true, position:'left', grid:{color:'rgba(255,255,255,0.035)'}, ticks:{color:'#475569',font:{family:'Space Mono',size:8}}, title:{display:true,text:'Apps / Acts',color:'#94a3b8',font:{family:'Space Mono',size:8}} },
-        y2: { position:'right', grid:{display:false}, ticks:{color:'#64748b',font:{family:'Space Mono',size:8},callback:v=>'$'+v+'k'}, title:{display:true,text:'Spend $k',color:'#fbbf24',font:{family:'Space Mono',size:8}} }
+        y2: { position:'right', grid:{display:false}, ticks:{color:'#a7b4c9',font:{family:'Space Mono',size:8},callback:v=>'$'+v+'k'}, title:{display:true,text:'Spend $k',color:'#fbbf24',font:{family:'Space Mono',size:8}} }
       }
     }
   });
@@ -1319,7 +1128,7 @@ function renderKPIs(kpis) {
   $('kv-acpa').style.color = acpaUnknown ? 'var(--muted)' : acpaCol;
   $('ks-acpa').innerHTML = acpaUnknown
     ? `<span style="color:var(--muted);font-size:9px">N/A</span>`
-    : `<span style="color:${acpaCol}">${actCpaLabel(activationCPA)}</span> · TARGET ≤$${ACT_TIERS.FANTASTIC}`;
+    : `<span style="color:${acpaCol}">${actCpaLabel(activationCPA)}</span>`;
 }
 
 function renderDevices(devData, sourceLabel) {
@@ -1561,24 +1370,15 @@ function renderTrajectory(monthly, daily) {
       </div>`;
     }
 
-    const valStr = m.isDollar ? fmtMoney(m.val) : m.val.toLocaleString();
-    let beat = '';
-    if (m.proj !== undefined && m.val > m.proj) {
-      const diff = (m.val - m.proj).toLocaleString();
-      const cls  = m.isProjOnly ? 'traj-pill-beat-proj' : 'traj-pill-beat';
-      const txt  = m.isProjOnly ? `▲ PROJ +${diff}` : `▲ BEAT +${diff}`;
-      beat = `<span class="traj-pill ${cls}">${txt}</span>`;
-    }
-
+    // Actual monthly row: month + status on the left, activations + gross paid on the right
     return `<div class="traj-row">
       <div class="traj-left">
         <span class="traj-month">${m.month}</span>
         <span class="traj-pill ${statusPillClass(m.status)}">${m.status}</span>
-        <span class="traj-metric">${m.metric}</span>
       </div>
       <div class="traj-right">
-        <span class="traj-val" style="color:${m.color}">${valStr}</span>
-        ${beat}
+        <span class="traj-metric">${(m.acts||0).toLocaleString()} acts</span>
+        <span class="traj-val" style="color:var(--green)">${fmtMoney(m.gross||0)}</span>
       </div>
     </div>`;
   }).join('');
@@ -2110,7 +1910,7 @@ function renderDeviceCPAChart(data, periodLabel) {
       plugins: {
         legend: {
           display: true, position: 'top', align: 'end',
-          labels: { color: '#64748b', font: { family: 'Space Mono', size: 8 }, boxWidth: 10, boxHeight: 5, padding: 10,
+          labels: { color: '#a7b4c9', font: { family: 'Space Mono', size: 8 }, boxWidth: 10, boxHeight: 5, padding: 10,
             filter: item => item.text !== `$${t.FANTASTIC} Target` && item.text !== `$${t.GOOD} Good` ? true :
               (item.text === `$${t.FANTASTIC} Target` || item.text === `$${t.GOOD} Good`)
           }
@@ -2358,7 +2158,7 @@ function renderAssuranceIntelligence() {
       options: {
         responsive: true, maintainAspectRatio: false,
         plugins: {
-          legend: { display: true, position:'top', align:'end', labels:{ color:'#64748b', font:{family:'Space Mono',size:8}, boxWidth:10, boxHeight:5, padding:10 } },
+          legend: { display: true, position:'top', align:'end', labels:{ color:'#a7b4c9', font:{family:'Space Mono',size:8}, boxWidth:10, boxHeight:5, padding:10 } },
           tooltip: {
             backgroundColor:'#111827', borderColor:'rgba(251,191,36,0.3)', borderWidth:1,
             titleColor:'#fbbf24', bodyColor:'#94a3b8',
@@ -2556,7 +2356,6 @@ function renderAssuranceIntelligence() {
         <div style="background:var(--surface2);border-radius:4px;padding:6px 8px">
           <div style="font-family:var(--mono);font-size:18px;font-weight:700;color:var(--muted)">${projDisplay}</div>
           <div style="font-family:var(--mono);font-size:7px;color:var(--muted);letter-spacing:1px;margin-top:2px">PROJECTED</div>
-          <div style="font-family:var(--mono);font-size:9px;color:var(--muted);margin-top:3px">$15 CPA target</div>
         </div>
         <div style="background:var(--surface2);border-radius:4px;padding:6px 8px">
           <div style="font-family:var(--mono);font-size:18px;font-weight:700;color:${pctCol}">${pctStr}${beat && !beatZero ? ' ▲' : ''}</div>
@@ -2625,7 +2424,7 @@ function getLifelineActuals() {
   let actsIdx = -1, grossIdx = -1, spendIdx = -1, paidIdx = -1;
   for (let i = monthIdx + 1; i < rows.length; i++) {
     if (rows[i].some(v => v.trim() === 'Activations') && actsIdx < 0) actsIdx = i;
-    if (rows[i].some(v => v.trim() === 'Gross') && grossIdx < 0) grossIdx = i;
+    if (rows[i].some(v => /^gross(\s+revenue)?$/i.test(v.trim())) && grossIdx < 0) grossIdx = i;
     if (rows[i].some(v => v.trim() === 'Ad Spend') && spendIdx < 0) spendIdx = i;
     // Row 29: contains PAID / PENDING per month
     if (rows[i].some(v => /^PAID$|^PENDING$/.test(v.trim())) && paidIdx < 0) paidIdx = i;
@@ -3153,48 +2952,34 @@ function buildHourly(hourly) {
 
 // Build trajectory for current data
 function buildTrajectory(kpis, chartDaily) {
-  const today = new Date();
-  const monthName = today.toLocaleDateString('en-US',{month:'short',year:'numeric'}).toUpperCase();
-  const daysInMonth = new Date(today.getFullYear(), today.getMonth()+1, 0).getDate();
-  const dayOfMonth  = today.getDate();
+  // REAL monthly performance from the Lifeline sheet (actuals only — no projections).
+  // Each month shows confirmed activations + the gross amount Assurance actually paid,
+  // and its settlement status (PAID / PENDING / CURRENT MONTH). Newest month first.
+  const la = getLifelineActuals();
+  const now = new Date();
+  const curKey = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+  const MN = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
 
-  // MTD confirmed activations from BGOA for this calendar month
-  const aprPrefix = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}`;
-  const bgoaMTD = (RAW && RAW.bgoa) ? RAW.bgoa.map(parseBGOARow).filter(r => r && r.date.startsWith(aprPrefix)) : [];
-  const mtdConfirmedActs = bgoaMTD.reduce((s,r) => s + r.activations, 0);
+  const keys = Object.keys(la)
+    .filter(mk => (la[mk].acts > 0 || la[mk].gross > 0))
+    .sort()            // ascending YYYY-MM
+    .reverse();        // newest first
 
-  // Daily pace: avg of last 7 settled days (skip last 2 days for T+1 lag)
-  const cutoff = new Date(today); cutoff.setDate(cutoff.getDate() - 2);
-  const cutoffStr = `${cutoff.getFullYear()}-${String(cutoff.getMonth()+1).padStart(2,'0')}-${String(cutoff.getDate()).padStart(2,'0')}`;
-  const lookback = new Date(cutoff); lookback.setDate(lookback.getDate() - 7);
-  const lookStr = `${lookback.getFullYear()}-${String(lookback.getMonth()+1).padStart(2,'0')}-${String(lookback.getDate()).padStart(2,'0')}`;
-  const paceRows = (RAW && RAW.bgoa) ? RAW.bgoa.map(parseBGOARow).filter(r => r && r.date >= lookStr && r.date <= cutoffStr && r.activations > 0) : [];
-  const settledDays = bgoaMTD.filter(r => r.date <= cutoffStr && r.activations > 0).length;
-  // Pace comes ONLY from real settled activations. If there's no real data yet, pace = 0
-  // (we never fall back to a percentage projection).
-  const dailyPace = paceRows.length > 0
-    ? paceRows.reduce((s,r) => s + r.activations, 0) / paceRows.length
-    : (settledDays > 0 ? mtdConfirmedActs / settledDays : 0);
+  const rows = keys.map(mk => {
+    const [y, mo] = mk.split('-');
+    const m = la[mk];
+    const status = m.paid ? 'PAID ✓' : (mk === curKey ? 'CURRENT MONTH' : 'PENDING');
+    return { month: `${MN[+mo - 1]} ${y}`, status, acts: m.acts, gross: m.gross };
+  });
 
-  // Full month = confirmed MTD + pace × remaining days
-  const remainingDays = daysInMonth - dayOfMonth;
-  const projectedActs = Math.round(mtdConfirmedActs + dailyPace * remainingDays);
+  const totActs   = keys.reduce((s, mk) => s + la[mk].acts, 0);
+  const totGross  = keys.reduce((s, mk) => s + la[mk].gross, 0);
+  const paidGross = keys.filter(mk => la[mk].paid).reduce((s, mk) => s + la[mk].gross, 0);
 
-  // MTD spend always from RAW.daily for the current calendar month — never from kpis.spend
-  // (kpis.spend reflects the active date filter, e.g. "Today" gives only one day's partial spend)
-  const mtdSpend = (RAW && RAW.daily)
-    ? RAW.daily.filter(r => normDateStr(r.Date||'').startsWith(aprPrefix)).reduce((s,r) => s + pn(r.Cost), 0)
-    : 0;
-  const projSpend = mtdSpend > 0 ? Math.round(mtdSpend / dayOfMonth * daysInMonth) : 0;
-
-  return [
-    {month:monthName, status:'PROJECTED', metric:'Activations', val:projectedActs, color:'var(--accent)', proj:2000, isProjOnly:true},
-    {month:monthName, status:'PROJECTED', metric:'Spend',        val:projSpend, color:'var(--amber)', isDollar:true},
-    {month:monthName, status:'PROJECTED', metric:'Revenue',      val:Math.round(projectedActs * PAYOUT), color:'var(--green)', isDollar:true},
-    {month:'MAR 2026', status:'PAID ✓',   metric:'Activations', val: Math.max(getLifelineActuals()['2026-03']?.acts||0, 1861), color:'var(--green)', proj:1000},
-    {month:'FEB 2026', status:'PAID ✓',   metric:'Activations', val: Math.max(getLifelineActuals()['2026-02']?.acts||0, 552),  color:'var(--green)', proj:500},
-    {isSummary:true,  summaryLabel:'REVENUE SETTLED', val:Object.values(getLifelineActuals()).filter(m=>m.paid).reduce((s,m)=>s+m.gross,0), color:'var(--green)', isDollar:true},
-  ];
+  rows.push({ isSummary:true, summaryLabel:'TOTAL ACTIVATIONS',        val: totActs,   color:'var(--accent)' });
+  rows.push({ isSummary:true, summaryLabel:'REVENUE SETTLED (PAID)',   val: paidGross, color:'var(--green)', isDollar:true });
+  rows.push({ isSummary:true, summaryLabel:'GROSS TO DATE (incl. pending)', val: totGross, color:'var(--green)', isDollar:true });
+  return rows;
 }
 
 // Restore the KPI row to its original DOM structure so renderKPIs can write to kv-*/ks-* elements.
@@ -3354,649 +3139,28 @@ function setDateRange(range, btn) {
   if (range !== 'custom') applyFilters();
 }
 
-// ════════════════════════════════════════════════════════════
-// GO BROADBAND — INDEPENDENT DASHBOARD
-// Account: 889-993-5007 · goadvertising8@gmail.com
-// Conversion: phone calls ≥ 60 seconds
-// ════════════════════════════════════════════════════════════
-
-// ── GB CONFIG ──
-// Paste spreadsheet ID here after first script run
-const GOBB_SHEET_ID = '10_X-G597viMypxssx9hoGr1k9RYVAooKoJngg5xZ878';
-
-const GB_CAMPAIGNS = ['GoBB | Buy Now | Search','GoBB | Price-Flex | Search','GoBB | Compare | Search'];
-
-// Initial CPA tiers — adjust once baseline data established
-// Based on avg RPO ~$80 (blended primary/other providers)
-const GB_CPA_TIERS = { FANTASTIC: 5, EXCELLENT: 7.50, GOOD: 10 };
-// >$10/call = POOR.
-
-// ── GB RAW DATA ──
-const GB_RAW = { daily:[], devices:[], geo:[], hourly:[], keywords:[], searchTerms:[], ga4Daily:[], ga4Sources:[], ga4Pages:[], ga4Realtime:[] };
-let gbDateRange = '30';  // default
-let gbActiveCampaign = 'all';
-let gbChartInst = null;
-let gbDataLoaded = false;
 
 // ── TAB SWITCHER ──
 function switchProject(proj) {
   const assuranceSection = document.getElementById('assuranceSection');
-  const gobbSection      = document.getElementById('gobbSection');
   const go2Section       = document.getElementById('go2Section');
   const tabA   = document.getElementById('tabAssurance');
-  const tabGB  = document.getElementById('tabGoBB');
   const tabGO2 = document.getElementById('tabGO2');
 
   assuranceSection.style.display = 'none';
-  gobbSection.style.display      = 'none';
   go2Section.style.display       = 'none';
   tabA.classList.remove('active');
-  tabGB.classList.remove('active');
   tabGO2.classList.remove('active');
 
-  if (proj === 'assurance') {
-    assuranceSection.style.display = '';
-    tabA.classList.add('active');
-  } else if (proj === 'gobb') {
-    gobbSection.style.display = '';
-    tabGB.classList.add('active');
-    if (!gbDataLoaded) gbFetchAndRender();
-  } else if (proj === 'go2') {
+  if (proj === 'go2') {
     go2Section.style.display = '';
     tabGO2.classList.add('active');
     if (!go2DataLoaded) go2FetchAndRender();
-  }
-}
-
-// ── GB SHEET URL BUILDER ──
-function gbSheetUrl(sheetName) {
-  if (!GOBB_SHEET_ID) return '';
-  return `https://docs.google.com/spreadsheets/d/${GOBB_SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(sheetName)}`;
-}
-
-// ── GB FETCH ──
-async function gbFetchAndRender() {
-  if (!GOBB_SHEET_ID) {
-    document.getElementById('gbNoData').style.display = 'block';
-    document.getElementById('gbNoData').innerHTML =
-      '⚠ SCRIPT NOT CONFIGURED YET<br>' +
-      '<span style="font-size:9px;display:block;margin-top:8px">' +
-      'Install go-broadband-ads-script.js in Google Ads account 889-993-5007 → run once → paste spreadsheet ID into GOBB_SHEET_ID in dashboard code</span>';
-    return;
-  }
-  try {
-    const sheets = ['DailyCampaign','Devices','Geo','Hourly','Keywords','SearchTerms','GA4Daily','GA4Sources','GA4Pages','GA4Realtime'];
-    const keys   = ['daily','devices','geo','hourly','keywords','searchTerms','ga4Daily','ga4Sources','ga4Pages','ga4Realtime'];
-    const results = await Promise.all(sheets.map(s => fetch(gbSheetUrl(s)).then(r=>r.text()).catch(()=>'')));
-    results.forEach((txt, i) => {
-      GB_RAW[keys[i]] = txt ? parseCSV(txt) : [];
-    });
-    gbDataLoaded = true;
-    gbApplyFilters();
-  } catch(e) {
-    console.error('[GoBB] Fetch failed:', e);
-  }
-}
-
-// ── GB DATE RANGE ──
-function gbSetRange(range) {
-  gbDateRange = range;
-  document.querySelectorAll('#gobbSection .dr-btn').forEach(b => b.classList.remove('active'));
-  event.target.classList.add('active');
-  gbApplyFilters();
-}
-
-function gbGetDates() {
-  const today = new Date();
-  const pad = n => String(n).padStart(2,'0');
-  const fmt = d => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
-  const toDate = fmt(today);
-  let fromDate;
-  if (gbDateRange === 'today') {
-    fromDate = toDate;
-  } else if (gbDateRange === 'yesterday') {
-    const y = new Date(today); y.setDate(y.getDate()-1); fromDate = fmt(y);
-  } else if (gbDateRange === 'mtd') {
-    fromDate = `${today.getFullYear()}-${pad(today.getMonth()+1)}-01`;
-  } else if (gbDateRange === 'lastmonth') {
-    const lm = new Date(today.getFullYear(), today.getMonth()-1, 1);
-    const lme = new Date(today.getFullYear(), today.getMonth(), 0);
-    return { from: fmt(lm), to: fmt(lme) };
   } else {
-    const days = parseInt(gbDateRange) || 30;
-    const d = new Date(today); d.setDate(d.getDate() - days + 1);
-    fromDate = fmt(d);
-  }
-  return { from: fromDate, to: toDate };
-}
-
-// ── GB FILTER + APPLY ──
-function gbApplyFilters() {
-  gbActiveCampaign = document.getElementById('gb-campaign-select')?.value || 'all';
-  const { from, to } = gbGetDates();
-  document.getElementById('gbPeriodBanner').textContent = `${from} → ${to}`;
-
-  const filterRow = r => {
-    const d = normDateStr(r.Date || r.date || '');
-    if (d && d < from) return false;
-    if (d && d > to)   return false;
-    if (gbActiveCampaign !== 'all' && (r.CampaignName||r.campaignName||'') !== gbActiveCampaign) return false;
-    return true;
-  };
-
-  const daily   = GB_RAW.daily.filter(filterRow);
-  const devices = GB_RAW.devices.filter(filterRow);
-  const geo     = GB_RAW.geo.filter(filterRow);
-  const hourly  = GB_RAW.hourly.filter(filterRow);
-  const keywords    = GB_RAW.keywords.filter(filterRow);
-  const searchTerms = GB_RAW.searchTerms.filter(filterRow);
-
-  const adsPanel = document.getElementById('gbAdsPanels');
-  if (adsPanel) adsPanel.style.display = daily.length ? '' : 'none';
-
-  gbRenderKPIs(daily);
-  gbRenderChart(daily);
-  gbRenderCampaignScorecard(daily);
-  gbRenderKeywords(keywords);
-  gbRenderSearchTerms(searchTerms);
-  gbRenderStates(geo);
-  gbRenderHourly(hourly);
-  gbRenderDevices(devices);
-
-  // GA4 — date-filtered daily/sources/pages, realtime always live
-  const ga4Daily = GB_RAW.ga4Daily.filter(r => {
-    const d = normDateStr(r.Date || '');
-    if (d && d < from) return false;
-    if (d && d > to)   return false;
-    return true;
-  });
-  const ga4Sources = GB_RAW.ga4Sources.filter(r => {
-    const d = normDateStr(r.Date || '');
-    if (d && d < from) return false;
-    if (d && d > to)   return false;
-    return true;
-  });
-  const ga4Pages = GB_RAW.ga4Pages.filter(r => {
-    const d = normDateStr(r.Date || '');
-    if (d && d < from) return false;
-    if (d && d > to)   return false;
-    return true;
-  });
-  gbRenderGA4(ga4Daily, ga4Sources, ga4Pages, GB_RAW.ga4Realtime);
-}
-
-// ── GB KPIs ──
-function gbRenderKPIs(daily) {
-  let spend=0, clicks=0, impressions=0, calls=0;
-  daily.forEach(r => {
-    spend       += pn(r.Cost);
-    clicks      += pn(r.Clicks);
-    impressions += pn(r.Impressions);
-    calls       += pn(r.Conversions);
-  });
-  const cpa = calls > 0 ? spend/calls : 0;
-  const ctr = impressions > 0 ? (clicks/impressions*100) : 0;
-  const cpc = clicks > 0 ? spend/clicks : 0;
-
-  const $v = id => document.getElementById(id);
-  $v('gbv-calls').textContent  = calls.toLocaleString();
-  $v('gbv-spend').textContent  = '$' + spend.toFixed(2);
-  $v('gbv-cpa').textContent    = calls > 0 ? '$' + cpa.toFixed(2) : '—';
-  $v('gbv-clicks').textContent = clicks.toLocaleString();
-  $v('gbv-ctr').textContent    = impressions > 0 ? ctr.toFixed(2)+'%' : '—';
-  $v('gbv-cpc').textContent    = clicks > 0 ? '$' + cpc.toFixed(2) : '—';
-
-  $v('gbs-calls').textContent  = calls === 0 ? 'No calls yet' : calls + ' qualified calls';
-  $v('gbs-spend').textContent  = daily.length + ' day(s) with spend';
-  $v('gbs-cpa').textContent    = cpa > 0 ? gbCpaLabel(cpa) + ' · ' + gbCpaColor(cpa).label : '—';
-  $v('gbs-clicks').textContent = impressions > 0 ? impressions.toLocaleString() + ' impressions' : '—';
-}
-
-// ── GB CPA TIER HELPERS ──
-function gbCpaColor(cpa) {
-  if (cpa === 0)                         return { color:'var(--muted)', label:'NO CALLS' };
-  if (cpa <= GB_CPA_TIERS.FANTASTIC)     return { color:'var(--green)', label:'FANTASTIC' };
-  if (cpa <= GB_CPA_TIERS.EXCELLENT)     return { color:'var(--accent)', label:'EXCELLENT' };
-  if (cpa <= GB_CPA_TIERS.GOOD)          return { color:'var(--amber)', label:'GOOD' };
-  return { color:'var(--red)', label:'POOR' };
-}
-function gbCpaLabel(cpa) {
-  return gbCpaColor(cpa).label;
-}
-
-// ── GB DAILY CHART ──
-function gbRenderChart(daily) {
-  // Aggregate by date
-  const byDate = {};
-  daily.forEach(r => {
-    const d = normDateStr(r.Date || '');
-    if (!d) return;
-    if (!byDate[d]) byDate[d] = { spend:0, calls:0, clicks:0 };
-    byDate[d].spend  += pn(r.Cost);
-    byDate[d].calls  += pn(r.Conversions);
-    byDate[d].clicks += pn(r.Clicks);
-  });
-  const dates  = Object.keys(byDate).sort();
-  const spends = dates.map(d => byDate[d].spend);
-  const calls  = dates.map(d => byDate[d].calls);
-  const labels = dates.map(d => d.slice(5)); // MM-DD
-
-  const ctx = document.getElementById('gbDailyChart')?.getContext('2d');
-  if (!ctx) return;
-  if (gbChartInst) { gbChartInst.destroy(); gbChartInst = null; }
-
-  gbChartInst = new Chart(ctx, {
-    data: {
-      labels,
-      datasets: [
-        { type:'bar',  label:'Spend ($)',  data:spends, backgroundColor:'rgba(56,189,248,0.35)', borderColor:'rgba(56,189,248,0.7)', borderWidth:1, yAxisID:'ySpend' },
-        { type:'line', label:'Calls',      data:calls,  borderColor:'#34d399', backgroundColor:'rgba(52,211,153,0.1)', borderWidth:2, pointRadius:3, pointBackgroundColor:'#34d399', yAxisID:'yCalls', tension:0.3, fill:true }
-      ]
-    },
-    options: {
-      responsive:true, maintainAspectRatio:false,
-      plugins:{ legend:{ labels:{ color:'#64748b', font:{ family:'Space Mono', size:9 } } } },
-      scales: {
-        x:{ ticks:{ color:'#64748b', font:{ family:'Space Mono', size:8 } }, grid:{ color:'rgba(255,255,255,0.04)' } },
-        ySpend:{ position:'left',  ticks:{ color:'#38bdf8', font:{ family:'Space Mono', size:8 }, callback:v=>'$'+v.toFixed(0) }, grid:{ color:'rgba(255,255,255,0.04)' } },
-        yCalls:{ position:'right', ticks:{ color:'#34d399', font:{ family:'Space Mono', size:8 } }, grid:{ display:false } }
-      }
-    }
-  });
-}
-
-// ── GB CAMPAIGN SCORECARD ──
-function gbRenderCampaignScorecard(daily) {
-  const byC = {};
-  daily.forEach(r => {
-    const c = r.CampaignName || '';
-    if (!c) return;
-    if (!byC[c]) byC[c] = { spend:0, calls:0, clicks:0, impressions:0 };
-    byC[c].spend       += pn(r.Cost);
-    byC[c].calls       += pn(r.Conversions);
-    byC[c].clicks      += pn(r.Clicks);
-    byC[c].impressions += pn(r.Impressions);
-  });
-
-  // Ensure all 3 campaigns appear even if no data yet
-  GB_CAMPAIGNS.forEach(c => { if (!byC[c]) byC[c] = { spend:0, calls:0, clicks:0, impressions:0 }; });
-
-  const el = document.getElementById('gbCampaignScorecard');
-  const shortName = c => c.replace('GoBB | ','').replace(' | Search','');
-
-  el.innerHTML = Object.entries(byC).map(([c, d]) => {
-    const cpa  = d.calls > 0 ? d.spend/d.calls : 0;
-    const ctr  = d.impressions > 0 ? (d.clicks/d.impressions*100) : 0;
-    const cpc  = d.clicks > 0 ? d.spend/d.clicks : 0;
-    const { color, label } = gbCpaColor(cpa);
-    // CTR quality signal
-    const ctrColor = ctr >= 10 ? 'var(--green)' : ctr >= 5 ? 'var(--accent)' : ctr > 0 ? 'var(--amber)' : 'var(--muted)';
-    const ctrLabel = ctr >= 10 ? 'STRONG' : ctr >= 5 ? 'GOOD' : ctr > 0 ? 'LOW' : '';
-    return `<div style="background:var(--surface2);border:1px solid var(--border2);border-radius:6px;padding:10px 12px">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
-        <div style="font-family:var(--mono);font-size:9px;color:var(--text);letter-spacing:1px">${shortName(c)}</div>
-        <div style="font-family:var(--mono);font-size:8px;color:var(--muted)">$${d.spend.toFixed(2)} spent</div>
-      </div>
-      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:8px">
-        <div style="text-align:center"><div style="font-family:var(--mono);font-size:13px;font-weight:700;color:var(--accent)">${d.clicks}</div><div style="font-family:var(--mono);font-size:7px;color:var(--muted)">CLICKS</div></div>
-        <div style="text-align:center"><div style="font-family:var(--mono);font-size:13px;font-weight:700;color:${ctrColor}">${ctr>0?ctr.toFixed(1)+'%':'—'}</div><div style="font-family:var(--mono);font-size:7px;color:var(--muted)">CTR</div></div>
-        <div style="text-align:center"><div style="font-family:var(--mono);font-size:13px;font-weight:700;color:var(--amber)">${cpc>0?'$'+cpc.toFixed(2):'—'}</div><div style="font-family:var(--mono);font-size:7px;color:var(--muted)">AVG CPC</div></div>
-        <div style="text-align:center"><div style="font-family:var(--mono);font-size:13px;font-weight:700;color:#34d399">${d.calls}</div><div style="font-family:var(--mono);font-size:7px;color:var(--muted)">CALLS</div></div>
-      </div>
-      <div style="display:flex;align-items:center;justify-content:space-between;padding-top:6px;border-top:1px solid var(--border2)">
-        <div style="font-family:var(--mono);font-size:8px;color:${ctrColor}">${ctrLabel ? ctrLabel+' CTR' : 'NO DATA YET'}</div>
-        <div style="font-family:var(--mono);font-size:8px;color:${cpa>0?color:'var(--muted)'}">${cpa>0?'$'+cpa.toFixed(0)+'/call':d.calls===0?'0 calls yet':''}</div>
-      </div>
-    </div>`;
-  }).join('');
-}
-
-// ── GB KEYWORDS ──
-function gbRenderKeywords(keywords) {
-  const byKw = {};
-  keywords.forEach(r => {
-    const k = (r.Keyword || r.Criteria || '').trim();
-    if (!k) return;
-    if (!byKw[k]) byKw[k] = { spend:0, calls:0, clicks:0, impressions:0, match:r.MatchType||r.KeywordMatchType||'' };
-    byKw[k].spend       += pn(r.Cost);
-    byKw[k].calls       += pn(r.Conversions);
-    byKw[k].clicks      += pn(r.Clicks);
-    byKw[k].impressions += pn(r.Impressions);
-  });
-  const sorted = Object.entries(byKw).sort((a,b) => b[1].spend - a[1].spend).slice(0,25);
-  const el = document.getElementById('gbKeywordList');
-  document.getElementById('gbKwCount').textContent = sorted.length + ' keywords';
-  if (!sorted.length) { el.innerHTML = '<div style="font-family:var(--mono);font-size:10px;color:var(--muted);text-align:center;padding:20px 0">Awaiting data...</div>'; return; }
-
-  el.innerHTML = sorted.map(([kw, d]) => {
-    const cpa = d.calls > 0 ? d.spend/d.calls : 0;
-    const { color } = gbCpaColor(cpa);
-    return `<div style="display:flex;align-items:center;justify-content:space-between;padding:5px 8px;background:var(--surface2);border-radius:4px;gap:8px">
-      <div style="font-size:11px;color:var(--text);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${kw} <span style="font-family:var(--mono);font-size:8px;color:var(--muted)">${d.match}</span></div>
-      <div style="display:flex;gap:10px;flex-shrink:0;font-family:var(--mono);font-size:10px">
-        <span style="color:var(--accent)">$${d.spend.toFixed(0)}</span>
-        <span style="color:#34d399">${d.calls}c</span>
-        <span style="color:${cpa>0?color:'var(--muted)'}">${cpa>0?'$'+cpa.toFixed(0):'—'}</span>
-      </div>
-    </div>`;
-  }).join('');
-}
-
-// ── GB SEARCH TERMS ──
-function gbRenderSearchTerms(searchTerms) {
-  const byST = {};
-  searchTerms.forEach(r => {
-    const k = (r.SearchTerm || r.Query || '').trim();
-    if (!k) return;
-    if (!byST[k]) byST[k] = { spend:0, calls:0, clicks:0 };
-    byST[k].spend  += pn(r.Cost);
-    byST[k].calls  += pn(r.Conversions);
-    byST[k].clicks += pn(r.Clicks);
-  });
-  const sorted = Object.entries(byST).sort((a,b) => b[1].spend - a[1].spend).slice(0,25);
-  const el = document.getElementById('gbSearchTermList');
-  document.getElementById('gbStCount').textContent = sorted.length + ' terms';
-  if (!sorted.length) { el.innerHTML = '<div style="font-family:var(--mono);font-size:10px;color:var(--muted);text-align:center;padding:20px 0">Awaiting data...</div>'; return; }
-
-  el.innerHTML = sorted.map(([term, d]) => {
-    const cpa = d.calls > 0 ? d.spend/d.calls : 0;
-    const { color } = gbCpaColor(cpa);
-    return `<div style="display:flex;align-items:center;justify-content:space-between;padding:5px 8px;background:var(--surface2);border-radius:4px;gap:8px">
-      <div style="font-size:11px;color:var(--text);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${term}</div>
-      <div style="display:flex;gap:10px;flex-shrink:0;font-family:var(--mono);font-size:10px">
-        <span style="color:var(--accent)">$${d.spend.toFixed(0)}</span>
-        <span style="color:#34d399">${d.calls}c</span>
-        <span style="color:${cpa>0?color:'var(--muted)'}">${cpa>0?'$'+cpa.toFixed(0):'—'}</span>
-      </div>
-    </div>`;
-  }).join('');
-}
-
-// ── GB STATES ──
-function gbRenderStates(geo) {
-  const STATE_ABBRS = {
-    'Alabama':'AL','Alaska':'AK','Arizona':'AZ','Arkansas':'AR','California':'CA',
-    'Colorado':'CO','Connecticut':'CT','Delaware':'DE','Florida':'FL','Georgia':'GA',
-    'Hawaii':'HI','Idaho':'ID','Illinois':'IL','Indiana':'IN','Iowa':'IA','Kansas':'KS',
-    'Kentucky':'KY','Louisiana':'LA','Maine':'ME','Maryland':'MD','Massachusetts':'MA',
-    'Michigan':'MI','Minnesota':'MN','Mississippi':'MS','Missouri':'MO','Montana':'MT',
-    'Nebraska':'NE','Nevada':'NV','New Hampshire':'NH','New Jersey':'NJ','New Mexico':'NM',
-    'New York':'NY','North Carolina':'NC','North Dakota':'ND','Ohio':'OH','Oklahoma':'OK',
-    'Oregon':'OR','Pennsylvania':'PA','Rhode Island':'RI','South Carolina':'SC',
-    'South Dakota':'SD','Tennessee':'TN','Texas':'TX','Utah':'UT','Vermont':'VT',
-    'Virginia':'VA','Washington':'WA','West Virginia':'WV','Wisconsin':'WI','Wyoming':'WY',
-    'Washington DC':'DC','Puerto Rico':'PR'
-  };
-  const byState = {};
-  geo.forEach(r => {
-    const raw = (r.Region || '').replace(/, United States/,'').trim();
-    const abbr = STATE_ABBRS[raw] || raw.substring(0,2).toUpperCase();
-    if (!abbr || abbr.length > 3) return;
-    if (!byState[abbr]) byState[abbr] = { spend:0, calls:0 };
-    byState[abbr].spend += pn(r.Cost);
-    byState[abbr].calls += pn(r.Conversions);
-  });
-
-  const states = Object.entries(byState).map(([abbr,d]) => ({
-    abbr, ...d, cpa: d.calls > 0 ? d.spend/d.calls : (d.spend > 0 ? Infinity : 0)
-  })).filter(d => d.spend > 0);
-
-  const best  = [...states].filter(d=>d.calls>0).sort((a,b)=>a.cpa-b.cpa).slice(0,10);
-  const worst = [...states].sort((a,b)=>b.spend-a.spend).filter(d=>d.cpa===Infinity||d.cpa>GB_CPA_TIERS.GOOD).slice(0,10);
-
-  const makeRow = (d, showCpa) => {
-    const { color, label } = gbCpaColor(d.cpa);
-    return `<div style="display:flex;align-items:center;gap:8px;padding:4px 6px;background:var(--surface2);border-radius:4px">
-      <div style="font-family:var(--mono);font-size:13px;font-weight:700;color:${color};width:28px">${d.abbr}</div>
-      <div style="flex:1;font-family:var(--mono);font-size:9px;color:var(--muted)">${d.calls}c · $${d.spend.toFixed(0)}</div>
-      <div style="font-family:var(--mono);font-size:9px;color:${color}">${showCpa&&d.calls>0?'$'+d.cpa.toFixed(0):d.cpa===Infinity?'0c':''}</div>
-    </div>`;
-  };
-
-  const bestEl  = document.getElementById('gbStateBest');
-  const worstEl = document.getElementById('gbStateWorst');
-  bestEl.innerHTML  = best.length  ? best.map(d=>makeRow(d,true)).join('')  : '<div style="font-family:var(--mono);font-size:10px;color:var(--muted);text-align:center;padding:10px">No calls yet</div>';
-  worstEl.innerHTML = worst.length ? worst.map(d=>makeRow(d,false)).join('') : '<div style="font-family:var(--mono);font-size:10px;color:var(--muted);text-align:center;padding:10px">No waste states</div>';
-}
-
-// ── GB HOURLY HEATMAP ──
-function gbRenderHourly(hourly) {
-  const byHour = {};
-  for (let h=0;h<24;h++) byHour[h]={calls:0,spend:0};
-  hourly.forEach(r => {
-    const h = parseInt(r.HourOfDay)||0;
-    byHour[h].calls += pn(r.Conversions);
-    byHour[h].spend += pn(r.Cost);
-  });
-  const maxCalls = Math.max(...Object.values(byHour).map(h=>h.calls), 1);
-  const fmt12 = h => h===0?'12A':h<12?h+'A':h===12?'12P':(h-12)+'P';
-
-  const el = document.getElementById('gbHourlyHeatmap');
-  el.innerHTML = Array.from({length:24},(_,h)=>{
-    const d = byHour[h];
-    const intensity = d.calls/maxCalls;
-    const bg = d.calls > 0
-      ? `rgba(52,211,153,${0.08+intensity*0.7})`
-      : 'rgba(255,255,255,0.03)';
-    return `<div title="Hour ${h}: ${d.calls} calls, $${d.spend.toFixed(2)}" style="background:${bg};border-radius:3px;padding:5px 2px;text-align:center;cursor:default">
-      <div style="font-family:var(--mono);font-size:8px;color:${d.calls>0?'#34d399':'var(--muted)'};">${d.calls>0?d.calls:'·'}</div>
-      <div style="font-family:var(--mono);font-size:7px;color:var(--muted);margin-top:2px">${fmt12(h)}</div>
-    </div>`;
-  }).join('');
-}
-
-// ── GB DEVICES ──
-function gbRenderDevices(devices) {
-  const byDev = {};
-  devices.forEach(r => {
-    let k = (r.Device||'').toLowerCase();
-    k = k.includes('mobile')?'Mobile':k.includes('computer')?'Desktop':k.includes('tablet')?'Tablet':'Other';
-    if (k==='Other') return;
-    if (!byDev[k]) byDev[k]={spend:0,calls:0,clicks:0,impressions:0};
-    byDev[k].spend       += pn(r.Cost);
-    byDev[k].calls       += pn(r.Conversions);
-    byDev[k].clicks      += pn(r.Clicks);
-    byDev[k].impressions += pn(r.Impressions);
-  });
-
-  const icons = {Mobile:'📱',Desktop:'🖥',Tablet:'📲'};
-  const colors = {Mobile:'rgba(56,189,248,0.9)',Desktop:'rgba(52,211,153,0.9)',Tablet:'rgba(129,140,248,0.9)'};
-  const el = document.getElementById('gbDeviceCards');
-  const devs = ['Mobile','Desktop','Tablet'];
-
-  el.innerHTML = devs.map(dev => {
-    const d = byDev[dev] || {spend:0,calls:0,clicks:0,impressions:0};
-    const cpa = d.calls>0?d.spend/d.calls:0;
-    const { color } = gbCpaColor(cpa);
-    return `<div style="background:var(--surface2);border:1px solid var(--border2);border-radius:6px;padding:14px">
-      <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
-        <span style="font-size:18px">${icons[dev]}</span>
-        <div style="font-family:var(--mono);font-size:10px;color:var(--text);letter-spacing:1px">${dev.toUpperCase()}</div>
-        ${cpa>0?`<div style="margin-left:auto;background:var(--surface);border:1px solid ${color};border-radius:3px;padding:2px 6px;font-family:var(--mono);font-size:8px;color:${color}">${gbCpaLabel(cpa)}</div>`:''}
-      </div>
-      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">
-        <div style="text-align:center"><div style="font-family:var(--mono);font-size:16px;font-weight:700;color:${cpa>0?color:'var(--muted)'}">${cpa>0?'$'+cpa.toFixed(0):'—'}</div><div style="font-family:var(--mono);font-size:7px;color:var(--muted)">COST/CALL</div></div>
-        <div style="text-align:center"><div style="font-family:var(--mono);font-size:16px;font-weight:700;color:#34d399">${d.calls}</div><div style="font-family:var(--mono);font-size:7px;color:var(--muted)">CALLS</div></div>
-        <div style="text-align:center"><div style="font-family:var(--mono);font-size:16px;font-weight:700;color:var(--accent)">$${d.spend.toFixed(0)}</div><div style="font-family:var(--mono);font-size:7px;color:var(--muted)">SPEND</div></div>
-      </div>
-    </div>`;
-  }).join('');
-}
-
-// ── GB GA4 WEBSITE ANALYTICS ──
-function gbRenderGA4(daily, sources, pages, realtime) {
-  const $v = id => document.getElementById(id);
-
-  // Realtime — row with Screen === 'TOTAL' holds the active user count
-  const rtRow = (realtime || []).find(r => (r.Screen || '') === 'TOTAL');
-  const activeNow = rtRow ? pn(rtRow.ActiveUsers || 0) : null;
-  if ($v('ga4-active')) $v('ga4-active').textContent = activeNow !== null ? activeNow : '—';
-  if ($v('ga4UpdatedAt') && rtRow && rtRow.UpdatedAt) {
-    try {
-      const d = new Date(rtRow.UpdatedAt);
-      $v('ga4UpdatedAt').textContent = 'Updated ' + d.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
-    } catch(e) {}
-  }
-
-  // Daily aggregates
-  let sessions=0, engaged=0, users=0, newUsers=0, durSum=0, durRows=0;
-  daily.forEach(r => {
-    sessions  += pn(r.Sessions  || 0);
-    engaged   += pn(r.EngagedSessions || 0);
-    users     += pn(r.Users     || 0);
-    newUsers  += pn(r.NewUsers  || 0);
-    const dur  = pn(r.AvgSessionDuration || 0);
-    if (dur > 0) { durSum += dur; durRows++; }
-  });
-  const engRate = sessions > 0 ? (engaged / sessions * 100) : 0;
-  const avgDur  = durRows  > 0 ? durSum / durRows : 0;
-
-  if ($v('ga4-sessions'))   $v('ga4-sessions').textContent   = sessions ? sessions.toLocaleString() : '—';
-  if ($v('ga4-engagement')) $v('ga4-engagement').textContent = sessions ? engRate.toFixed(1) + '%'  : '—';
-  if ($v('ga4-users'))      $v('ga4-users').textContent      = users    ? users.toLocaleString()    : '—';
-  if ($v('ga4-newusers'))   $v('ga4-newusers').textContent   = newUsers ? newUsers.toLocaleString() : '—';
-  if ($v('ga4-duration'))   $v('ga4-duration').textContent   = avgDur   ? gbFmtDur(avgDur)          : '—';
-  if ($v('ga4s-sessions'))  $v('ga4s-sessions').textContent  = sessions ? 'total sessions'          : 'no data yet';
-  if ($v('ga4s-users'))     $v('ga4s-users').textContent     = users && newUsers
-    ? Math.round(newUsers/users*100) + '% new'
-    : 'total visitors';
-
-  // Traffic sources bar chart
-  const srcAgg = {};
-  sources.forEach(r => {
-    const ch = r.Channel || 'Unknown';
-    srcAgg[ch] = (srcAgg[ch] || 0) + pn(r.Sessions || 0);
-  });
-  const srcTotal  = Object.values(srcAgg).reduce((a,b)=>a+b,0);
-  const srcSorted = Object.entries(srcAgg).sort((a,b)=>b[1]-a[1]);
-  const srcEl = $v('ga4SourcesList');
-  if (srcEl) {
-    if (!srcSorted.length) {
-      srcEl.innerHTML = '<div style="font-family:var(--mono);font-size:10px;color:var(--muted);text-align:center;padding:24px 0">No data yet — script runs hourly</div>';
-    } else {
-      const CH_COLOR = {
-        'Paid Search':'#38bdf8','Organic Search':'#34d399','Direct':'#a78bfa',
-        'Referral':'#f59e0b','Organic Social':'#f472b6','Email':'#6ee7b7',
-        'Paid Social':'#fb7185','Unassigned':'#6b7280','(Other)':'#6b7280'
-      };
-      srcEl.innerHTML = srcSorted.map(([ch, cnt]) => {
-        const pct   = srcTotal > 0 ? (cnt / srcTotal * 100) : 0;
-        const color = CH_COLOR[ch] || '#6b7280';
-        return `<div style="margin-bottom:10px">
-          <div style="display:flex;justify-content:space-between;align-items:baseline;font-family:var(--mono);font-size:10px;margin-bottom:5px">
-            <span style="color:${color};letter-spacing:.5px">${ch}</span>
-            <span style="color:var(--text)">${cnt.toLocaleString()} <span style="color:var(--muted);font-size:9px">${pct.toFixed(1)}%</span></span>
-          </div>
-          <div style="height:4px;background:var(--border2);border-radius:2px">
-            <div style="height:4px;background:${color};border-radius:2px;width:${Math.min(pct,100).toFixed(1)}%;transition:width .4s"></div>
-          </div>
-        </div>`;
-      }).join('');
-    }
-  }
-
-  // Top pages
-  const pageAgg = {};
-  pages.forEach(r => {
-    const path = r.PagePath || '/';
-    if (!pageAgg[path]) pageAgg[path] = { sessions:0, engaged:0 };
-    pageAgg[path].sessions += pn(r.Sessions || 0);
-    pageAgg[path].engaged  += pn(r.EngagedSessions || 0);
-  });
-  const pageSorted = Object.entries(pageAgg).sort((a,b)=>b[1].sessions-a[1].sessions).slice(0,6);
-  const pageMax    = pageSorted.length ? pageSorted[0][1].sessions : 1;
-  const pageEl = $v('ga4PagesList');
-  if (pageEl) {
-    if (!pageSorted.length) {
-      pageEl.innerHTML = '<div style="font-family:var(--mono);font-size:10px;color:var(--muted);text-align:center;padding:24px 0">No data yet — script runs hourly</div>';
-    } else {
-      pageEl.innerHTML = pageSorted.map(([path, d]) => {
-        const engPct = d.sessions > 0 ? (d.engaged / d.sessions * 100).toFixed(0) : 0;
-        const barPct = pageMax   > 0 ? (d.sessions / pageMax * 100).toFixed(1) : 0;
-        const label  = path === '/' ? '/ (home)' : (path.length > 26 ? path.slice(0,26)+'…' : path);
-        return `<div style="margin-bottom:10px">
-          <div style="display:flex;justify-content:space-between;align-items:baseline;font-family:var(--mono);font-size:10px;margin-bottom:5px">
-            <span style="color:#34d399">${label}</span>
-            <span style="color:var(--text)">${d.sessions.toLocaleString()} <span style="color:var(--muted);font-size:9px">${engPct}% eng</span></span>
-          </div>
-          <div style="height:3px;background:var(--border2);border-radius:2px">
-            <div style="height:3px;background:#34d399;border-radius:2px;width:${barPct}%;transition:width .4s"></div>
-          </div>
-        </div>`;
-      }).join('');
-    }
+    assuranceSection.style.display = '';
+    tabA.classList.add('active');
   }
 }
-
-function gbFmtDur(secs) {
-  secs = Math.round(secs);
-  const m = Math.floor(secs / 60);
-  const s = secs % 60;
-  return m > 0 ? m + 'm ' + s + 's' : s + 's';
-}
-
-// ── MAIN INIT ── //
-async function init() {
-  // Update loader message then hide after data loads (or 20s max)
-  const loaderMsgs = ['LOADING ASSURANCE DATA...', 'LOADING GOOGLE ADS DATA...', 'ALMOST THERE...'];
-  let mi = 0;
-  const loaderInterval = setInterval(() => {
-    if ($('loaderSub') && mi < loaderMsgs.length) $('loaderSub').textContent = loaderMsgs[mi++];
-  }, 2500);
-  const hideLoader = () => { clearInterval(loaderInterval); $('loadingOverlay').classList.add('hidden'); };
-  setTimeout(hideLoader, 20000); // hide after 20s regardless
-
-  // Fetch all live data
-  try {
-    const { loaded, failed } = await fetchAllSheets();
-    console.log('[MC] Loaded:', loaded, '| Failed:', failed);
-    hideLoader(); // hide as soon as phase 1 data is back
-
-    if (RAW.daily.length > 0) {
-      $('errorBanner').style.display = 'none';
-      $('liveStatus').textContent = 'LIVE · GOOGLE ADS';
-      $('liveStatus').style.color = 'var(--green)';
-      $('dataSource').textContent = 'SOURCE: GOOGLE SHEETS · LAST: ' + new Date().toLocaleTimeString();
-      applyFilters();
-    } else if (RAW.bgoa.length > 0) {
-      hideLoader();
-      $('errorBanner').style.display = 'block';
-      $('errorMsg').innerHTML = '⚠ SCRIPT IS RUNNING BUT SHEET IS UNPUBLISHED — Script ran OK but published CSV is inaccessible. Fix: open <a href="https://docs.google.com/spreadsheets/d/1ZLzpR9oGk5y2amRr0jS4QPVIIzC44m1VfBRIxDK64Vg/edit" target="_blank" style="color:var(--amber)">the Script spreadsheet</a>, go to File → Share → Publish to web, and re-publish all tabs as CSV. Then click ↻ RETRY.';
-      $('liveStatus').textContent = 'PARTIAL · ASSURANCE ONLY';
-      $('liveStatus').style.color = 'var(--amber)';
-    } else {
-      hideLoader();
-      const failList = failed.filter(k => ['daily','bgoa'].includes(k)).join(', ').toUpperCase() || 'all';
-      $('errorBanner').style.display = 'block';
-      $('errorMsg').textContent = `⚠ ALL DATA FEEDS FAILED (${failList}) — Press F12, go to Console tab, and share the red errors with your developer. Click RETRY to try again.`;
-      $('liveStatus').textContent = 'NO DATA';
-      $('liveStatus').style.color = 'var(--red)';
-    }
-  } catch(e) {
-    hideLoader();
-    console.error('[MC] Init fetch failed:', e);
-    $('errorBanner').style.display = 'block';
-    $('errorMsg').textContent = '⚠ CONNECTION ERROR — ' + (e.message || 'unknown error') + '. Click RETRY.';
-    $('liveStatus').textContent = 'ERROR';
-    $('liveStatus').style.color = 'var(--red)';
-  }
-
-  // Auto-refresh every 5 minutes
-  setInterval(async () => {
-    try {
-      const { loaded } = await fetchAllSheets();
-      if (RAW.daily.length > 0) {
-        applyFilters();
-        $('errorBanner').style.display = 'none';
-        $('liveStatus').textContent = 'LIVE · GOOGLE ADS';
-        $('liveStatus').style.color = 'var(--green)';
-        $('dataSource').textContent = 'SOURCE: GOOGLE SHEETS · LAST: ' + new Date().toLocaleTimeString();
-      }
-    } catch(e) { console.warn('[MC] Refresh failed:', e); }
-  }, 5 * 60 * 1000);
-}
-
-init();
 
 // ════════════════════════════════════════════════════════════
 // ASSURANCE GO2 — INDEPENDENT DASHBOARD
@@ -4173,9 +3337,9 @@ function go2RenderChart(daily) {
     },
     options: {
       responsive:true, maintainAspectRatio:false,
-      plugins:{ legend:{ labels:{ color:'#64748b', font:{ family:'Space Mono', size:9 } } } },
+      plugins:{ legend:{ labels:{ color:'#a7b4c9', font:{ family:'Space Mono', size:9 } } } },
       scales: {
-        x:{ ticks:{ color:'#64748b', font:{ family:'Space Mono', size:8 } }, grid:{ color:'rgba(255,255,255,0.04)' } },
+        x:{ ticks:{ color:'#a7b4c9', font:{ family:'Space Mono', size:8 } }, grid:{ color:'rgba(255,255,255,0.04)' } },
         ySpend:{ position:'left',  ticks:{ color:'#f97316', font:{ family:'Space Mono', size:8 }, callback:v=>'$'+v.toFixed(0) }, grid:{ color:'rgba(255,255,255,0.04)' } },
         yApps: { position:'right', ticks:{ color:'#fdba74', font:{ family:'Space Mono', size:8 } }, grid:{ display:false } }
       }
