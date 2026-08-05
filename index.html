@@ -3162,6 +3162,69 @@ function switchProject(proj) {
   }
 }
 
+// ── MAIN INIT ── //
+async function init() {
+  // Update loader message then hide after data loads (or 20s max)
+  const loaderMsgs = ['LOADING ASSURANCE DATA...', 'LOADING GOOGLE ADS DATA...', 'ALMOST THERE...'];
+  let mi = 0;
+  const loaderInterval = setInterval(() => {
+    if ($('loaderSub') && mi < loaderMsgs.length) $('loaderSub').textContent = loaderMsgs[mi++];
+  }, 2500);
+  const hideLoader = () => { clearInterval(loaderInterval); $('loadingOverlay').classList.add('hidden'); };
+  setTimeout(hideLoader, 20000); // hide after 20s regardless
+
+  // Fetch all live data
+  try {
+    const { loaded, failed } = await fetchAllSheets();
+    console.log('[MC] Loaded:', loaded, '| Failed:', failed);
+    hideLoader(); // hide as soon as phase 1 data is back
+
+    if (RAW.daily.length > 0) {
+      $('errorBanner').style.display = 'none';
+      $('liveStatus').textContent = 'LIVE · GOOGLE ADS';
+      $('liveStatus').style.color = 'var(--green)';
+      $('dataSource').textContent = 'SOURCE: GOOGLE SHEETS · LAST: ' + new Date().toLocaleTimeString();
+      applyFilters();
+    } else if (RAW.bgoa.length > 0) {
+      hideLoader();
+      $('errorBanner').style.display = 'block';
+      $('errorMsg').innerHTML = '⚠ SCRIPT IS RUNNING BUT SHEET IS UNPUBLISHED — Script ran OK but published CSV is inaccessible. Fix: open <a href="https://docs.google.com/spreadsheets/d/1ZLzpR9oGk5y2amRr0jS4QPVIIzC44m1VfBRIxDK64Vg/edit" target="_blank" style="color:var(--amber)">the Script spreadsheet</a>, go to File → Share → Publish to web, and re-publish all tabs as CSV. Then click ↻ RETRY.';
+      $('liveStatus').textContent = 'PARTIAL · ASSURANCE ONLY';
+      $('liveStatus').style.color = 'var(--amber)';
+    } else {
+      hideLoader();
+      const failList = failed.filter(k => ['daily','bgoa'].includes(k)).join(', ').toUpperCase() || 'all';
+      $('errorBanner').style.display = 'block';
+      $('errorMsg').textContent = `⚠ ALL DATA FEEDS FAILED (${failList}) — Press F12, go to Console tab, and share the red errors with your developer. Click RETRY to try again.`;
+      $('liveStatus').textContent = 'NO DATA';
+      $('liveStatus').style.color = 'var(--red)';
+    }
+  } catch(e) {
+    hideLoader();
+    console.error('[MC] Init fetch failed:', e);
+    $('errorBanner').style.display = 'block';
+    $('errorMsg').textContent = '⚠ CONNECTION ERROR — ' + (e.message || 'unknown error') + '. Click RETRY.';
+    $('liveStatus').textContent = 'ERROR';
+    $('liveStatus').style.color = 'var(--red)';
+  }
+
+  // Auto-refresh every 5 minutes
+  setInterval(async () => {
+    try {
+      const { loaded } = await fetchAllSheets();
+      if (RAW.daily.length > 0) {
+        applyFilters();
+        $('errorBanner').style.display = 'none';
+        $('liveStatus').textContent = 'LIVE · GOOGLE ADS';
+        $('liveStatus').style.color = 'var(--green)';
+        $('dataSource').textContent = 'SOURCE: GOOGLE SHEETS · LAST: ' + new Date().toLocaleTimeString();
+      }
+    } catch(e) { console.warn('[MC] Refresh failed:', e); }
+  }, 5 * 60 * 1000);
+}
+
+init();
+
 // ════════════════════════════════════════════════════════════
 // ASSURANCE GO2 — INDEPENDENT DASHBOARD
 // Account: 275-817-6694
