@@ -2032,15 +2032,21 @@ function renderAssuranceIntelligence() {
   // says PAID; e.g. May 2026 ($183,000 / 7,320 acts) flows in automatically once marked
   // PAID in the sheet — no code change needed for future months.
   const _LA = getLifelineActuals();
-  const confirmedPaid = {};  // month -> gross $, only for PAID months
+  const confirmedPaid = {};  // month -> $ paid, only for PAID months
   const confirmedActs = {};  // month -> Lifeline settled activation count
   Object.entries(_LA).forEach(([mk, v]) => {
     if (v.paid && v.gross > 0) confirmedPaid[mk] = v.gross;
     if (v.acts > 0) confirmedActs[mk] = v.acts;
   });
+  // ACTUAL amount received when Assurance pays LESS than gross. Per contract they don't pay for
+  // activations that CANCEL within 14 days; they began enforcing this in 2026. Overrides that
+  // month's paid $ + forces PAID status. July 2026: received $379,375 vs $443,900 gross (~14.5%
+  // clawback). Add each month here as it's paid: '2026-08': <actual $>, etc.
+  const PAID_ACTUAL = { '2026-07': 379375, '2026-08': 563425 };
+  Object.entries(PAID_ACTUAL).forEach(([mk, amt]) => { confirmedPaid[mk] = amt; });
   // Final locked CPAs for closed/paid months — use these, never recalculate from live data
   const confirmedCPA  = { '2025-12': 2.83, '2026-01': 3.21,  '2026-02': 12.38, '2026-03': 11.35 };
-  const monthNames = { '2025-12':'DEC 2025','2026-01':'JAN 2026','2026-02':'FEB 2026','2026-03':'MAR 2026','2026-04':'APR 2026','2026-05':'MAY 2026' };
+  const monthNames = { '2025-12':'DEC 2025','2026-01':'JAN 2026','2026-02':'FEB 2026','2026-03':'MAR 2026','2026-04':'APR 2026','2026-05':'MAY 2026','2026-06':'JUN 2026','2026-07':'JUL 2026','2026-08':'AUG 2026','2026-09':'SEP 2026' };
 
   $('monthlyActuals').innerHTML = `<table class="intel-table">
     <thead><tr>
@@ -2091,7 +2097,7 @@ function renderAssuranceIntelligence() {
   // ── Business Health KPIs ──
   const totalSpend      = rows.reduce((s,r) => s+r.spend, 0);
   const totalActs       = Object.values(confirmedActs).reduce((s,v)=>s+v, 0);
-  const totalRevConfirm = Object.values(_LA).filter(m=>m.paid).reduce((s,m)=>s+m.gross,0); // live: sum of ALL paid gross
+  const totalRevConfirm = Object.values(confirmedPaid).reduce((s,v)=>s+v,0); // sum of confirmed-paid $ (actual where overridden by PAID_ACTUAL, else gross)
   const totalRevBGOA    = rows.reduce((s,r)=>s+r.revenue, 0);
   const netToDate       = totalRevBGOA - totalSpend;
   const roi             = totalSpend > 0 ? (netToDate/totalSpend*100) : 0;
