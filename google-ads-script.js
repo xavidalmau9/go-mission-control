@@ -1,6 +1,9 @@
 /**
  * Mission Control Data Push
- * GO Advertising · Assurance Wireless / BGOA Partner Dashboard
+ * GO Advertising · Assurance Wireless
+ * Legacy Google Ads account for partner code BGOA (earlier code).
+ * Current partner code is BGOC — that account is pushed by go2-ads-script.js.
+ * This script is not Meta.
  *
  * Pushes Google Ads performance data to Google Sheets every hour.
  * Spreadsheet ID: 1ZLzpR9oGk5y2amRr0jS4QPVIIzC44m1VfBRIxDK64Vg

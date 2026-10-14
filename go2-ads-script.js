@@ -1,6 +1,8 @@
 /**
- * Mission Control Data Push — Assurance Wireless GO2
+ * Mission Control Data Push — Google Ads partner code BGOC
  * GO Advertising · Account: 275-817-6694
+ * This is the current Google Ads code (/partner/BGOC). It is not Meta.
+ * The legacy BGOA account is pushed by google-ads-script.js.
  *
  * Pushes Google Ads performance data to Google Sheets every hour.
  * Spreadsheet ID: 1OwGn3f_Qz1Sd8QOq18adpf-SZDYfNGpnf9gEHsil6aI

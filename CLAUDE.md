@@ -1,6 +1,6 @@
 # Mission Control Dashboard — Claude Project Instructions
-**GO Advertising · Assurance Wireless / BGOA Partner Dashboard**
-**Last updated: June 8, 2026 (session 11)**
+**GO Advertising · Assurance Wireless · Google Ads (BGOC current, BGOA legacy)**
+**Last updated: October 14, 2026**
 
 > This file is read by Claude at the start of every session. Update it whenever significant decisions are made.
 
@@ -8,7 +8,19 @@
 
 ## What This Project Is
 
-A single-page real-time performance dashboard (`index.html`) for tracking Google Ads + Meta Ads campaigns promoting Assurance Wireless (Lifeline phone program). The dashboard auto-refreshes every 5 minutes from Google Sheets CSVs.
+A single-page real-time performance dashboard (`index.html`) for tracking Google Ads campaigns promoting Assurance Wireless (Lifeline phone program). The dashboard auto-refreshes every 5 minutes from Google Sheets CSVs.
+
+**Partner codes (October 14, 2026 — supersedes every older “BGOC = Meta” note below):**
+- **BGOC is the current Google Ads partner code.** goadvertising.io is switching links to `/partner/BGOC`. It is not Meta. Remove any Meta label, legend, or channel split tied to BGOC.
+- **BGOA is the earlier Google Ads partner code.** Keep its history visible. Do not delete the `bgoa` fetch or the tracking tab.
+- **Two Google Ads accounts, two cost pools. Do not divide one account’s cost by the other code.**
+  - Legacy account (`google-ads-script.js` → spreadsheet `1ZLzpR9o…` DailyCampaign, `RAW.daily`) matches the **BGOA** sheet’s Ad Spend exactly. Campaigns such as “XD Assurance Wireless - Search”.
+  - BGOC account (`go2-ads-script.js` → spreadsheet `1OwGn3f…`, account **275-817-6694**, campaign “BGOC | Brand Search | Manual”) matches the **BGOC** sheet’s Ad Spend. It is **not** inside `RAW.daily`.
+- **Headline spend** = `RAW.daily` + BGOC Google cost. BGOC cost prefers `RAW.go2daily` for a date the script exported, otherwise the BGOC tracking tab. Never add the BGOA tab’s Ad Spend on top of `RAW.daily` (same dollars).
+- **Headline activations and revenue** = de-duped BGOA + de-duped BGOC. **Applications** = legacy DailyCampaign conversions + BGOC Google conversions (GO2, else the tab’s “GOOGLE Applications” column). Do not also add the BGOA sheet’s Google Applications.
+- **Activation CPA** = that combined Google spend ÷ combined activations. Each code’s own card uses only its own spend and its own activations.
+- **BGOC dates are `M/D/YY`.** `parseBGOARow` normalizes them through `normDateStr`. Do not require `YYYY-MM-DD` only, or almost every BGOC row is dropped.
+- The Lifeline projections sheet (`getLifelineActuals`) is the payment ledger and does **not** consistently include BGOC (October 2026 acts `1,556` and spend `$35,703.49` match BGOA only; June–July spend does include BGOC). Hero, growth chart, and trajectory keep reading that ledger. `officialGoogleActs()` adds BGOC onto a month only when the ledger’s activation gap does not already cover the BGOC count.
 
 - **Live URL:** https://xavidalmau9.github.io/go-mission-control/
 - **GitHub:** https://github.com/xavidalmau9/go-mission-control
@@ -46,7 +58,7 @@ Bots made the activation-rate percentage unreliable, so the dashboard must **nev
 ## Business Context
 
 - **Payout:** $25.00 per confirmed activation (fixed by Assurance Wireless)
-- **Campaigns:** BGOA = Google Ads (goadvertising9@gmail.com) · BGOC = Meta Ads
+- **Campaigns:** BGOC = current Google Ads code (account 275-817-6694) · BGOA = earlier Google Ads code (goadvertising9@gmail.com). There is no Meta channel.
 - **Reporting lag:** Assurance reports activations T+1 — today's count is never available same day
 - **30-day cookie window:** Sundays with $0 Google spend still generate activations (attributed from earlier clicks)
 - **Activation rate lag:** Daily activation data takes ~5 days to fully settle
@@ -133,7 +145,7 @@ Spreadsheet: `1Yr0gtdyf5x0TOjjzrGhCYRjZFjxPehKCBJwwlXorCxw`
 | Key | Sheet | What it contains |
 |-----|-------|-----------------|
 | `bgoa` | ad spend BGOA | Daily Google Ads spend + Assurance confirmed activations |
-| `bgoc` | ad spend BGOC | Daily Meta Ads spend + Assurance confirmed activations |
+| `bgoc` | ad spend BGOC | Current Google Ads code. Daily BGOC-account spend + Assurance confirmed activations. Not Meta. |
 | `monthly` | monthly | Monthly summary |
 | `gva` | google vs assurance | Comparison of Google conv vs Assurance activations |
 
@@ -666,4 +678,4 @@ GO2 Google Ads script  →  1OwGn3f… (DailyCampaign tab)        [hourly; Conve
 
 - **Budget/bid change history** — user wants to see daily change log. Requires Google Ads Script modification to write to a BudgetHistory tab. Not yet implemented.
 - **CampaignMeta tab** — not yet published. Dashboard falls back to MTD avg for live budget display.
-- **BGOC (Meta)** — early data (started Apr 2026). CPA will normalize as volume grows.
+- **BGOC is Google Ads, not Meta** (October 14, 2026). See the partner-code rules at the top of this file. The Lifeline REALITY row still needs BGOC added by hand for months that are BGOA-only.
