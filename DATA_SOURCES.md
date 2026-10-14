@@ -1,6 +1,6 @@
 # Mission Control · Data Sources Reference
-**GO Advertising · Assurance Wireless / BGOA Partner Dashboard**
-Last updated: April 2026
+**GO Advertising · Assurance Wireless · Google Ads (BGOC current, BGOA legacy)**
+Last updated: October 14, 2026
 
 ---
 
@@ -34,14 +34,14 @@ Last updated: April 2026
 
 | Sheet Tab | GID | Published CSV URL |
 |-----------|-----|-------------------|
-| ad spend BGOA (Google Ads) | 1141776879 | `https://docs.google.com/spreadsheets/d/e/2PACX-1vRjprUFe1FCLx6TolRC-Ruioin9FGWQW32nT7m90EqM6r_R95O67Cx4gJe9hWxXIRvc9cfFmca3RwV1/pub?gid=1141776879&single=true&output=csv` |
-| ad spend BGOC (Meta Ads) | 1214117353 | `https://docs.google.com/spreadsheets/d/e/2PACX-1vRjprUFe1FCLx6TolRC-Ruioin9FGWQW32nT7m90EqM6r_R95O67Cx4gJe9hWxXIRvc9cfFmca3RwV1/pub?gid=1214117353&single=true&output=csv` |
+| ad spend BGOA (legacy Google Ads code) | 1141776879 | `https://docs.google.com/spreadsheets/d/e/2PACX-1vRjprUFe1FCLx6TolRC-Ruioin9FGWQW32nT7m90EqM6r_R95O67Cx4gJe9hWxXIRvc9cfFmca3RwV1/pub?gid=1141776879&single=true&output=csv` |
+| ad spend BGOC (current Google Ads code — not Meta) | 1214117353 | `https://docs.google.com/spreadsheets/d/e/2PACX-1vRjprUFe1FCLx6TolRC-Ruioin9FGWQW32nT7m90EqM6r_R95O67Cx4gJe9hWxXIRvc9cfFmca3RwV1/pub?gid=1214117353&single=true&output=csv` |
 | monthly | 1008697328 | `https://docs.google.com/spreadsheets/d/e/2PACX-1vRjprUFe1FCLx6TolRC-Ruioin9FGWQW32nT7m90EqM6r_R95O67Cx4gJe9hWxXIRvc9cfFmca3RwV1/pub?gid=1008697328&single=true&output=csv` |
 | google vs assurance | 946614110 | `https://docs.google.com/spreadsheets/d/e/2PACX-1vRjprUFe1FCLx6TolRC-Ruioin9FGWQW32nT7m90EqM6r_R95O67Cx4gJe9hWxXIRvc9cfFmca3RwV1/pub?gid=946614110&single=true&output=csv` |
 
 **Column reference (BGOA/BGOC tabs):**
 - `Day` — date YYYY-MM-DD
-- `Ad Spend` — daily Google/Meta spend
+- `Ad Spend` — daily Google Ads spend for that partner code (BGOA and BGOC are separate Google Ads accounts; neither is Meta)
 - `Applications` — total applications submitted
 - `Approvals` — approved applications
 - `Approval Percentage %` — approval rate
@@ -106,7 +106,7 @@ Last updated: April 2026
 
 - **Account:** GO Advertising (goadvertising9@gmail.com)
 - **Campaigns:** AW LIFELINE, AW SEARCH · SS, PRIME TIME · SS
-- **Landing page:** BGOA (assurancewireless.com affiliate)
+- **Landing page:** `/partner/BGOC` is the current code. BGOA is the earlier Google Ads code and is still tracked.
 
 ---
 
@@ -125,7 +125,7 @@ Last updated: April 2026
 > This section summarizes key decisions and session history.
 
 ### Core Architecture
-- **Data priority**: BGOA/BGOC confirmed data ALWAYS beats Google estimates
+- **Data priority**: BGOC + BGOA confirmed activations (both Google Ads) beat any estimated count. There is no Meta channel.
 - **T+1 reporting**: Today's activations are always unknown — dashboard shows "—" for today
 - **30-day cookie window**: Sundays ($0 spend) still have BGOA activations — merged into chart
 - **ACT_TIERS (hardcoded only)**: FANTASTIC≤$10 · EXCELLENT≤$12.50 · GOOD≤$15 · POOR>$15 · FATAL>$25
@@ -181,7 +181,27 @@ Last updated: April 2026
 
 ---
 
-## 8. If the Dashboard Shows "NO DATA"
+## 8. Partner codes (October 14, 2026)
+
+BGOC is the current Google Ads partner code. BGOA is the earlier Google Ads code. Nothing on this dashboard is Meta.
+
+| Code | What it is | Where the cost lives |
+|------|------------|----------------------|
+| BGOA | Legacy Google Ads code | `google-ads-script.js` → spreadsheet `1ZLzpR9oGk5y2amRr0jS4QPVIIzC44m1VfBRIxDK64Vg` DailyCampaign. Matches the BGOA tab’s Ad Spend. |
+| BGOC | Current Google Ads code (`/partner/BGOC`) | `go2-ads-script.js` → spreadsheet `1OwGn3f_Qz1Sd8QOq18adpf-SZDYfNGpnf9gEHsil6aI` (account 275-817-6694). Matches the BGOC tab’s Ad Spend. Not inside the legacy DailyCampaign. |
+
+The dashboard adds those two cost pools together and divides by BGOA activations + BGOC activations. It does not divide the legacy account’s cost by BGOC.
+
+The BGOC tab’s Day column is `M/D/YY` (the BGOA tab is `YYYY-MM-DD`). The dashboard accepts both. GIDs above are what the page fetches — renaming a tab is safe; deleting a tab or republishing it under a new GID breaks the fetch.
+
+### What Javier needs to change in Google Sheets (cannot be done from this repo)
+
+1. **Lifeline REALITY row** on spreadsheet `1JQWn6RHVuOVZWPnVgxFRXBFGka6ae7qYQ6Jik74t60Q` (GID `849051862`). October 2026 still matches BGOA only (1,556 activations, $35,703.49 spend). June and July spend already include BGOC; other months do not. Add BGOC activations, gross, and ad spend into any month that is still BGOA-only. The hero bar, monthly growth chart, and trajectory read this ledger and will not invent those dollars.
+2. **Optional tab labels** on `1Yr0gtdyf5x0TOjjzrGhCYRjZFjxPehKCBJwwlXorCxw`: “ad spend BGOC” can be labeled as the current Google Ads code and “ad spend BGOA” as the legacy Google Ads code. Keep the same tabs (GIDs `1214117353` and `1141776879`). Do not unpublish them.
+3. **Optional:** format the BGOC Day column as `YYYY-MM-DD` so it matches BGOA. Not required for the dashboard after this change.
+4. **Do not merge the BGOC account’s spend into the legacy DailyCampaign tab.** They are different Google Ads accounts. The dashboard already adds the BGOC export (`go2daily`) on top.
+
+## 9. If the Dashboard Shows "NO DATA"
 
 1. Open browser console (F12 → Console tab) — check for specific error messages
 2. Click the **↻ RETRY** button on the red banner

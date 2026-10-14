@@ -295,7 +295,7 @@ body::after{content:'';position:fixed;inset:0;background-image:linear-gradient(r
       <div class="logo"><div class="logo-dot"></div></div>
       <div>
         <div class="logo-text">GO Advertising · Mission Control</div>
-        <div class="logo-sub">Assurance Wireless · BGOA Partner Dashboard</div>
+        <div class="logo-sub">Assurance Wireless · Google Ads · BGOC</div>
       </div>
     </div>
     <div class="hdr-mid" id="clock">--</div>
@@ -309,7 +309,7 @@ body::after{content:'';position:fixed;inset:0;background-image:linear-gradient(r
   <!-- Project Tab Switcher -->
   <div class="proj-tabs">
     <button class="proj-tab active" id="tabAssurance" onclick="switchProject('assurance')">🛡 Assurance Wireless</button>
-    <button class="proj-tab go2-tab" id="tabGO2" onclick="switchProject('go2')">🛡 Assurance GO2</button>
+    <button class="proj-tab go2-tab" id="tabGO2" onclick="switchProject('go2')">🛡 Google Ads · BGOC</button>
   </div>
 
   <!-- ══════════════════ ASSURANCE WIRELESS SECTION ══════════════════ -->
@@ -370,7 +370,7 @@ body::after{content:'';position:fixed;inset:0;background-image:linear-gradient(r
   <div class="panel fade" style="animation-delay:.15s;margin-bottom:14px">
     <div class="panel-hdr">
       <div class="ptitle">Monthly Growth · Activations &amp; Revenue Paid</div>
-      <div class="pmeta">ALL-TIME · CONFIRMED</div>
+      <div class="pmeta">LIFELINE LEDGER · GOOGLE ADS</div>
     </div>
     <div style="height:230px;position:relative"><canvas id="growthChart"></canvas></div>
   </div>
@@ -488,7 +488,7 @@ body::after{content:'';position:fixed;inset:0;background-image:linear-gradient(r
     <div class="panel" style="display:flex;flex-direction:column">
       <div class="panel-hdr">
         <div class="ptitle">Business Trajectory</div>
-        <div class="pmeta">ACTUAL VS TARGET</div>
+        <div class="pmeta">LIFELINE LEDGER · GOOGLE ADS</div>
       </div>
       <div id="trajectory" style="display:flex;flex-direction:column;justify-content:space-evenly;flex:1;min-height:240px">
         <div class="no-data-state"><div class="nd-icon">📈</div><div class="nd-title">AWAITING LIVE DATA</div></div>
@@ -541,12 +541,12 @@ body::after{content:'';position:fixed;inset:0;background-image:linear-gradient(r
   <div class="panel fade" style="animation-delay:.45s;margin-bottom:14px">
     <div class="panel-hdr">
       <div class="ptitle">🏢 Assurance Intelligence · Real Data · Dec 19, 2025 → Today</div>
-      <div class="pmeta">SOURCE: ASSURANCE WIRELESS BGOA (GOOGLE) + BGOC (META) · LIVE</div>
+      <div class="pmeta">SOURCE: GOOGLE ADS · BGOC (CURRENT) + BGOA (LEGACY) · LIVE</div>
     </div>
 
     <!-- Monthly Actuals (full width) -->
     <div style="margin-bottom:14px">
-      <div style="font-family:var(--mono);font-size:9px;color:var(--accent);letter-spacing:2px;margin-bottom:10px">MONTHLY ACTUALS · BGOA CONFIRMED</div>
+      <div style="font-family:var(--mono);font-size:9px;color:var(--accent);letter-spacing:2px;margin-bottom:10px">MONTHLY ACTUALS · GOOGLE ADS · BGOC + BGOA LEGACY</div>
       <div id="monthlyActuals">
         <div class="no-data-state"><div class="nd-icon">📅</div><div class="nd-title">LOADING BGOA DATA...</div></div>
       </div>
@@ -554,11 +554,11 @@ body::after{content:'';position:fixed;inset:0;background-image:linear-gradient(r
 
     <!-- CPA Trend Chart (full width) -->
     <div style="margin-bottom:14px">
-      <div style="font-family:var(--mono);font-size:9px;color:var(--accent);letter-spacing:2px;margin-bottom:10px">ACTIVATION CPA TREND · BGOA DAILY (7-DAY ROLLING) · TARGET &lt;$10</div>
+      <div style="font-family:var(--mono);font-size:9px;color:var(--accent);letter-spacing:2px;margin-bottom:10px">ACTIVATION CPA TREND · GOOGLE ADS (7-DAY ROLLING) · BGOC + BGOA · TARGET &lt;$10</div>
       <div style="position:relative;height:200px"><canvas id="cpaTrendChart"></canvas></div>
     </div>
 
-    <!-- Bottom row: Google vs Assurance + Meta (BGOC) + Projections -->
+    <!-- Bottom row: Google vs Assurance + current code (BGOC) + legacy code (BGOA) -->
     <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px">
 
       <!-- Google vs Assurance -->
@@ -569,14 +569,21 @@ body::after{content:'';position:fixed;inset:0;background-image:linear-gradient(r
         </div>
       </div>
 
-      <!-- BGOC Meta -->
+      <!-- BGOC — current Google Ads partner code -->
       <div style="padding-top:28px">
-        <div style="font-family:var(--mono);font-size:9px;color:var(--accent);letter-spacing:2px;margin-bottom:10px">META ADS (BGOC) · APRIL 2026</div>
+        <div style="font-family:var(--mono);font-size:9px;color:var(--accent);letter-spacing:2px;margin-bottom:10px">GOOGLE ADS · BGOC · CURRENT CODE</div>
         <div id="bgocPanel">
           <div class="no-data-state"><div class="nd-icon">📘</div><div class="nd-title">LOADING...</div></div>
         </div>
       </div>
 
+      <!-- BGOA — earlier Google Ads partner code, kept for history -->
+      <div style="padding-top:28px">
+        <div style="font-family:var(--mono);font-size:9px;color:var(--accent);letter-spacing:2px;margin-bottom:10px">GOOGLE ADS · BGOA · LEGACY CODE</div>
+        <div id="bgoaLegacyPanel">
+          <div class="no-data-state"><div class="nd-icon">📗</div><div class="nd-title">LOADING...</div></div>
+        </div>
+      </div>
 
     </div>
   </div>
@@ -621,7 +628,7 @@ body::after{content:'';position:fixed;inset:0;background-image:linear-gradient(r
     <!-- Daily Chart + Campaign Scorecard -->
     <div style="display:grid;grid-template-columns:1fr 340px;gap:12px;margin-bottom:12px">
       <div class="panel" style="background:var(--surface);border:1px solid var(--border2);border-radius:8px;padding:18px 20px">
-        <div class="section-title" style="font-family:var(--mono);font-size:10px;color:var(--muted);letter-spacing:2px;margin-bottom:16px">DAILY PERFORMANCE <span style="color:#f97316">· ASSURANCE GO2</span></div>
+        <div class="section-title" style="font-family:var(--mono);font-size:10px;color:var(--muted);letter-spacing:2px;margin-bottom:16px">DAILY PERFORMANCE <span style="color:#f97316">· GOOGLE ADS · BGOC</span></div>
         <div style="height:200px;position:relative"><canvas id="go2DailyChart"></canvas></div>
       </div>
       <div class="panel" style="background:var(--surface);border:1px solid var(--border2);border-radius:8px;padding:18px 20px">
@@ -693,7 +700,7 @@ body::after{content:'';position:fixed;inset:0;background-image:linear-gradient(r
     <!-- GO2 no-data -->
     <div id="go2NoData" style="display:none;text-align:center;padding:60px 20px;font-family:var(--mono);font-size:11px;color:var(--muted);letter-spacing:2px">
       NO DATA YET · SCRIPT NOT YET ACTIVE<br>
-      <span style="font-size:10px;display:block;margin-top:8px">Install go2-ads-script.js in Google Ads account 275-817-6694 and run at least once</span>
+      <span style="font-size:10px;display:block;margin-top:8px">Install go2-ads-script.js in the BGOC Google Ads account 275-817-6694 and run at least once</span>
     </div>
 
   </div><!-- /go2Section -->
@@ -713,9 +720,14 @@ const SHEET_URLS = {
   hourly:      'https://docs.google.com/spreadsheets/d/e/2PACX-1vQSGFATGsiH9UxFDJPkIrDpdHoDTivZRDEm2zYxydUSZhyTRK91KnNFmYX7qRvjkMwRcP6eYypCF9z2/pub?gid=1038380061&single=true&output=csv',
   keywords:    'https://docs.google.com/spreadsheets/d/e/2PACX-1vQSGFATGsiH9UxFDJPkIrDpdHoDTivZRDEm2zYxydUSZhyTRK91KnNFmYX7qRvjkMwRcP6eYypCF9z2/pub?gid=373579478&single=true&output=csv',
   searchTerms: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQSGFATGsiH9UxFDJPkIrDpdHoDTivZRDEm2zYxydUSZhyTRK91KnNFmYX7qRvjkMwRcP6eYypCF9z2/pub?gid=1994073909&single=true&output=csv',
-  // Assurance Wireless Direct Tracking (manually updated daily)
+  // Assurance Wireless daily tracking (published by GID — tab renames do not break these).
+  // BGOA = earlier Google Ads partner code. BGOC = current Google Ads partner code.
+  // Neither tab is Meta. Both fetches stay; do not drop BGOA.
   bgoa:        'https://docs.google.com/spreadsheets/d/e/2PACX-1vRjprUFe1FCLx6TolRC-Ruioin9FGWQW32nT7m90EqM6r_R95O67Cx4gJe9hWxXIRvc9cfFmca3RwV1/pub?gid=1141776879&single=true&output=csv',
   bgoc:        'https://docs.google.com/spreadsheets/d/e/2PACX-1vRjprUFe1FCLx6TolRC-Ruioin9FGWQW32nT7m90EqM6r_R95O67Cx4gJe9hWxXIRvc9cfFmca3RwV1/pub?gid=1214117353&single=true&output=csv',
+  // Live Google Ads export for the BGOC account (275-817-6694). Not in RAW.daily.
+  // Phase 2 only — a failure here must not block the other sheets.
+  go2daily:    'https://docs.google.com/spreadsheets/d/1OwGn3f_Qz1Sd8QOq18adpf-SZDYfNGpnf9gEHsil6aI/gviz/tq?tqx=out:csv&sheet=DailyCampaign',
   monthly:     'https://docs.google.com/spreadsheets/d/e/2PACX-1vRjprUFe1FCLx6TolRC-Ruioin9FGWQW32nT7m90EqM6r_R95O67Cx4gJe9hWxXIRvc9cfFmca3RwV1/pub?gid=1008697328&single=true&output=csv',
   gva:         'https://docs.google.com/spreadsheets/d/e/2PACX-1vRjprUFe1FCLx6TolRC-Ruioin9FGWQW32nT7m90EqM6r_R95O67Cx4gJe9hWxXIRvc9cfFmca3RwV1/pub?gid=946614110&single=true&output=csv',
   // Projections vs Reality tracking
@@ -732,17 +744,24 @@ const ACT_TIERS = {
   // >$15 = POOR: anything above target CPA (including over-payout)
 };
 
-// Baseline activation rate (Google conversions → confirmed BGOA activations, Mar 2026)
-// Updated live from BGOA data via getLiveActRate()
+// Baseline activation rate (Google conversions → confirmed Google Ads activations, Mar 2026)
+// Updated live from BGOC + BGOA tracking via getLiveActRate()
 const ACT_RATE_BASELINE = 0.5512;
-let ACT_RATE = ACT_RATE_BASELINE; // updated by getLiveActRate() after BGOA loads
+let ACT_RATE = ACT_RATE_BASELINE; // updated by getLiveActRate() after tracking sheets load
 
-// Return live activation rate from BGOA data.
+// Both partner codes are Google Ads. Rows are concatenated so a shared date sums, not replaces.
+function partnerTrackingRows() {
+  const a = (RAW && RAW.bgoa) ? RAW.bgoa.map(parseBGOARow).filter(Boolean) : [];
+  const c = (RAW && RAW.bgoc) ? RAW.bgoc.map(parseBGOARow).filter(Boolean) : [];
+  return a.concat(c);
+}
+
+// Return live activation rate from Google Ads partner tracking (BGOC + BGOA).
 // Uses the last SETTLED month (data is final ~15 days after month close).
 // March 2026 is our first full tracked month — use it as the benchmark.
 // After the 15th of each month, the prior month is considered settled.
 function getLiveActRate() {
-  const rows = (RAW && RAW.bgoa) ? RAW.bgoa.map(parseBGOARow).filter(Boolean) : [];
+  const rows = partnerTrackingRows();
   if (rows.length === 0) return ACT_RATE_BASELINE;
 
   const today = new Date();
@@ -776,7 +795,7 @@ function getLiveActRate() {
 
 // Return the label for the settled month used in getLiveActRate()
 function getSettledRateLabel() {
-  const rows = (RAW && RAW.bgoa) ? RAW.bgoa.map(parseBGOARow).filter(Boolean) : [];
+  const rows = partnerTrackingRows();
   if (rows.length === 0) return 'baseline';
   const today = new Date();
   const dayOfMonth = today.getDate();
@@ -794,7 +813,7 @@ function getSettledRateLabel() {
   return 'Mar 26 settled';
 }
 
-// Compute ACTUAL activation rate for the selected date range from BGOA daily data.
+// Compute ACTUAL activation rate for the selected date range from both Google Ads codes.
 // Rate = Activations ÷ Approvals (both de-duped) — matches the sheet's col I
 // ("Activation Percentage % / Approvals"). Jun 2026: replaced the old ÷ Applications
 // formula (bots inflate applications, making that ratio meaningless).
@@ -808,7 +827,7 @@ function getPeriodActRate(from, to) {
   const settledTo = (!to || to > cutoffStr) ? cutoffStr : to;
   if (!from || settledTo < from) return null;
 
-  const rows = RAW.bgoa.map(parseBGOARow).filter(r =>
+  const rows = partnerTrackingRows().filter(r =>
     r && r.date >= from && r.date <= settledTo && r.approvals > 0
   );
   if (rows.length < 3) return null; // need at least 3 settled days
@@ -915,8 +934,12 @@ function normDateStr(s) {
   if (!s) return '';
   const t = String(s).trim();
   if (/^\d{4}-\d{2}-\d{2}/.test(t)) return t.substring(0, 10);
-  const m = t.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);
-  if (m) return `${m[3]}-${m[1].padStart(2,'0')}-${m[2].padStart(2,'0')}`;
+  const m = t.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})/);
+  if (m) {
+    let y = parseInt(m[3], 10);
+    if (y < 100) y += 2000;
+    return `${y}-${m[1].padStart(2,'0')}-${m[2].padStart(2,'0')}`;
+  }
   return '';
 }
 
@@ -1103,7 +1126,8 @@ function renderKPIs(kpis) {
 
   // Applications = Google conversions ONLY (Jun 2026 bot-mitigation rule)
   $('kv-apps').textContent = Math.round(applications).toLocaleString();
-  $('ks-apps').innerHTML = `<span style="color:var(--green);font-size:10px">✓ Google conversions</span>`;
+  const appsBoth = applications > (conversions || 0);
+  $('ks-apps').innerHTML = `<span style="color:var(--green);font-size:10px">✓ Google conversions${appsBoth ? ' · BGOC + legacy' : ''}</span>`;
   // Activation rate: use actual period data from BGOA (excluding last 5 unsettled days)
   // Falls back to settled monthly rate, then baseline
   // TODAY view: always projected — no confirmed activations same day (T+1 lag)
@@ -1121,12 +1145,17 @@ function renderKPIs(kpis) {
     // Fallback: MTD avg from Google Ads DailyCampaign (all campaigns)
     const byDate = {};
     RAW.daily.forEach(r => { const d = normDateStr(r.Date||''); if (d) { byDate[d] = (byDate[d]||0) + (pn(r.Cost)); } });
+    const go2spend = go2ByDate();
+    Object.keys(go2spend).forEach(d => { byDate[d] = (byDate[d]||0) + go2spend[d].spend; });
+    (RAW.bgoc || []).map(parseBGOARow).filter(Boolean).forEach(r => {
+      if (!go2spend[r.date] && r.spend > 0) byDate[r.date] = (byDate[r.date]||0) + r.spend;
+    });
     const _n = new Date(); const thisMonth = `${_n.getFullYear()}-${String(_n.getMonth()+1).padStart(2,'0')}`;
     const mtdDates = Object.keys(byDate).filter(d => d.startsWith(thisMonth)).sort();
     const useDates = mtdDates.length >= 3 ? mtdDates : Object.keys(byDate).sort().slice(-7);
     const label = mtdDates.length >= 3 ? 'MTD AVG/DAY' : '7D AVG/DAY';
-    if (useDates.length > 0) { const avg = useDates.reduce((s,d)=>s+byDate[d],0)/useDates.length; return `<span style="color:var(--muted)">${label}: ${fmtMoney(avg)} · ${campCount}</span>`; }
-    return `<span style="color:var(--muted)">${campCount}</span>`;
+    if (useDates.length > 0) { const avg = useDates.reduce((s,d)=>s+byDate[d],0)/useDates.length; return `<span style="color:var(--muted)">${label}: ${fmtMoney(avg)} · ${campCount}${kpis.bgocSpend > 0 ? ' · BGOC Google included' : ''}</span>`; }
+    return `<span style="color:var(--muted)">${campCount}${kpis.bgocSpend > 0 ? ' · BGOC Google included' : ''}</span>`;
   })();
   $('ks-spend').innerHTML = spendSubtitle;
 
@@ -1215,20 +1244,33 @@ function renderFeed(daily) {
   const el = $('intelFeed');
   if (!el) return;
 
-  // Source: BGOA spreadsheet (ad spend BGOA sheet) — Date, Ad Spend, Applications, Approvals, Activations
-  // Falls back to a waiting state if BGOA hasn't loaded yet (Phase 2)
-  if (!RAW.bgoa || !RAW.bgoa.length) {
-    el.innerHTML = '<div class="no-data-state"><div class="nd-icon">📋</div><div class="nd-title">LOADING BGOA DATA...</div><div class="nd-sub">Arrives in Phase 2 — up to 60s after page load</div></div>';
+  // Confirmed funnel from both Google Ads codes. BGOC is current; BGOA is the earlier code.
+  if ((!RAW.bgoa || !RAW.bgoa.length) && (!RAW.bgoc || !RAW.bgoc.length)) {
+    el.innerHTML = '<div class="no-data-state"><div class="nd-icon">📋</div><div class="nd-title">LOADING GOOGLE ADS TRACKING...</div><div class="nd-sub">BGOC and BGOA arrive with the tracking sheets</div></div>';
     return;
   }
 
-  // Parse all BGOA rows, sort most recent first, take last 30 days
-  const rows = RAW.bgoa.map(parseBGOARow).filter(r => r && r.spend > 0)
+  const merged = {};
+  const addFeed = (r, code) => {
+    if (!r) return;
+    if (!merged[r.date]) merged[r.date] = { date: r.date, spend: 0, applications: 0, approvals: 0, activations: 0, bgoa: false, bgoc: false };
+    const d = merged[r.date];
+    d.spend += r.spend;
+    d.applications += r.applications;
+    d.approvals += r.approvals;
+    d.activations += r.activations;
+    d[code] = true;
+  };
+  (RAW.bgoa || []).map(parseBGOARow).filter(Boolean).forEach(r => addFeed(r, 'bgoa'));
+  (RAW.bgoc || []).map(parseBGOARow).filter(Boolean).forEach(r => addFeed(r, 'bgoc'));
+  // Last 30 days that actually had spend or a confirmed activation.
+  const rows = Object.values(merged)
+    .filter(r => r.spend > 0 || r.activations > 0)
     .sort((a,b) => b.date.localeCompare(a.date))
     .slice(0, 30);
 
   if (!rows.length) {
-    el.innerHTML = '<div class="no-data-state"><div class="nd-icon">📋</div><div class="nd-title">NO BGOA DATA</div></div>';
+    el.innerHTML = '<div class="no-data-state"><div class="nd-icon">📋</div><div class="nd-title">NO GOOGLE ADS TRACKING DATA</div></div>';
     return;
   }
 
@@ -1241,7 +1283,7 @@ function renderFeed(daily) {
 
   el.innerHTML = `
     <div style="padding:0 2px 8px;border-bottom:1px solid var(--border2);margin-bottom:8px">
-      <div style="font-family:var(--mono);font-size:9px;color:var(--muted);letter-spacing:1.5px;margin-bottom:6px">7-DAY AVERAGES (SETTLED) · SOURCE: BGOA</div>
+      <div style="font-family:var(--mono);font-size:9px;color:var(--muted);letter-spacing:1.5px;margin-bottom:6px">7-DAY AVERAGES (SETTLED) · GOOGLE ADS · BGOC + BGOA</div>
       <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px">
         <div style="background:var(--surface2);border-radius:5px;padding:7px 8px;text-align:center">
           <div style="font-family:var(--mono);font-size:15px;font-weight:700;color:var(--green)">${fmtMoney(avgSpend)}</div>
@@ -1257,7 +1299,7 @@ function renderFeed(daily) {
         </div>
       </div>
     </div>
-    <div style="font-family:var(--mono);font-size:9px;color:var(--muted);letter-spacing:1.5px;margin-bottom:4px;padding:0 2px">DAILY BREAKDOWN · LAST ${rows.length} DAYS · BGOA CONFIRMED</div>
+    <div style="font-family:var(--mono);font-size:9px;color:var(--muted);letter-spacing:1.5px;margin-bottom:4px;padding:0 2px">DAILY BREAKDOWN · LAST ${rows.length} DAYS · BGOC CURRENT + BGOA LEGACY</div>
     <div style="overflow-y:auto;flex:1">
       <table style="width:100%;border-collapse:collapse;font-family:var(--mono);font-size:10px">
         <thead>
@@ -1400,8 +1442,10 @@ function renderTrajectory(monthly, daily) {
     </div>`;
   }).join('');
 
-  // Spark: use BGOA confirmed activations (real data, T+1), not estimated
-  const bgoaRows = RAW.bgoa.map(parseBGOARow).filter(Boolean).sort((a,b)=>a.date.localeCompare(b.date)).slice(-14);
+  // Spark: confirmed activations from both Google Ads codes (real data, T+1).
+  const sparkMap = {};
+  partnerTrackingRows().forEach(r => { sparkMap[r.date] = (sparkMap[r.date] || 0) + r.activations; });
+  const bgoaRows = Object.keys(sparkMap).sort().slice(-14).map(date => ({ date, activations: sparkMap[date] }));
   if (bgoaRows.length > 0) {
     const maxA = Math.max(...bgoaRows.map(r => r.activations), 1);
     if ($('weekSpark')) $('weekSpark').innerHTML = bgoaRows.map(r => {
@@ -1446,20 +1490,25 @@ function renderSummary(chartDaily, kpis) {
   const dayOfMonth2  = today.getDate();
   const remainDays   = Math.max(0, daysInMonth2 - dayOfMonth2);
 
-  // MTD confirmed from BGOA
+  // MTD confirmed from both Google Ads codes. Spend adds the BGOC account once.
   const aprPfx2  = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}`;
   const bgoaMTD2 = (RAW && RAW.bgoa) ? RAW.bgoa.map(parseBGOARow).filter(r => r && r.date.startsWith(aprPfx2)) : [];
-  const mtdActs  = bgoaMTD2.reduce((s,r) => s + r.activations, 0);
-  const mtdSpend = (RAW && RAW.daily)
-    ? RAW.daily.filter(r => (r.Date||'').startsWith(aprPfx2)).reduce((s,r) => s + pn(r.Cost), 0)
-    : kpis.spend;
+  const bgocMTD2 = (RAW && RAW.bgoc) ? RAW.bgoc.map(parseBGOARow).filter(r => r && r.date.startsWith(aprPfx2)) : [];
+  const mtdActs  = bgoaMTD2.reduce((s,r) => s + r.activations, 0) + bgocMTD2.reduce((s,r) => s + r.activations, 0);
+  const legacyMtd = (RAW && RAW.daily)
+    ? RAW.daily.filter(r => normDateStr(r.Date||'').startsWith(aprPfx2)).reduce((s,r) => s + pn(r.Cost), 0)
+    : (kpis.legacySpend || 0);
+  const mtdSpend = legacyMtd + sumBgocGoogle(aprPfx2 + '-01', aprPfx2 + '-31').spend;
 
   // Daily pace from last 7 settled days
   const cutoff2 = new Date(today); cutoff2.setDate(cutoff2.getDate()-2);
   const cutStr2 = `${cutoff2.getFullYear()}-${String(cutoff2.getMonth()+1).padStart(2,'0')}-${String(cutoff2.getDate()).padStart(2,'0')}`;
   const lookbk2 = new Date(cutoff2); lookbk2.setDate(lookbk2.getDate()-7);
   const lookStr2= `${lookbk2.getFullYear()}-${String(lookbk2.getMonth()+1).padStart(2,'0')}-${String(lookbk2.getDate()).padStart(2,'0')}`;
-  const paceRows2 = (RAW && RAW.bgoa) ? RAW.bgoa.map(parseBGOARow).filter(r => r && r.date >= lookStr2 && r.date <= cutStr2 && r.activations > 0) : [];
+  const paceMap = {};
+  partnerTrackingRows().filter(r => r && r.date >= lookStr2 && r.date <= cutStr2 && r.activations > 0)
+    .forEach(r => { paceMap[r.date] = (paceMap[r.date] || 0) + r.activations; });
+  const paceRows2 = Object.keys(paceMap).map(date => ({ activations: paceMap[date] }));
   const dailyActPace = paceRows2.length > 0 ? paceRows2.reduce((s,r) => s+r.activations,0)/paceRows2.length : (mtdActs / Math.max(dayOfMonth2-2,1));
   const dailySpdPace = mtdSpend / Math.max(dayOfMonth2,1);
 
@@ -1671,33 +1720,40 @@ function renderBrief(dailyRaw, keywordsRaw, searchTermsRaw) {
     return;
   }
 
-  const ySpend = yData.spend;
+  const ySpend = yData.spend; // legacy Google Ads account only; BGOC is added below as ySpendAll
 
-  // Applications: Google conversions ONLY (Jun 2026 rule — bots inflate confirmed counts)
-  const bgoaYest = RAW.bgoa.map(parseBGOARow).filter(Boolean).find(r => r.date === yStr);
-  const bgoaDB   = RAW.bgoa.map(parseBGOARow).filter(Boolean).find(r => r.date === dbStr);
-  const googleAppsY = yData.conv;
-  const yApps = googleAppsY;
-  const yAppCPA = yApps > 0 ? ySpend / yApps : 0;
+  // Applications: Google conversions from BOTH accounts (legacy DailyCampaign + BGOC).
+  // BGOC cost is not in yesterday's legacy spend, so it has to be added or CPA divides
+  // the legacy account's cost by the other code's results.
+  const bgoaYest = (RAW.bgoa || []).map(parseBGOARow).filter(Boolean).find(r => r.date === yStr);
+  const bgocYest = (RAW.bgoc || []).map(parseBGOARow).filter(Boolean).find(r => r.date === yStr);
+  const bgoaDB   = (RAW.bgoa || []).map(parseBGOARow).filter(Boolean).find(r => r.date === dbStr);
+  const bgocDB   = (RAW.bgoc || []).map(parseBGOARow).filter(Boolean).find(r => r.date === dbStr);
+  const go2map = go2ByDate();
+  const yBgocG = bgocGoogleDay(yStr, bgocYest, go2map);
+  const dbBgocG = bgocGoogleDay(dbStr, bgocDB, go2map);
+  const ySpendAll = ySpend + yBgocG.spend;
+  const yApps = yData.conv + yBgocG.apps;
+  const yAppCPA = yApps > 0 ? ySpendAll / yApps : 0;
 
-  // Activations ONLY from real BGOA confirmed data — never projected from a percentage.
-  const yActs    = bgoaYest ? bgoaYest.activations : null;
-  const yActsConfirmed = !!bgoaYest;
-  // Pending = BGOA row exists for yesterday but activations = 0 (Assurance hasn't reported yet)
+  // Activations from both Google Ads codes — never projected, never treated as Meta.
+  const yActsConfirmed = !!(bgoaYest || bgocYest);
+  const yActs = yActsConfirmed
+    ? (bgoaYest ? bgoaYest.activations : 0) + (bgocYest ? bgocYest.activations : 0)
+    : null;
   const yActsPending = yActsConfirmed && yActs === 0;
-  const yActCPA  = (yActs && yActs > 0) ? ySpend / yActs : null;
+  const yActCPA  = (yActs && yActs > 0) ? ySpendAll / yActs : null;
   const yRevenue = yActs !== null ? yActs * PAYOUT : null;
-  const yProfit  = yRevenue !== null ? yRevenue - ySpend : null;
+  const yProfit  = yRevenue !== null ? yRevenue - ySpendAll : null;
   const yCTR      = yData.impressions > 0 ? yData.clicks / yData.impressions * 100 : 0;
 
-  // Day-before apps: Google conversions ONLY (same Jun 2026 rule)
-  const googleAppsDB  = dbData ? dbData.conv : null;
-  const dbApps   = googleAppsDB;
-  const dbSpend  = dbData ? dbData.spend   : null;
-  const dbAppCPA = dbData && dbApps > 0 ? dbSpend / dbApps : null;
+  // Day-before: same two-account Google total as yesterday.
+  const dbApps   = dbData ? dbData.conv + dbBgocG.apps : (dbBgocG.apps || null);
+  const dbSpend  = dbData ? dbData.spend + dbBgocG.spend : (dbBgocG.spend || null);
+  const dbAppCPA = dbSpend && dbApps > 0 ? dbSpend / dbApps : null;
 
-  // Trend analysis
-  const spendTrend  = dbSpend  ? ((ySpend  - dbSpend)  / dbSpend  * 100) : null;
+  // Trend analysis — both sides include BGOC so the legacy account is not compared alone.
+  const spendTrend  = dbSpend  ? ((ySpendAll - dbSpend) / dbSpend * 100) : null;
   const appsTrend   = dbApps   ? ((yApps   - dbApps)   / dbApps   * 100) : null;
   const cpaTrend    = dbAppCPA ? ((yAppCPA - dbAppCPA) / dbAppCPA * 100) : null;
 
@@ -1736,16 +1792,21 @@ function renderBrief(dailyRaw, keywordsRaw, searchTermsRaw) {
   // normDateStr required so M/D/YYYY and YYYY-MM-DD dates sort and group together
   const byDateSpend = {};
   RAW.daily.forEach(r => { const d = normDateStr(r.Date||''); if (d) byDateSpend[d] = (byDateSpend[d]||0) + (pn(r.Cost)); });
+  Object.keys(go2map).forEach(d => { byDateSpend[d] = (byDateSpend[d]||0) + go2map[d].spend; });
+  (RAW.bgoc || []).map(parseBGOARow).filter(Boolean).forEach(r => {
+    if (r.date > yStr) return; // sheet is pre-filled through month end
+    if (!go2map[r.date]) byDateSpend[r.date] = (byDateSpend[r.date]||0) + r.spend;
+  });
   const recentDates = Object.keys(byDateSpend).sort().slice(-8, -1); // last 7 days excluding today
   const avg7Spend = recentDates.length > 0 ? recentDates.reduce((s,d)=>s+byDateSpend[d],0)/recentDates.length : 0;
   if (avg7Spend > 0) {
-    const spendRatio = ySpend / avg7Spend;
+    const spendRatio = ySpendAll / avg7Spend;
     if (spendRatio < 0.7) {
-      actions.push({ type:'warn', icon:'💸', text:`Spend ${fmtMoney(ySpend)} — ${Math.round((1-spendRatio)*100)}% below your 7-day avg of ${fmtMoney(avg7Spend)}. Check campaign budgets and bid caps.` });
+      actions.push({ type:'warn', icon:'💸', text:`Spend ${fmtMoney(ySpendAll)} — ${Math.round((1-spendRatio)*100)}% below your 7-day avg of ${fmtMoney(avg7Spend)}. Check campaign budgets and bid caps.` });
     } else if (spendRatio > 1.3) {
-      actions.push({ type:'warn', icon:'💰', text:`Spend ${fmtMoney(ySpend)} — ${Math.round((spendRatio-1)*100)}% above your 7-day avg of ${fmtMoney(avg7Spend)}. Monitor closely — ensure CPA stayed in range.` });
+      actions.push({ type:'warn', icon:'💰', text:`Spend ${fmtMoney(ySpendAll)} — ${Math.round((spendRatio-1)*100)}% above your 7-day avg of ${fmtMoney(avg7Spend)}. Monitor closely — ensure CPA stayed in range.` });
     } else {
-      actions.push({ type:'good', icon:'✅', text:`Spend ${fmtMoney(ySpend)} well-paced against 7-day avg of ${fmtMoney(avg7Spend)} (${Math.round(spendRatio*100)}%).` });
+      actions.push({ type:'good', icon:'✅', text:`Spend ${fmtMoney(ySpendAll)} well-paced against 7-day avg of ${fmtMoney(avg7Spend)} (${Math.round(spendRatio*100)}%).` });
     }
   }
 
@@ -1806,8 +1867,9 @@ function renderBrief(dailyRaw, keywordsRaw, searchTermsRaw) {
 
 // Parse a BGOA/BGOC CSV row into clean numbers
 function parseBGOARow(r) {
-  const day = (r.Day || r.date || '').trim();
-  if (!day.match(/^\d{4}-\d{2}-\d{2}$/)) return null; // skip totals/label rows
+  // BGOA days are YYYY-MM-DD. BGOC days are M/D/YY. Both are Google Ads tracking tabs.
+  const day = normDateStr(r.Day || r.date || '');
+  if (!day) return null; // skip totals/label rows
   const n = v => parseFloat((v||'').replace(/[$,%\s]/g,'').replace(/,/g,'')) || 0;
   // pick() = first NON-EMPTY cell whose header matches the regex (robust to spacing
   // differences between the BGOA and BGOC sheets, e.g. "Approvals   NO DUPLICATES").
@@ -2012,21 +2074,121 @@ function refreshDevTrendChart() {
   renderDeviceCPAChart(trend, label + ' · CAMPAIGN: ' + campLabel);
 }
 
+// GO2 DailyCampaign is the live BGOC Google Ads account. Keyed by date so a day
+// exported by the script replaces the tracking-sheet copy of the same dollars.
+function go2ByDate() {
+  const by = {};
+  (RAW.go2daily || []).forEach(r => {
+    const d = normDateStr(r.Date || r.date || '');
+    if (!d) return;
+    if (!by[d]) by[d] = { spend: 0, apps: 0 };
+    by[d].spend += pn(r.Cost);
+    by[d].apps  += pn(r.Conversions);
+  });
+  return by;
+}
+
+function bgocGoogleDay(date, sheetRow, go2) {
+  if (go2 && Object.prototype.hasOwnProperty.call(go2, date)) {
+    return { spend: go2[date].spend, apps: go2[date].apps };
+  }
+  return {
+    spend: sheetRow ? sheetRow.spend : 0,
+    apps:  sheetRow ? sheetRow.applications : 0,
+  };
+}
+
+function sumBgocGoogle(from, to) {
+  const sheet = {};
+  (RAW.bgoc || []).map(parseBGOARow).filter(Boolean).forEach(r => {
+    if (r.date >= from && r.date <= to) sheet[r.date] = r;
+  });
+  const go2 = go2ByDate();
+  const dates = new Set([
+    ...Object.keys(sheet),
+    ...Object.keys(go2).filter(d => d >= from && d <= to),
+  ]);
+  let spend = 0, apps = 0;
+  dates.forEach(d => {
+    const g = bgocGoogleDay(d, sheet[d], go2);
+    spend += g.spend;
+    apps  += g.apps;
+  });
+  return { spend, apps };
+}
+
+// Lifeline sometimes already includes BGOC and sometimes is still the BGOA ledger.
+// If the lifeline-vs-BGOA gap covers the BGOC count, don't add BGOC again.
+// Otherwise keep the lifeline figure (it can be the settled de-duped BGOA count,
+// lower than a bot-inflated sheet) and add the BGOC activations on top.
+function officialGoogleActs(bgoaActs, bgocActs, lifeActs) {
+  if (!lifeActs) return (bgoaActs || 0) + (bgocActs || 0);
+  const gap = lifeActs - (bgoaActs || 0);
+  if ((bgocActs || 0) > 0 && gap >= bgocActs * 0.8) return lifeActs;
+  return lifeActs + (bgocActs || 0);
+}
+
+function partnerCodeCard(rows, note) {
+  if (!rows.length) {
+    return `<div class="no-data-state"><div class="nd-icon">—</div><div class="nd-title">N/A</div><div class="nd-sub">No rows on this tracking tab yet</div></div>`;
+  }
+  const spend = rows.reduce((s,r) => s + r.spend, 0);
+  const apps  = rows.reduce((s,r) => s + r.applications, 0);
+  const acts  = rows.reduce((s,r) => s + r.activations, 0);
+  const rev   = rows.reduce((s,r) => s + r.revenue, 0);
+  const cpa   = acts > 0 ? spend / acts : 0;
+  const cpaCol = cpa > 0 && cpa <= 10 ? 'var(--green)' : cpa > 15 ? 'var(--red)' : 'var(--amber)';
+  return `
+    <div style="background:var(--surface2);border:1px solid rgba(56,189,248,0.2);border-radius:6px;padding:12px">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
+        <div><div style="font-family:var(--mono);font-size:16px;font-weight:700;color:var(--accent2)">${spend > 0 ? fmtMoney(spend) : 'N/A'}</div><div style="font-family:var(--mono);font-size:9px;color:var(--muted)">AD SPEND</div></div>
+        <div><div style="font-family:var(--mono);font-size:16px;font-weight:700;color:var(--green)">${acts.toLocaleString()}</div><div style="font-family:var(--mono);font-size:9px;color:var(--muted)">ACTIVATIONS</div></div>
+        <div><div style="font-family:var(--mono);font-size:16px;font-weight:700;color:var(--amber)">${r2(apps).toLocaleString()}</div><div style="font-family:var(--mono);font-size:9px;color:var(--muted)">APPLICATIONS</div></div>
+        <div><div style="font-family:var(--mono);font-size:16px;font-weight:700;color:${cpaCol}">${cpa > 0 ? fmtCPA(cpa) : 'N/A'}</div><div style="font-family:var(--mono);font-size:9px;color:var(--muted)">ACTIVATION CPA</div></div>
+      </div>
+      <div style="font-family:var(--mono);font-size:9px;color:var(--muted);padding:6px;background:rgba(56,189,248,0.06);border-radius:4px;line-height:1.6">
+        ${note} Revenue ${rev > 0 ? fmtMoney(rev) : 'N/A'}.
+      </div>
+    </div>`;
+}
+
 function renderAssuranceIntelligence() {
-  const rows = RAW.bgoa.map(parseBGOARow).filter(Boolean).sort((a,b) => a.date.localeCompare(b.date));
-  if (!rows.length) return;
+  const bgoaRowsAll = (RAW.bgoa || []).map(parseBGOARow).filter(Boolean);
+  const bgocRowsAll = (RAW.bgoc || []).map(parseBGOARow).filter(Boolean);
+  if (!bgoaRowsAll.length && !bgocRowsAll.length) return;
+
+  // One combined Google Ads day (BGOC current + BGOA legacy). Sheet spend is the
+  // full history; the two codes are different accounts so adding them is not a double count.
+  const byDate = {};
+  const fold = (r, code) => {
+    if (!byDate[r.date]) byDate[r.date] = { date: r.date, spend:0, applications:0, approvals:0, activations:0, revenue:0, rolling7d:0 };
+    const d = byDate[r.date];
+    d.spend += r.spend;
+    d.applications += r.applications;
+    d.approvals += r.approvals;
+    d.activations += r.activations;
+    d.revenue += r.revenue;
+    if (code === 'bgoa' && r.rolling7d > 0) d.rolling7d = r.rolling7d;
+  };
+  bgoaRowsAll.forEach(r => fold(r, 'bgoa'));
+  bgocRowsAll.forEach(r => fold(r, 'bgoc'));
+  const rows = Object.values(byDate).sort((a,b) => a.date.localeCompare(b.date));
 
   // ── Monthly actuals table ──
   const byMonth = {};
-  rows.forEach(r => {
-    const m = r.date.substring(0,7); // YYYY-MM
-    if (!byMonth[m]) byMonth[m] = { spend:0, apps:0, approvals:0, activations:0, revenue:0 };
+  const foldMonth = (r, code) => {
+    const m = r.date.substring(0,7);
+    if (!byMonth[m]) byMonth[m] = { spend:0, apps:0, approvals:0, activations:0, revenue:0, bgoaActs:0, bgocActs:0, bgoaSpend:0, bgocSpend:0 };
     byMonth[m].spend       += r.spend;
     byMonth[m].apps        += r.applications;
     byMonth[m].approvals   += r.approvals;
     byMonth[m].activations += r.activations;
     byMonth[m].revenue     += r.revenue;
-  });
+    if (code === 'bgoa') { byMonth[m].bgoaActs += r.activations; byMonth[m].bgoaSpend += r.spend; }
+    else { byMonth[m].bgocActs += r.activations; byMonth[m].bgocSpend += r.spend; }
+  };
+  bgoaRowsAll.forEach(r => foldMonth(r, 'bgoa'));
+  bgocRowsAll.forEach(r => foldMonth(r, 'bgoc'));
   // Confirmed paid $ + activations — read LIVE from the Lifeline spreadsheet
   // (getLifelineActuals), NEVER hardcoded. A month counts as paid when its status row
   // says PAID; e.g. May 2026 ($183,000 / 7,320 acts) flows in automatically once marked
@@ -2046,17 +2208,18 @@ function renderAssuranceIntelligence() {
   Object.entries(PAID_ACTUAL).forEach(([mk, amt]) => { confirmedPaid[mk] = amt; });
   // Final locked CPAs for closed/paid months — use these, never recalculate from live data
   const confirmedCPA  = { '2025-12': 2.83, '2026-01': 3.21,  '2026-02': 12.38, '2026-03': 11.35 };
-  const monthNames = { '2025-12':'DEC 2025','2026-01':'JAN 2026','2026-02':'FEB 2026','2026-03':'MAR 2026','2026-04':'APR 2026','2026-05':'MAY 2026','2026-06':'JUN 2026','2026-07':'JUL 2026','2026-08':'AUG 2026','2026-09':'SEP 2026' };
+  const monthNames = { '2025-12':'DEC 2025','2026-01':'JAN 2026','2026-02':'FEB 2026','2026-03':'MAR 2026','2026-04':'APR 2026','2026-05':'MAY 2026','2026-06':'JUN 2026','2026-07':'JUL 2026','2026-08':'AUG 2026','2026-09':'SEP 2026','2026-10':'OCT 2026','2026-11':'NOV 2026','2026-12':'DEC 2026' };
 
   $('monthlyActuals').innerHTML = `<table class="intel-table">
     <thead><tr>
       <th>Month</th><th class="num">Spend</th><th class="num">Applications</th><th class="num">Activations</th><th class="num">Act CPA</th><th class="num">Revenue</th><th class="num">Status</th>
     </tr></thead>
     <tbody>${Object.entries(byMonth).sort((a,b)=>a[0].localeCompare(b[0])).map(([m, d]) => {
-      const actCPA = confirmedCPA[m] || (d.activations > 0 ? d.spend/d.activations : 0);
-      const cpaCol = actCPA <= 10 ? 'var(--green)' : actCPA <= 15 ? 'var(--amber)' : 'var(--red)';
       const paid = confirmedPaid[m];
       const paidActs = confirmedActs[m];
+      const displayActs = officialGoogleActs(d.bgoaActs || 0, d.bgocActs || 0, paidActs || 0);
+      const actCPA = confirmedCPA[m] || (displayActs > 0 ? d.spend/displayActs : 0);
+      const cpaCol = actCPA <= 10 ? 'var(--green)' : actCPA <= 15 ? 'var(--amber)' : 'var(--red)';
       // Status labels must match the rest of the dashboard:
       // current month = CURRENT MONTH, previous month = PENDING, older = PAID ✓
       const _now = new Date();
@@ -2066,9 +2229,8 @@ function renderAssuranceIntelligence() {
         : m === _curKey
           ? `<span style="color:var(--accent);font-size:9px">CURRENT MONTH</span>`
           : `<span style="color:var(--amber);font-size:9px">PENDING</span>`;
-      const displayActs = paidActs || d.activations;
       return `<tr>
-        <td><b style="color:var(--text)">${monthNames[m]||m}</b></td>
+        <td><b style="color:var(--text)">${monthNames[m]||m}</b><div style="font-size:8px;color:var(--muted);letter-spacing:.4px;margin-top:2px">BGOC ${Math.round(d.bgocActs||0).toLocaleString()} · BGOA ${Math.round(d.bgoaActs||0).toLocaleString()}</div></td>
         <td class="num" style="color:var(--amber)">${fmtMoney(d.spend)}</td>
         <td class="num" style="color:var(--muted)">${Math.round(d.apps).toLocaleString()}</td>
         <td class="num" style="color:var(--accent)">${displayActs.toLocaleString()}</td>
@@ -2080,7 +2242,7 @@ function renderAssuranceIntelligence() {
     <tr style="border-top:1px solid var(--border)">
       <td><b>TOTAL</b></td>
       ${(() => {
-        const tot = Object.entries(byMonth).reduce((s,[m,d])=>({spend:s.spend+d.spend,apps:s.apps+d.apps,activations:s.activations+(confirmedActs[m]||d.activations),revenue:s.revenue+(confirmedPaid[m]||d.revenue)}),{spend:0,apps:0,activations:0,revenue:0});
+        const tot = Object.entries(byMonth).reduce((s,[m,d])=>({spend:s.spend+d.spend,apps:s.apps+d.apps,activations:s.activations+officialGoogleActs(d.bgoaActs||0,d.bgocActs||0,confirmedActs[m]||0),revenue:s.revenue+(confirmedPaid[m]||d.revenue)}),{spend:0,apps:0,activations:0,revenue:0});
         const totCPA = tot.activations > 0 ? tot.spend/tot.activations : 0;
         const totCol = totCPA <= 15 ? 'var(--amber)' : 'var(--red)';
         return `<td class="num" style="color:var(--amber)"><b>${fmtMoney(tot.spend)}</b></td>
@@ -2110,7 +2272,7 @@ function renderAssuranceIntelligence() {
   if ($('businessHealth')) $('businessHealth').innerHTML = `<div class="biz-kpi">
     <div class="biz-kpi-item">
       <div class="biz-kpi-v" style="color:var(--green)">${fmtMoney(totalRevBGOA)}</div>
-      <div class="biz-kpi-l">TOTAL REVENUE (BGOA)</div>
+      <div class="biz-kpi-l">TOTAL REVENUE (GOOGLE ADS)</div>
       <div class="biz-kpi-sub" style="color:var(--muted)">${fmtMoney(totalRevConfirm)} confirmed paid</div>
     </div>
     <div class="biz-kpi-item">
@@ -2197,16 +2359,22 @@ function renderAssuranceIntelligence() {
     });
   }
 
-  // ── Google vs Assurance panel — built dynamically from live data ──
-  // BGOA: group by month for Assurance confirmed activations + manually tracked spend
+  // ── Google vs Assurance — both partner codes are Google Ads ──
   const bgoaByMonth = {};
-  RAW.bgoa.map(parseBGOARow).filter(Boolean).forEach(r => {
+  bgoaRowsAll.forEach(r => {
     const m = r.date.substring(0, 7);
     if (!bgoaByMonth[m]) bgoaByMonth[m] = { acts: 0, spend: 0 };
     bgoaByMonth[m].acts  += r.activations;
     bgoaByMonth[m].spend += r.spend;
   });
-  // Google Ads daily: group by month for Google-reported conversions + actual spend
+  const bgocByMonth = {};
+  bgocRowsAll.forEach(r => {
+    const m = r.date.substring(0, 7);
+    if (!bgocByMonth[m]) bgocByMonth[m] = { acts: 0, spend: 0 };
+    bgocByMonth[m].acts  += r.activations;
+    bgocByMonth[m].spend += r.spend;
+  });
+  // Legacy Google Ads account (matches the BGOA sheet). Does not contain BGOC.
   const googleByMonth = {};
   (RAW.daily || []).forEach(r => {
     const d = normDateStr(r.Date || '');
@@ -2220,31 +2388,39 @@ function renderAssuranceIntelligence() {
   const _curMonth = `${_now.getFullYear()}-${String(_now.getMonth()+1).padStart(2,'0')}`;
   const _prevDate  = new Date(_now.getFullYear(), _now.getMonth() - 1, 1);
   const _prevMonth = `${_prevDate.getFullYear()}-${String(_prevDate.getMonth()+1).padStart(2,'0')}`;
-  // Pull Lifeline actuals (higher confirmed numbers from the Projections vs Reality sheet)
   const lifelineActs = getLifelineActuals();
-  // All months with BGOA data, most recent first
-  const gvaData = Object.keys(bgoaByMonth).sort().reverse()
-    .filter(mk => bgoaByMonth[mk].acts > 0 || bgoaByMonth[mk].spend > 0)
+  const gvaMonths = new Set([...Object.keys(bgoaByMonth), ...Object.keys(bgocByMonth)]);
+  const gvaData = [...gvaMonths].sort().reverse()
+    .filter(mk => {
+      const a = bgoaByMonth[mk] || { acts:0, spend:0 };
+      const c = bgocByMonth[mk] || { acts:0, spend:0 };
+      return a.acts > 0 || a.spend > 0 || c.acts > 0 || c.spend > 0;
+    })
     .map(mk => {
-      const bgoa    = bgoaByMonth[mk];
-      const google  = googleByMonth[mk] || null;
+      const bgoa = bgoaByMonth[mk] || { acts: 0, spend: 0 };
+      const bgoc = bgocByMonth[mk] || { acts: 0, spend: 0 };
+      const google = googleByMonth[mk] || null;
       const lifeline = lifelineActs[mk] || null;
-      // Always use the higher activation count — Lifeline vs BGOA daily
-      const bestActs = Math.max(bgoa.acts, lifeline?.acts || 0);
-      // Always use Google Ads spend when available; fall back to Lifeline, then BGOA manual
-      const spend   = google ? google.spend : (lifeline?.spend || bgoa.spend);
-      const label   = new Date(mk + '-15').toLocaleDateString('en-US', { month:'short', year:'numeric' }).toUpperCase();
-      // Status: April 2026 = PENDING (activation lag — month closing out), older confirmed = PAID ✓
-      const status  = confirmedPaid[mk] ? 'PAID ✓' : mk === _curMonth ? 'CURRENT MONTH' : mk === _prevMonth ? 'PENDING' : 'PAID ✓';
+      const bgocG = sumBgocGoogle(mk + '-01', mk + '-31');
+      // Legacy account cost is DailyCampaign when that month was exported, else the BGOA sheet.
+      // BGOC account cost is added once. Lifeline spend is not added on top — some months already mix the codes.
+      const bgoaSpend = google ? google.spend : bgoa.spend;
+      const spend = bgoaSpend + bgocG.spend;
+      const googleConvs = (google ? google.convs : 0) + bgocG.apps;
+      const bestActs = officialGoogleActs(bgoa.acts, bgoc.acts, lifeline?.acts || 0);
+      const label = new Date(mk + '-15').toLocaleDateString('en-US', { month:'short', year:'numeric' }).toUpperCase();
+      const status = confirmedPaid[mk] ? 'PAID ✓' : mk === _curMonth ? 'CURRENT MONTH' : mk === _prevMonth ? 'PENDING' : 'PAID ✓';
+      const hasGoogle = googleConvs > 0 || spend > 0;
       return {
-        month:         label,
+        month: label,
         assuranceActs: bestActs,
-        googleActs:    google ? Math.round(google.convs) : null,
-        assuranceCPA:  confirmedCPA[mk] || (bestActs > 0 && spend > 0 ? spend / bestActs : null),
-        googleCPA:     google && google.convs > 0 ? google.spend / google.convs : null,
-        paidOut:       bestActs * PAYOUT,
+        googleActs: hasGoogle ? Math.round(googleConvs) : null,
+        assuranceCPA: confirmedCPA[mk] || (bestActs > 0 && spend > 0 ? spend / bestActs : null),
+        googleCPA: googleConvs > 0 ? spend / googleConvs : null,
+        paidOut: bestActs * PAYOUT,
         status,
-        noGoogleData:  !google,
+        bgoaActs: Math.round(bgoa.acts),
+        bgocActs: Math.round(bgoc.acts),
       };
     });
   $('gvaPanel').innerHTML = gvaData.map(g => `
@@ -2253,7 +2429,7 @@ function renderAssuranceIntelligence() {
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px">
         <div style="background:var(--surface2);border-radius:4px;padding:6px 8px">
           <div style="font-family:var(--mono);font-size:13px;color:var(--accent)">${g.assuranceActs.toLocaleString()}</div>
-          <div style="font-family:var(--mono);font-size:8px;color:var(--muted);letter-spacing:1px">BGOA ACTIVATIONS</div>
+          <div style="font-family:var(--mono);font-size:8px;color:var(--muted);letter-spacing:1px">GOOGLE ADS ACTIVATIONS</div>
           <div style="font-family:var(--mono);font-size:10px;color:var(--amber);margin-top:2px">${g.assuranceCPA ? fmtCPA(g.assuranceCPA)+' CPA' : '—'}</div>
         </div>
         <div style="background:var(--surface2);border-radius:4px;padding:6px 8px">
@@ -2262,46 +2438,38 @@ function renderAssuranceIntelligence() {
           <div style="font-family:var(--mono);font-size:8px;color:var(--muted);letter-spacing:1px">GOOGLE CONVERSIONS</div>
           <div style="font-family:var(--mono);font-size:10px;color:var(--amber);margin-top:2px">${g.googleCPA ? fmtCPA(g.googleCPA)+' CPA' : '—'}</div>
           ` : `
-          <div style="font-family:var(--mono);font-size:13px;color:var(--muted)">0</div>
+          <div style="font-family:var(--mono);font-size:13px;color:var(--muted)">N/A</div>
           <div style="font-family:var(--mono);font-size:8px;color:var(--muted);letter-spacing:1px">GOOGLE CONVERSIONS</div>
-          <div style="font-family:var(--mono);font-size:10px;color:var(--muted);margin-top:2px">Not tracked</div>
+          <div style="font-family:var(--mono);font-size:10px;color:var(--muted);margin-top:2px">N/A</div>
           `}
         </div>
       </div>
       <div style="font-family:var(--mono);font-size:9px;color:var(--muted);margin-top:5px">
-        ${g.googleActs !== null
-          ? `Δ ${Math.abs(g.googleActs - g.assuranceActs)} · Google conversions ${g.googleActs > g.assuranceActs ? 'over-report' : 'under-report'} vs BGOA activations by ${((Math.abs(g.googleActs-g.assuranceActs)/g.assuranceActs)*100).toFixed(1)}% · `
-          : ''}Paid out: <span style="color:var(--green)">${fmtMoney(g.paidOut)}</span>
+        BGOC ${g.bgocActs.toLocaleString()} · BGOA legacy ${g.bgoaActs.toLocaleString()}
+        ${g.googleActs !== null && g.assuranceActs
+          ? ` · Δ ${Math.abs(g.googleActs - g.assuranceActs)} Google conversions vs activations`
+          : ''}
+        · Paid out: <span style="color:var(--green)">${fmtMoney(g.paidOut)}</span>
       </div>
     </div>
   `).join('') + `<div style="font-family:var(--mono);font-size:9px;color:var(--muted);margin-top:8px;line-height:1.6;padding:6px;background:rgba(56,189,248,0.04);border-radius:4px">
-    ⚡ 30-day cookie window means activations backfill after month close. BGOA final numbers typically come in 7-10 days after end of month.
+    Both codes are Google Ads. BGOC is the current partner code (/partner/BGOC). BGOA is the earlier code and stays in the history. Activations backfill for 7–10 days after month close.
   </div>`;
 
-  // ── BGOC Meta panel ──
-  const bgocRows = RAW.bgoc.map(parseBGOARow).filter(Boolean);
-  const bgocTotSpend = bgocRows.reduce((s,r)=>s+r.spend,0);
-  const bgocTotApps  = bgocRows.reduce((s,r)=>s+r.applications,0);
-  const bgocTotActs  = bgocRows.reduce((s,r)=>s+r.activations,0);
-  const bgocRevenue  = bgocTotActs * 25;
-  const bgocCPA      = bgocTotActs > 0 ? bgocTotSpend/bgocTotActs : 0;
-  $('bgocPanel').innerHTML = `
-    <div style="background:var(--surface2);border:1px solid rgba(129,140,248,0.2);border-radius:6px;padding:12px">
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
-        <div><div style="font-family:var(--mono);font-size:16px;font-weight:700;color:var(--accent2)">${fmtMoney(bgocTotSpend||472.50)}</div><div style="font-family:var(--mono);font-size:9px;color:var(--muted)">AD SPEND</div></div>
-        <div><div style="font-family:var(--mono);font-size:16px;font-weight:700;color:var(--green)">${(bgocTotActs||4).toLocaleString()}</div><div style="font-family:var(--mono);font-size:9px;color:var(--muted)">ACTIVATIONS</div></div>
-        <div><div style="font-family:var(--mono);font-size:16px;font-weight:700;color:var(--amber)">${r2(bgocTotApps||13).toLocaleString()}</div><div style="font-family:var(--mono);font-size:9px;color:var(--muted)">APPLICATIONS</div></div>
-        <div><div style="font-family:var(--mono);font-size:16px;font-weight:700;color:${bgocCPA>0&&bgocCPA<=10?'var(--green)':bgocCPA>15?'var(--red)':'var(--amber)'}">${bgocCPA > 0 ? fmtCPA(bgocCPA) : '$118.13'}</div><div style="font-family:var(--mono);font-size:9px;color:var(--muted)">Activation CPA</div></div>
-      </div>
-      <div style="font-family:var(--mono);font-size:9px;color:var(--muted);padding:6px;background:rgba(129,140,248,0.06);border-radius:4px;line-height:1.6">
-        ⚡ Meta campaign just started April 2026. Very early data — CPA will normalize as more activations come in. 4 activations from $472.50 spend. Revenue: ${fmtMoney(bgocTotActs*25||100)}.
-      </div>
-    </div>`;
+  // Per-code cards. Each CPA uses that code's own Google cost and its own activations.
+  if ($('bgocPanel')) {
+    $('bgocPanel').innerHTML = partnerCodeCard(bgocRowsAll,
+      'Current Google Ads code. This spend is the BGOC Google Ads account, kept separate from the legacy account.');
+  }
+  if ($('bgoaLegacyPanel')) {
+    $('bgoaLegacyPanel').innerHTML = partnerCodeCard(bgoaRowsAll,
+      'Earlier Google Ads code. Kept so historical activations and spend stay visible. Same channel as BGOC.');
+  }
 
 }
 
 // ── LIVE DATA LAYER ── //
-let RAW = { daily: [], devices: [], geo: [], hourly: [], keywords: [], searchTerms: [], bgoa: [], bgoc: [], gva: [], projVsReal: [], projVsRealRows: [] };
+let RAW = { daily: [], devices: [], geo: [], hourly: [], keywords: [], searchTerms: [], bgoa: [], bgoc: [], go2daily: [], gva: [], projVsReal: [], projVsRealRows: [] };
 let activeCampaign  = 'all';
 let activeDateRange = 'today';
 let customFrom = null, customTo = null;
@@ -2476,7 +2644,7 @@ async function fetchAllSheets() {
   if (bm) bm.textContent = `YESTERDAY VS DAY BEFORE · Activation CPA: ≤$${ACT_TIERS.FANTASTIC} FANTASTIC · ≤$${ACT_TIERS.EXCELLENT} EXCELLENT · ≤$${ACT_TIERS.GOOD} GOOD · Application CPA: ≤${fmtCPA(liveT.FANTASTIC)} FANTASTIC (${(ACT_RATE*100).toFixed(1)}% act rate)`;
 
   // Render what we have immediately after priority sheets
-  if (RAW.bgoa.length) try { renderAssuranceIntelligence(); } catch(e) { console.error('AssuranceIntel', e); }
+  if (RAW.bgoa.length || RAW.bgoc.length) try { renderAssuranceIntelligence(); } catch(e) { console.error('AssuranceIntel', e); }
   if (RAW.daily.length) {
     const dates = RAW.daily.map(r => r.Date||'').filter(Boolean).sort();
     $('lastPush').textContent = dates[dates.length-1] || '—';
@@ -2494,7 +2662,7 @@ async function fetchAllSheets() {
     });
     // Re-render everything with full data once secondary sheets load
     // applyFilters() respects the active date range and campaign filter
-    if (RAW.bgoa.length) try { renderAssuranceIntelligence(); } catch(e) { console.error('AssuranceIntel phase2',e); }
+    if (RAW.bgoa.length || RAW.bgoc.length) try { renderAssuranceIntelligence(); } catch(e) { console.error('AssuranceIntel phase2',e); }
     try { applyFilters(); } catch(e) { console.error('applyFilters phase2',e); }
   });
 
@@ -2604,9 +2772,13 @@ function filterData() {
   };
 }
 
-// Build KPIs — uses BGOA confirmed data where available, Google Ads as fallback
+// Build KPIs. Spend is Google Ads only, from both accounts:
+//   legacy DailyCampaign (BGOA-era account) + BGOC account (GO2 script, else the BGOC tab).
+// Those are different dollars. Adding the BGOC tab on top of DailyCampaign is required;
+// adding the BGOA tab on top of DailyCampaign would double-count.
+// Activations are the de-duped Assurance counts for both Google partner codes.
 function buildKPIs(daily) {
-  const googleSpend  = daily.reduce((s,r) => s + pn(r.Cost), 0);
+  const legacySpend  = daily.reduce((s,r) => s + pn(r.Cost), 0);
   const conversions  = daily.reduce((s,r) => s + pn(r.Conversions), 0);
   const clicks       = daily.reduce((s,r) => s + pn(r.Clicks), 0);
   const impressions  = daily.reduce((s,r) => s + pn(r.Impressions), 0);
@@ -2614,49 +2786,40 @@ function buildKPIs(daily) {
   const { from, to } = getDateRange();
   const isSingleCampaign = activeCampaign && activeCampaign !== 'all';
 
-  const bgoaRows = isSingleCampaign ? [] : RAW.bgoa.map(parseBGOARow).filter(r => r && r.date >= from && r.date <= to);
-  const bgocRows = isSingleCampaign ? [] : RAW.bgoc.map(parseBGOARow).filter(r => r && r.date >= from && r.date <= to);
+  const bgoaRows = isSingleCampaign ? [] : (RAW.bgoa || []).map(parseBGOARow).filter(r => r && r.date >= from && r.date <= to);
+  const bgocRows = isSingleCampaign ? [] : (RAW.bgoc || []).map(parseBGOARow).filter(r => r && r.date >= from && r.date <= to);
+  const bgocGoogle = isSingleCampaign ? { spend: 0, apps: 0 } : sumBgocGoogle(from, to);
 
-  // Ad Spend: always from Google Ads DailyCampaign (script uses WHERE Cost > 0 to capture
-  // ALL campaigns including Performance Max). Google is always accurate for spend by campaign.
-  const spend     = googleSpend;
-  const googleCPA = conversions > 0 ? googleSpend / conversions : 0;
+  const spend     = legacySpend + bgocGoogle.spend;
+  const googleCPA = conversions > 0 ? legacySpend / conversions : 0;
   const hasBGOA  = bgoaRows.length > 0;
   const hasBGOC  = bgocRows.length > 0;
 
-  // Applications, activations, activation rate — all come from BGOA/BGOC daily tracking.
-  // Assurance sometimes reports more than Google tracks. Google conversions are a fallback only.
   let applications, activations, revenue, isConfirmed, confirmedDays, confirmedSources;
   if (hasBGOA || hasBGOC) {
-    const bgoaApps = bgoaRows.reduce((s,r) => s + r.applications, 0);
-    const bgocApps = bgocRows.reduce((s,r) => s + r.applications, 0);
     const bgoaActs = bgoaRows.reduce((s,r) => s + r.activations, 0);
     const bgocActs = bgocRows.reduce((s,r) => s + r.activations, 0);
     const bgoaRev  = bgoaRows.reduce((s,r) => s + r.revenue, 0);
     const bgocRev  = bgocRows.reduce((s,r) => s + r.revenue, 0);
-    const confirmedApps = bgoaApps + bgocApps;
-    const googleApps    = Math.round(conversions);
-    // RULE (Jun 2026): Applications count ONLY from Google conversions — nothing else.
-    // Bots inflate the manual/confirmed columns, so we no longer take Math.max.
-    applications     = googleApps;
-    activations      = bgoaActs + bgocActs;   // de-duped (col H) from Assurance tracking
+    // Google conversions from both accounts. BGOA-sheet applications duplicate DailyCampaign.
+    applications     = Math.round(conversions + bgocGoogle.apps);
+    activations      = bgoaActs + bgocActs;
     revenue          = bgoaRev  + bgocRev;
     isConfirmed      = true;
     confirmedDays    = Math.max(bgoaRows.length, bgocRows.length);
-    confirmedSources = [hasBGOA ? 'BGOA' : null, hasBGOC ? 'BGOC' : null].filter(Boolean).join('+');
+    confirmedSources = [
+      hasBGOC ? 'BGOC' : null,
+      hasBGOA ? 'BGOA LEGACY' : null,
+    ].filter(Boolean).join(' + ');
   } else {
-    // No confirmed data (or single campaign selected). Applications = real Google
-    // conversions, but we do NOT project activations/revenue from a percentage —
-    // those stay null and render as "—" until real Assurance numbers arrive.
-    applications     = Math.round(conversions);   // real Google conversions
+    applications     = Math.round(conversions + bgocGoogle.apps);
     activations      = null;
     revenue          = null;
     isConfirmed      = false;
     confirmedDays    = 0;
-    confirmedSources = isSingleCampaign ? 'CAMPAIGN ESTIMATE' : '';
+    confirmedSources = isSingleCampaign ? 'CAMPAIGN' : '';
   }
 
-  // Spend = Google Ads total (all campaigns, WHERE Cost > 0 ensures none are missed)
   const appCPA        = applications > 0 ? spend / applications : 0;
   const activationCPA = (activations && activations > 0) ? spend / activations : null;
   const profit        = (revenue !== null && revenue !== undefined) ? revenue - spend : null;
@@ -2667,14 +2830,15 @@ function buildKPIs(daily) {
     const c = r.CampaignName || '(no name)';
     campTotals[c] = (campTotals[c] || 0) + pn(r.Cost);
   });
-  console.log('[MC] Spend by campaign:', campTotals, '| Total:', spend.toFixed(2),
-              '| Apps (BGOA):', applications, '| Acts (BGOA):', activations);
+  console.log('[MC] Spend by legacy campaign:', campTotals, '| Legacy:', legacySpend.toFixed(2),
+              '| BGOC Google:', bgocGoogle.spend.toFixed(2), '| Total:', spend.toFixed(2),
+              '| Apps:', applications, '| Acts:', activations);
 
-  const googleApps    = Math.round(conversions);
+  const googleApps    = Math.round(conversions + bgocGoogle.apps);
   const confirmedApps = (hasBGOA || hasBGOC)
     ? bgoaRows.reduce((s,r)=>s+r.applications,0) + bgocRows.reduce((s,r)=>s+r.applications,0)
     : 0;
-  return { spend, clicks, impressions, conversions, applications, activations,
+  return { spend, legacySpend, bgocSpend: bgocGoogle.spend, clicks, impressions, conversions, applications, activations,
            googleCPA, appCPA, activationCPA, revenue, profit,
            isConfirmed, confirmedDays, confirmedSources, googleApps, confirmedApps };
 }
@@ -2692,21 +2856,42 @@ function buildChartDaily(daily) {
     byDate[d].apps  += pn(r.Conversions);
   });
 
-  // Step 2: overlay BGOA confirmed activations for the same date range
-  // This adds Sunday/no-ad days that have cookie-window activations
+  // Step 2: overlay confirmed activations from both Google Ads codes.
+  // Cookie-window days (no ads that day) still get their activations.
   const { from, to } = getDateRange();
-  const bgoaAll = RAW.bgoa.map(parseBGOARow).filter(r => r && r.date >= from && r.date <= to);
+  const allCampaigns = !activeCampaign || activeCampaign === 'all';
+  const bgoaAll = (RAW.bgoa || []).map(parseBGOARow).filter(r => r && r.date >= from && r.date <= to);
   bgoaAll.forEach(r => {
     const d = r.date.substring(5);
     if (!byDate[d]) {
-      // Day not in Google Ads (e.g. Sunday) — add it with $0 spend
       byDate[d] = { date: d, fullDate: r.date, activations: r.activations, spend: 0, apps: 0, confirmed: true };
     } else {
-      // Day exists in both — use confirmed activations from BGOA
       byDate[d].activations = r.activations;
       byDate[d].confirmed   = true;
     }
   });
+  // BGOC cost is a second Google Ads account. Add it only on All Campaigns so a
+  // single legacy campaign is not charged the other account's spend.
+  if (allCampaigns) {
+    const go2 = go2ByDate();
+    const bgocBy = {};
+    (RAW.bgoc || []).map(parseBGOARow).filter(r => r && r.date >= from && r.date <= to).forEach(r => {
+      bgocBy[r.date] = r;
+      const d = r.date.substring(5);
+      if (!byDate[d]) byDate[d] = { date: d, fullDate: r.date, activations: 0, spend: 0, apps: 0, confirmed: false };
+      byDate[d].activations += r.activations;
+      byDate[d].confirmed = true;
+    });
+    const dates = new Set([...Object.keys(bgocBy), ...Object.keys(go2).filter(d => d >= from && d <= to)]);
+    dates.forEach(date => {
+      const g = bgocGoogleDay(date, bgocBy[date], go2);
+      if (!g.spend && !g.apps) return;
+      const d = date.substring(5);
+      if (!byDate[d]) byDate[d] = { date: d, fullDate: date, activations: 0, spend: 0, apps: 0, confirmed: false };
+      byDate[d].spend += g.spend;
+      byDate[d].apps  += g.apps;
+    });
+  }
 
   // Step 3: days with no real BGOA activation data are NOT projected — leave activations
   // as null so the chart simply shows no activation point (no fabricated percentage estimate).
@@ -2940,7 +3125,8 @@ function renderHeroBar() {
     ['BLENDED ROI',        Math.round(t.roi * 100) + '%', t.roi >= 0 ? 'var(--green)' : 'var(--red)'],
     ['PENDING PAYMENT',    fmtMoney(t.pending),         'var(--amber)'],
   ];
-  el.innerHTML = `<div class="hero-tag">All-time performance · Assurance Wireless</div>` +
+  el.innerHTML = `<div class="hero-tag">All-time · Lifeline ledger · Google Ads</div>` +
+    `<div style="font-family:var(--mono);font-size:9px;color:var(--muted);letter-spacing:.6px;margin:-4px 0 10px;line-height:1.5">BGOC is the current Google Ads code and is included in the tiles below. This ledger still has to be updated in Google Sheets wherever a month is BGOA-only.</div>` +
     `<div class="hero-cells">` +
     cells.map(c => `<div class="hero-cell"><div class="hero-val" style="color:${c[2]}">${c[1]}</div><div class="hero-lbl">${c[0]}</div></div>`).join('') +
     `</div>`;
@@ -3225,9 +3411,9 @@ async function init() {
 init();
 
 // ════════════════════════════════════════════════════════════
-// ASSURANCE GO2 — INDEPENDENT DASHBOARD
-// Account: 275-817-6694
-// Conversion: applications (same product as GO1)
+// BGOC GOOGLE ADS ACCOUNT — tab "Google Ads · BGOC"
+// Account: 275-817-6694. Partner code BGOC. Not Meta.
+// Conversion: applications (same product as the legacy account)
 // CPA Tiers: FANTASTIC ≤$10 · EXCELLENT ≤$12.50 · GOOD ≤$15 · POOR >$15
 // ════════════════════════════════════════════════════════════
 
